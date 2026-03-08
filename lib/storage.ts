@@ -102,3 +102,29 @@ function calculateStreak(logs: AngelLog[]): number {
   }
   return streak
 }
+
+// ── Numerology Profile Storage ─────────────────────────────────────────────
+import type { NumerologyProfile } from './numerology'
+
+const NUMEROLOGY_KEY = 'synchrosoul_numerology'
+
+export function saveNumerologyProfile(profile: NumerologyProfile): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(NUMEROLOGY_KEY, JSON.stringify(profile))
+}
+
+export function getNumerologyProfile(): NumerologyProfile | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(NUMEROLOGY_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as NumerologyProfile
+  } catch {
+    return null
+  }
+}
+
+export function clearNumerologyProfile(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(NUMEROLOGY_KEY)
+}
