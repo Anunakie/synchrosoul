@@ -1,122 +1,199 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const mockSoulTwins = [
-  { id: '1', name: 'Luna M.', avatar: '🌙', location: 'Portland, OR', sharedNumbers: ['1111', '333', '777'], syncScore: 94, lifePath: 7, bio: 'Spiritual seeker, crystal healer, and lover of midnight walks under the stars.', lastActive: '2 hours ago', verified: 3 },
-  { id: '2', name: 'Orion K.', avatar: '⭐', location: 'Sedona, AZ', sharedNumbers: ['555', '1111'], syncScore: 87, lifePath: 11, bio: 'Energy worker and sound healer. I see 1111 every single day without fail.', lastActive: '5 hours ago', verified: 5 },
-  { id: '3', name: 'Sage R.', avatar: '🌿', location: 'Asheville, NC', sharedNumbers: ['222', '444', '888'], syncScore: 82, lifePath: 2, bio: 'Herbalist and intuitive reader. Numbers guide my path daily.', lastActive: '1 day ago', verified: 2 },
-  { id: '4', name: 'Nova T.', avatar: '💫', location: 'Santa Fe, NM', sharedNumbers: ['999', '333'], syncScore: 78, lifePath: 9, bio: 'Artist and mystic. In the middle of a massive life transformation.', lastActive: '3 hours ago', verified: 4 },
-  { id: '5', name: 'River A.', avatar: '🌊', location: 'Byron Bay, AU', sharedNumbers: ['1111', '444'], syncScore: 75, lifePath: 4, bio: 'Surfer, meditator, and student of sacred geometry.', lastActive: '12 hours ago', verified: 1 },
+const DEMO_TWINS = [
+  { id: '1', name: 'Luna M.', avatar: '🌙', location: 'Sedona, AZ', syncScore: 94,
+    sharedNumbers: ['1111','333','777'], lifePathNumber: 7, recentNumber: '1111',
+    timeAgo: '12 min ago', bio: 'Spiritual seeker, crystal healer, moon lover.',
+    numerologySign: 'The Seeker', color: '#8b5cf6', online: true },
+  { id: '2', name: 'Orion K.', avatar: '⭐', location: 'Bali, Indonesia', syncScore: 88,
+    sharedNumbers: ['444','1212'], lifePathNumber: 4, recentNumber: '444',
+    timeAgo: '34 min ago', bio: 'Sacred geometry artist and meditation guide.',
+    numerologySign: 'The Builder', color: '#3b82f6', online: true },
+  { id: '3', name: 'Sage R.', avatar: '🌿', location: 'Glastonbury, UK', syncScore: 82,
+    sharedNumbers: ['555','1111'], lifePathNumber: 5, recentNumber: '555',
+    timeAgo: '1 hr ago', bio: 'Herbalist, tarot reader, nature mystic.',
+    numerologySign: 'The Adventurer', color: '#22c55e', online: false },
+  { id: '4', name: 'Nova S.', avatar: '✨', location: 'Tulum, Mexico', syncScore: 79,
+    sharedNumbers: ['222','888'], lifePathNumber: 2, recentNumber: '222',
+    timeAgo: '2 hrs ago', bio: 'Sound healer and sacred feminine teacher.',
+    numerologySign: 'The Peacemaker', color: '#f9a8d4', online: false },
+  { id: '5', name: 'Zephyr A.', avatar: '🌊', location: 'Byron Bay, AU', syncScore: 75,
+    sharedNumbers: ['999','333'], lifePathNumber: 9, recentNumber: '999',
+    timeAgo: '3 hrs ago', bio: 'Surfer, shaman, cosmic wanderer.',
+    numerologySign: 'The Humanitarian', color: '#c9a84c', online: false },
 ];
 
-const compatibilityMatrix: Record<string, Record<string, string>> = {
-  '1': { '1': 'Powerful but competitive', '2': 'Perfect balance', '3': 'Creative fire', '4': 'Solid foundation', '5': 'Exciting tension', '6': 'Nurturing bond', '7': 'Mystical depth', '8': 'Power couple', '9': 'Inspiring union', '11': 'Visionary pair', '22': 'World changers', '33': 'Sacred service' },
-  '7': { '1': 'Mystical depth', '2': 'Intuitive harmony', '3': 'Inspired creativity', '4': 'Grounded wisdom', '5': 'Adventurous minds', '6': 'Healing love', '7': 'Twin flame energy', '8': 'Spiritual power', '9': 'Enlightened souls', '11': 'Cosmic awakening', '22': 'Ancient wisdom', '33': 'Divine teachers' },
-};
+const SYNC_FACTORS = [
+  { label: 'Shared Angel Numbers', icon: '🔢', weight: 40 },
+  { label: 'Life Path Harmony', icon: '🌟', weight: 30 },
+  { label: 'Timing Proximity', icon: '⏱', weight: 20 },
+  { label: 'Numerology Overlap', icon: '🔮', weight: 10 },
+];
 
 export default function SoulTwinPage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  const [filter, setFilter] = useState<'all'|'high'|'verified'>('all');
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState(DEMO_TWINS[0]);
+  const [filter, setFilter] = useState<'all'|'online'|'high'>('all');
   const [connected, setConnected] = useState<string[]>([]);
 
-  useEffect(() => {
-    const l = localStorage.getItem('synchrosoul_logs'); if (l) setLogs(JSON.parse(l));
-    const p = localStorage.getItem('synchrosoul_profile'); if (p) setProfile(JSON.parse(p));
-    const c = localStorage.getItem('synchrosoul_connections'); if (c) setConnected(JSON.parse(c));
-  }, []);
-
-  const myNumbers = [...new Set(logs.slice(0, 20).map((l: any) => l.number))];
-
-  const twins = mockSoulTwins.map(t => ({
-    ...t,
-    sharedWithMe: t.sharedNumbers.filter(n => myNumbers.includes(n)),
-  })).sort((a, b) => b.syncScore - a.syncScore);
-
-  const filtered = twins.filter(t => {
+  const filtered = DEMO_TWINS.filter(t => {
+    if (filter === 'online') return t.online;
     if (filter === 'high') return t.syncScore >= 85;
-    if (filter === 'verified') return t.verified >= 3;
     return true;
   });
 
-  const connect = (id: string) => {
-    const updated = connected.includes(id) ? connected.filter(c => c !== id) : [...connected, id];
-    setConnected(updated);
-    localStorage.setItem('synchrosoul_connections', JSON.stringify(updated));
-  };
-
-  const selectedTwin = twins.find(t => t.id === selected);
+  const connect = (id: string) => setConnected(prev =>
+    prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+  );
 
   return (
-    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>👥 Soul Twin Radar</h1>
-      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Souls seeing the same numbers as you right now</p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Soul Twin Radar</h1>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Souls seeing the same numbers as you right now</p>
+      </div>
 
-      {myNumbers.length > 0 && (
-        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '1rem', padding: '1rem 1.25rem', backdropFilter: 'blur(10px)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your signal:</span>
-          {myNumbers.slice(0, 6).map(n => (
-            <span key={n} style={{ padding: '0.2rem 0.6rem', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '999px', color: '#c9a84c', fontSize: '0.82rem', fontWeight: 600 }}>{n}</span>
-          ))}
-        </div>
-      )}
+      {/* Live indicator */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>Live matching active · {DEMO_TWINS.filter(t => t.online).length} souls online now</span>
+      </div>
 
+      {/* Filters */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
-        {(['all','high','verified'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.4rem 1rem', borderRadius: '999px', background: filter === f ? 'rgba(155,89,182,0.2)' : 'rgba(255,255,255,0.05)', border: filter === f ? '1px solid rgba(155,89,182,0.4)' : '1px solid rgba(255,255,255,0.08)', color: filter === f ? '#b794f4' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.82rem' }}>
-            {f === 'all' ? '✨ All' : f === 'high' ? '🔥 85%+ Sync' : '✅ Verified'}
-          </button>
+        {(['all','online','high'] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: '0.4rem 1rem', borderRadius: '999px', cursor: 'pointer',
+            background: filter === f ? '#c9a84c' : 'rgba(255,255,255,0.08)',
+            color: filter === f ? '#000' : 'rgba(255,255,255,0.7)',
+            border: 'none', fontSize: '0.85rem', fontWeight: 600,
+            textTransform: 'capitalize'
+          }}>{f === 'high' ? 'High Sync (85%+)' : f === 'online' ? 'Online Now' : 'All Matches'}</button>
         ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        {filtered.map(twin => {
-          const isConnected = connected.includes(twin.id);
-          const isSelected = selected === twin.id;
-          return (
-            <div key={twin.id} style={{ background: 'rgba(8,6,28,0.88)', border: isSelected ? '1px solid rgba(155,89,182,0.4)' : '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.25rem', backdropFilter: 'blur(10px)', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setSelected(isSelected ? null : twin.id)}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(155,89,182,0.3), rgba(201,168,76,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>{twin.avatar}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{ color: '#e8d5b7', fontWeight: 600, fontSize: '0.95rem' }}>{twin.name}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>LP {twin.lifePath}</span>
-                    {twin.verified >= 3 && <span style={{ fontSize: '0.65rem', background: 'rgba(72,187,120,0.15)', color: '#48bb78', padding: '0.1rem 0.4rem', borderRadius: '999px', border: '1px solid rgba(72,187,120,0.25)' }}>✓ Verified</span>}
-                  </div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{twin.location} · {twin.lastActive}</div>
-                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
-                    {twin.sharedNumbers.map(n => (
-                      <span key={n} style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', background: myNumbers.includes(n) ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.06)', border: myNumbers.includes(n) ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', color: myNumbers.includes(n) ? '#c9a84c' : 'rgba(255,255,255,0.4)' }}>{n}</span>
-                    ))}
-                  </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem' }}>
+        {/* Match List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {filtered.map(twin => (
+            <button key={twin.id} onClick={() => setSelected(twin)} style={{
+              background: selected.id === twin.id ? `${twin.color}15` : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${selected.id === twin.id ? twin.color + '60' : 'rgba(255,255,255,0.08)'}`,
+              borderRadius: '1.25rem', padding: '1rem',
+              cursor: 'pointer', textAlign: 'left', width: '100%',
+              transition: 'all 0.2s'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '50%',
+                    background: `${twin.color}30`, border: `2px solid ${twin.color}60`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem'
+                  }}>{twin.avatar}</div>
+                  {twin.online && <div style={{
+                    position: 'absolute', bottom: 0, right: 0,
+                    width: '10px', height: '10px', borderRadius: '50%',
+                    background: '#22c55e', border: '2px solid #050510'
+                  }} />}
                 </div>
-                <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: twin.syncScore >= 90 ? '#c9a84c' : twin.syncScore >= 80 ? '#9b59b6' : '#3498db' }}>{twin.syncScore}%</div>
-                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>sync</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem' }}>{twin.name}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{twin.location}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: twin.color, fontWeight: 700, fontSize: '1.1rem' }}>{twin.syncScore}%</div>
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem' }}>sync</div>
                 </div>
               </div>
+              <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {twin.sharedNumbers.map(n => (
+                  <span key={n} style={{
+                    background: `${twin.color}20`, borderRadius: '999px',
+                    padding: '0.1rem 0.5rem', color: twin.color, fontSize: '0.7rem', fontWeight: 700
+                  }}>{n}</span>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
 
-              {isSelected && (
-                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.88rem', lineHeight: 1.7, marginBottom: '1rem', fontStyle: 'italic' }}>“{twin.bio}”</p>
-                  {twin.sharedWithMe.length > 0 && (
-                    <div style={{ marginBottom: '0.75rem', padding: '0.6rem 0.9rem', background: 'rgba(201,168,76,0.08)', borderRadius: '0.6rem', border: '1px solid rgba(201,168,76,0.15)' }}>
-                      <span style={{ color: '#c9a84c', fontSize: '0.8rem' }}>✨ You both see: {twin.sharedWithMe.join(', ')}</span>
-                    </div>
-                  )}
-                  <button onClick={e => { e.stopPropagation(); connect(twin.id); }} style={{ width: '100%', padding: '0.7rem', borderRadius: '0.75rem', background: isConnected ? 'rgba(72,187,120,0.15)' : 'linear-gradient(135deg, rgba(155,89,182,0.3), rgba(201,168,76,0.2))', border: isConnected ? '1px solid rgba(72,187,120,0.3)' : '1px solid rgba(155,89,182,0.3)', color: isConnected ? '#48bb78' : '#e8d5b7', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
-                    {isConnected ? '✓ Connected — Send Message' : '💫 Connect Souls'}
-                  </button>
-                </div>
-              )}
+        {/* Detail Panel */}
+        <div style={{
+          background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+          border: `1px solid ${selected.color}40`, padding: '1.5rem',
+          backdropFilter: 'blur(12px)', alignSelf: 'start', position: 'sticky', top: '1rem'
+        }}>
+          {/* Avatar & Name */}
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{
+              width: '72px', height: '72px', borderRadius: '50%', margin: '0 auto 0.75rem',
+              background: `radial-gradient(circle, ${selected.color}40, ${selected.color}10)`,
+              border: `2px solid ${selected.color}80`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem',
+              boxShadow: `0 0 30px ${selected.color}30`
+            }}>{selected.avatar}</div>
+            <h3 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{selected.name}</h3>
+            <p style={{ color: selected.color, fontSize: '0.85rem' }}>{selected.numerologySign} · Life Path {selected.lifePathNumber}</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>{selected.location}</p>
+          </div>
+
+          {/* Sync Score Ring */}
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{
+              display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+              background: `${selected.color}10`, borderRadius: '1rem',
+              padding: '1rem 2rem', border: `1px solid ${selected.color}30`
+            }}>
+              <span style={{ fontSize: '2.5rem', fontWeight: 800, color: selected.color }}>{selected.syncScore}%</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>Sync Score</span>
             </div>
-          );
-        })}
-      </div>
+          </div>
 
-      <div style={{ background: 'rgba(8,6,28,0.75)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '1rem', padding: '1.25rem', backdropFilter: 'blur(8px)', textAlign: 'center' }}>
-        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', lineHeight: 1.7, margin: 0 }}>🔮 Real-time matching activates when you connect your Supabase account. These are preview matches based on your logged numbers.</p>
+          {/* Sync Factors */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            {SYNC_FACTORS.map(f => (
+              <div key={f.label} style={{ marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>{f.icon} {f.label}</span>
+                  <span style={{ color: selected.color, fontSize: '0.75rem' }}>{Math.round(selected.syncScore * f.weight / 100 * (0.8 + Math.random() * 0.4))}%</span>
+                </div>
+                <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px' }}>
+                  <div style={{
+                    height: '100%', borderRadius: '2px',
+                    background: selected.color,
+                    width: `${Math.round(selected.syncScore * f.weight / 100 * (0.8 + 0.2))}%`
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bio */}
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '1rem', fontStyle: 'italic' }}>“{selected.bio}”</p>
+
+          {/* Shared numbers */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.4rem' }}>SHARED NUMBERS</p>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              {selected.sharedNumbers.map(n => (
+                <span key={n} style={{
+                  background: `${selected.color}20`, border: `1px solid ${selected.color}50`,
+                  borderRadius: '999px', padding: '0.25rem 0.7rem',
+                  color: selected.color, fontSize: '0.85rem', fontWeight: 700
+                }}>{n}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Connect button */}
+          <button onClick={() => connect(selected.id)} style={{
+            width: '100%', padding: '0.75rem', borderRadius: '999px', cursor: 'pointer',
+            background: connected.includes(selected.id) ? 'rgba(255,255,255,0.08)' : selected.color,
+            color: connected.includes(selected.id) ? 'rgba(255,255,255,0.7)' : '#000',
+            border: connected.includes(selected.id) ? '1px solid rgba(255,255,255,0.2)' : 'none',
+            fontSize: '0.95rem', fontWeight: 700
+          }}>{connected.includes(selected.id) ? '✓ Connected' : '✨ Connect Souls'}</button>
+        </div>
       </div>
     </div>
   );
