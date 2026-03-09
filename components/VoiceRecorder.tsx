@@ -31,31 +31,38 @@ export default function VoiceRecorder({ onTranscript, onVoiceNote, placeholder, 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
+  // Use a ref to track transcript so the onresult closure never goes stale
+  const transcriptRef = useRef('')
+  const onTranscriptRef = useRef(onTranscript)
+  useEffect(() => { onTranscriptRef.current = onTranscript }, [onTranscript])
+
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) { setSupported(false); return }
     const recognition = new SR()
     recognition.continuous = true
-    recognition.interimResults = true
+    recognition.interimResults = false
     recognition.lang = 'en-US'
     recognition.onresult = (e: any) => {
       let final = ''
-      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript
-        if (e.results[i].isFinal) final += t
-        else interim += t
+        if (e.results[i].isFinal) {
+          final += e.results[i][0].transcript
+        }
       }
-      const combined = (transcript + final).trim()
       if (final) {
+        const combined = (transcriptRef.current + ' ' + final).trim()
+        transcriptRef.current = combined
         setTranscript(combined)
-        onTranscript(combined)
+        onTranscriptRef.current(combined)
       }
     }
     recognition.onerror = () => { setIsListening(false); setPulse(false) }
     recognition.onend = () => { setIsListening(false); setPulse(false) }
     recognitionRef.current = recognition
-  }, [transcript, onTranscript])
+    // Only create recognition once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -73,6 +80,7 @@ export default function VoiceRecorder({ onTranscript, onVoiceNote, placeholder, 
       recognitionRef.current.stop()
       setIsListening(false)
     } else {
+      transcriptRef.current = ''
       setTranscript('')
       recognitionRef.current.start()
       setIsListening(true)
