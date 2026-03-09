@@ -1,209 +1,144 @@
 'use client';
 import { useState } from 'react';
 
-const NUMBERS = [
-  { n:'000', color:'#6b7280', theme:'Infinite Potential', keywords:['Infinity','Void','Source','Completion'],
-    meaning:'You are at the beginning of a spiritual journey. The universe is signaling that you are one with the infinite. A cycle has completed and a new one is about to begin.',
-    love:'A relationship is coming full circle. Embrace new beginnings together.',
-    career:'A chapter closes. Trust that something greater is being prepared for you.',
-    action:'Meditate on what you wish to create in this new cycle.' },
-  { n:'111', color:'#c9a84c', theme:'Manifestation Portal', keywords:['Manifestation','New Beginnings','Alignment','Thoughts'],
-    meaning:'Your thoughts are manifesting rapidly. The universe has opened a portal of manifestation. Be very intentional about what you think and feel right now.',
-    love:'A new romantic chapter is beginning. Your thoughts about love are manifesting.',
-    career:'New opportunities are appearing. Your ideas have power right now.',
-    action:'Write down your most important intention and repeat it 3 times.' },
-  { n:'222', color:'#3b82f6', theme:'Divine Balance', keywords:['Balance','Partnership','Trust','Patience'],
-    meaning:'Trust the process. Everything is unfolding in divine timing. You are being asked to have faith and maintain balance in all areas of your life.',
-    love:'Your relationship is divinely guided. Trust the timing of love.',
-    career:'Partnerships and collaborations are blessed. Trust your co-creators.',
-    action:'Practice patience today. Trust that your seeds are growing.' },
-  { n:'333', color:'#f97316', theme:'Ascended Masters', keywords:['Creativity','Growth','Ascended Masters','Expression'],
-    meaning:'The Ascended Masters are near, offering guidance and support. Your creative energy is at its peak. Express yourself authentically.',
-    love:'The masters bless your love life. Express your feelings openly.',
-    career:'Creative projects are divinely supported. Share your gifts boldly.',
-    action:'Create something today. Paint, write, sing, or dance.' },
-  { n:'444', color:'#22c55e', theme:'Angelic Protection', keywords:['Protection','Foundation','Angels','Stability'],
-    meaning:'Your angels surround you with love and protection. You are safe. Build strong foundations now. The universe is your solid ground.',
-    love:'Your relationship has angelic protection. Build something lasting.',
-    career:'Your hard work is noticed by the universe. Foundations are solid.',
-    action:'Acknowledge your angels. Say thank you for their protection.' },
-  { n:'555', color:'#8b5cf6', theme:'Major Change', keywords:['Change','Freedom','Adventure','Transformation'],
-    meaning:'Major life changes are coming or already happening. Embrace the transformation. What is shifting is for your highest good, even if it feels uncertain.',
-    love:'A significant shift in your love life is occurring. Embrace it.',
-    career:'Career transformation is underway. Change leads to freedom.',
-    action:'Release resistance to change. Write what you are ready to release.' },
-  { n:'666', color:'#ec4899', theme:'Rebalance', keywords:['Balance','Healing','Home','Nurturing'],
-    meaning:'Time to rebalance your thoughts between the material and spiritual. Nurture yourself and others. Home and family need your loving attention.',
-    love:'Nurture your relationship. Balance giving and receiving love.',
-    career:'Rebalance work and personal life. Nurture your creative projects.',
-    action:'Do something nurturing for yourself or someone you love today.' },
-  { n:'777', color:'#c9a84c', theme:'Divine Magic', keywords:['Magic','Luck','Spiritual Awakening','Wisdom'],
-    meaning:'You are in perfect alignment with the universe. Magic is happening. Your spiritual practice is paying off. Miracles and synchronicities are flowing to you.',
-    love:'Magical, fated connections are blessed. Love is truly magical now.',
-    career:'Lucky breaks and magical opportunities are flowing to you.',
-    action:'Celebrate your spiritual progress. You are on the right path.' },
-  { n:'888', color:'#f59e0b', theme:'Infinite Abundance', keywords:['Abundance','Prosperity','Karma','Infinity'],
-    meaning:'Infinite abundance is flowing to you. Financial blessings are on their way. The karmic cycle of giving and receiving is in perfect balance.',
-    love:'Abundant love is yours. Give and receive love freely and fully.',
-    career:'Financial abundance and career success are manifesting now.',
-    action:'Open yourself to receive. Say yes to opportunities and gifts.' },
-  { n:'999', color:'#ef4444', theme:'Divine Completion', keywords:['Completion','Endings','Lightworker','Purpose'],
-    meaning:'A major cycle is completing. You are being called to your higher purpose as a lightworker. Release the old to make space for your divine mission.',
-    love:'A relationship chapter is completing. Honor what was, welcome what comes.',
-    career:'Your soul mission is calling. Align your work with your purpose.',
-    action:'Let go of what no longer serves. Your higher purpose awaits.' },
-  { n:'1010', color:'#06b6d4', theme:'Spiritual Awakening', keywords:['Awakening','Potential','Divine Support','Progress'],
-    meaning:'You are on the path of spiritual awakening. The universe is cheering you on. Every step forward is divinely supported. Keep going.',
-    love:'Your love life is spiritually guided. Growth and awakening together.',
-    career:'You are progressing on your divine path. Keep taking inspired action.',
-    action:'Take one step toward your spiritual goals today.' },
-  { n:'1111', color:'#c9a84c', theme:'Master Manifestation', keywords:['Master Portal','Awakening','Alignment','Miracles'],
-    meaning:'The most powerful manifestation portal. You are fully aligned with the universe. Your thoughts, words, and actions are creating your reality at lightning speed. Make a wish.',
-    love:'Twin flame energy. Soul-level connections are activated.',
-    career:'Your life purpose is activating. Miracles in your career are possible.',
-    action:'Make a wish. Set your most sacred intention right now.' },
-  { n:'1212', color:'#8b5cf6', theme:'Cosmic Alignment', keywords:['Alignment','Growth','Positive Thinking','Universe'],
-    meaning:'You are in perfect cosmic alignment. The universe is asking you to stay positive and keep your thoughts elevated. Your spiritual growth is accelerating.',
-    love:'Cosmic love alignment. Your relationship is divinely orchestrated.',
-    career:'Stay positive about your career. Cosmic forces are aligning for you.',
-    action:'Elevate your thoughts. Replace one negative thought with a positive one.' },
-  { n:'1234', color:'#22c55e', theme:'Stepping Stones', keywords:['Progress','Steps','Building','Forward'],
-    meaning:'You are taking the right steps in the right order. Life is progressing beautifully. Trust the sequential unfolding of your journey.',
-    love:'Your relationship is progressing naturally and beautifully.',
-    career:'Your career is building step by step. Trust the process.',
-    action:'Identify your next step and take it with confidence.' },
-  { n:'2222', color:'#3b82f6', theme:'Deep Trust', keywords:['Deep Trust','Miracles','Patience','Faith'],
-    meaning:'Have deep faith. Miracles are being orchestrated behind the scenes. The universe is working on your behalf in ways you cannot yet see.',
-    love:'Trust in the miracle of love. What is meant for you is coming.',
-    career:'Behind-the-scenes forces are working in your favor. Trust.',
-    action:'Write a letter of gratitude to the universe for miracles in progress.' },
-  { n:'3333', color:'#f97316', theme:'Trinity Power', keywords:['Trinity','Mind Body Spirit','Masters','Power'],
-    meaning:'The holy trinity of mind, body, and spirit is in perfect alignment. The Ascended Masters are amplifying your power. You are a co-creator with the divine.',
-    love:'Mind, body, and soul connection in love. Deep spiritual partnership.',
-    career:'Your mind, passion, and purpose are aligned. Powerful creation time.',
-    action:'Align your thoughts, feelings, and actions toward one goal.' },
-  { n:'4444', color:'#22c55e', theme:'Fortress of Angels', keywords:['Fortress','Protection','Stability','Angels'],
-    meaning:'You are completely surrounded and protected by angels. A fortress of divine light encircles you. You are safe to build your dreams.',
-    love:'Your love is protected by a fortress of angelic light.',
-    career:'Your work is protected and supported by divine forces.',
-    action:'Feel the angelic protection around you. Build boldly.' },
-  { n:'5555', color:'#8b5cf6', theme:'Quantum Leap', keywords:['Quantum Leap','Massive Change','Freedom','Evolution'],
-    meaning:'A quantum leap in your evolution is occurring. Massive, positive change is sweeping through your life. You are leveling up in every way.',
-    love:'A quantum leap in your love life. Everything is changing for the better.',
-    career:'A massive career leap is happening. Embrace the quantum shift.',
-    action:'Embrace the change fully. Say yes to the new version of yourself.' },
-  { n:'7777', color:'#c9a84c', theme:'Cosmic Jackpot', keywords:['Jackpot','Miracles','Luck','Spiritual Mastery'],
-    meaning:'The cosmic jackpot. You have reached a level of spiritual mastery that is attracting miraculous luck and blessings. The universe is rewarding your spiritual work.',
-    love:'Miraculous love blessings. Your spiritual work has opened your heart.',
-    career:'Miraculous career luck. Your spiritual alignment is paying off.',
-    action:'Celebrate. You have earned this cosmic reward.' },
-  { n:'8888', color:'#f59e0b', theme:'Abundance Overflow', keywords:['Overflow','Wealth','Karma','Harvest'],
-    meaning:'Abundance is overflowing in every area of your life. You are in the harvest season of your karmic cycle. Receive with gratitude and share generously.',
-    love:'Overflowing love and joy in relationships. Share your love generously.',
-    career:'Financial harvest time. Your investments of time and energy pay off.',
-    action:'Receive graciously. Share your abundance with others.' },
-  { n:'9999', color:'#ef4444', theme:'Grand Completion', keywords:['Grand Completion','Ascension','Purpose','New Earth'],
-    meaning:'The grandest completion. You are ascending to a new level of consciousness. Your lightworker mission is fully activating. The old world falls away.',
-    love:'Soul contracts completing. New soul-level love is entering.',
-    career:'Your highest purpose career is fully activating. Answer the call.',
-    action:'Surrender completely to your highest purpose. The universe has you.' },
+const NUMBERS: Record<string, { meaning: string; theme: string; color: string; keywords: string[]; affirmation: string; action: string }> = {
+  '000': { theme: 'Infinite Potential', color: '#ffffff', keywords: ['void','creation','source','reset'], meaning: 'You are at the beginning of a new cycle. The universe is offering you a blank slate. This is a powerful moment of pure potential — anything is possible.', affirmation: 'I am open to infinite possibilities.', action: 'Meditate on what you truly want to create.' },
+  '111': { theme: 'Manifestation Portal', color: '#f59e0b', keywords: ['thoughts','manifest','new start','alignment'], meaning: 'Your thoughts are manifesting rapidly. Be mindful of what you focus on — the universe is listening and responding in real time. A powerful portal is open.', affirmation: 'My thoughts create my reality with ease.', action: 'Write down your most important intention right now.' },
+  '222': { theme: 'Divine Timing', color: '#3b82f6', keywords: ['patience','trust','balance','partnership'], meaning: 'Trust the process. Everything is unfolding in perfect divine timing. Your seeds are germinating beneath the surface — keep the faith and stay balanced.', affirmation: 'I trust divine timing completely.', action: 'Release control and surrender to the flow.' },
+  '333': { theme: 'Ascended Masters', color: '#f97316', keywords: ['creativity','guides','expression','growth'], meaning: 'The Ascended Masters are near, offering guidance and support. Your creative energy is amplified. Express yourself authentically and trust your inner wisdom.', affirmation: 'I am guided, protected, and divinely supported.', action: 'Create something — write, draw, sing, or speak your truth.' },
+  '444': { theme: 'Angelic Protection', color: '#22c55e', keywords: ['foundation','protection','stability','angels'], meaning: 'The angels surround you with love and protection. You are on the right path. Build solid foundations and trust that your hard work is supported by divine forces.', affirmation: 'I am safe, protected, and divinely guided.', action: 'Ground yourself — walk barefoot, breathe deeply, feel supported.' },
+  '555': { theme: 'Major Change', color: '#8b5cf6', keywords: ['change','transformation','freedom','adventure'], meaning: 'Significant change is coming or already underway. Release resistance and embrace the transformation. This shift is divinely orchestrated for your highest good.', affirmation: 'I embrace change as divine transformation.', action: 'Identify one thing you need to release to make space for the new.' },
+  '666': { theme: 'Rebalance', color: '#ec4899', keywords: ['balance','home','love','rebalance'], meaning: 'A call to rebalance your thoughts and energy. Shift focus from material concerns to love, family, and spiritual growth. Nurture yourself and those around you.', affirmation: 'I bring love and balance to all areas of my life.', action: 'Spend time in nature or with loved ones today.' },
+  '777': { theme: 'Spiritual Luck', color: '#6366f1', keywords: ['luck','wisdom','spiritual','reward'], meaning: 'You are in perfect alignment with the universe. Spiritual luck and divine rewards are flowing to you. Your spiritual practice is paying off — keep going.', affirmation: 'I am in perfect alignment with divine flow.', action: 'Deepen your spiritual practice — meditate, journal, or study.' },
+  '888': { theme: 'Infinite Abundance', color: '#f59e0b', keywords: ['abundance','infinity','karma','wealth'], meaning: 'The infinite loop of abundance is activated. Financial and material blessings are flowing. Karmic rewards for past efforts are arriving. Receive with gratitude.', affirmation: 'Abundance flows to me from all directions.', action: 'Open yourself to receive — say yes to opportunities today.' },
+  '999': { theme: 'Completion & Release', color: '#ef4444', keywords: ['completion','release','endings','lightworker'], meaning: 'A major cycle is completing. Release what no longer serves your highest path. You are being called to step into your role as a lightworker and serve humanity.', affirmation: 'I release the old with gratitude and welcome the new.', action: 'Complete something unfinished or consciously let something go.' },
+  '1010': { theme: 'Spiritual Awakening', color: '#a78bfa', keywords: ['awakening','growth','divine','path'], meaning: 'You are on a path of rapid spiritual awakening. The universe is nudging you toward your higher purpose. Stay positive and keep taking inspired action.', affirmation: 'I am awakening to my highest potential.', action: 'Take one step toward your soul purpose today.' },
+  '1111': { theme: 'Master Portal', color: '#fde68a', keywords: ['portal','wishes','alignment','master'], meaning: 'The most powerful manifestation portal. Your thoughts, words, and intentions are being supercharged by the universe. Make a wish. Set an intention. You are seen.', affirmation: 'I am a powerful creator aligned with divine will.', action: 'Make a wish or set a powerful intention right now.' },
+  '1212': { theme: 'Soul Mission', color: '#60a5fa', keywords: ['mission','purpose','divine','path'], meaning: 'You are aligned with your soul mission. The universe is confirming you are exactly where you need to be. Trust your path and keep moving forward with courage.', affirmation: 'I am fulfilling my soul mission with joy.', action: 'Reflect on your deepest purpose and take one aligned action.' },
+  '1234': { theme: 'Step by Step', color: '#4ade80', keywords: ['progress','steps','forward','growth'], meaning: 'You are making steady, sequential progress. Each step is building on the last. Trust the process and keep moving forward — you are climbing the right staircase.', affirmation: 'I trust each step of my journey.', action: 'Identify your next small step and take it today.' },
+  '2222': { theme: 'Master Builder', color: '#3b82f6', keywords: ['building','vision','patience','master'], meaning: 'Master builder energy is with you. Your vision is being built brick by brick. Have patience — the structure you are creating will stand the test of time.', affirmation: 'I am building something magnificent and lasting.', action: 'Work on your most important long-term project today.' },
+  '3333': { theme: 'Trinity Power', color: '#f97316', keywords: ['trinity','mind body spirit','masters','power'], meaning: 'The trinity of mind, body, and spirit is in perfect alignment. Multiple Ascended Masters are with you. Your creative and spiritual power is at its peak.', affirmation: 'My mind, body, and spirit are in perfect harmony.', action: 'Do something that nourishes all three: mind, body, and spirit.' },
+  '4444': { theme: 'Angelic Army', color: '#22c55e', keywords: ['angels','army','protection','foundation'], meaning: 'An entire army of angels surrounds you. You are deeply protected and supported. The foundations you are building are blessed and will endure.', affirmation: 'I am surrounded by divine love and protection.', action: 'Trust completely and take bold action knowing you are protected.' },
+  '5555': { theme: 'Massive Shift', color: '#8b5cf6', keywords: ['massive','shift','transformation','freedom'], meaning: 'A massive, life-altering transformation is underway. This is one of the most powerful change sequences. Surrender completely to the divine plan unfolding.', affirmation: 'I surrender to divine transformation with trust and joy.', action: 'Release your biggest fear about the changes happening.' },
+  '7777': { theme: 'Divine Miracle', color: '#6366f1', keywords: ['miracle','luck','divine','reward'], meaning: 'A divine miracle is unfolding in your life. This is the highest luck sequence. The universe is rewarding your spiritual dedication with extraordinary blessings.', affirmation: 'Miracles are natural in my life.', action: 'Expect a miracle today and watch for signs of it.' },
+  '8888': { theme: 'Infinite Wealth', color: '#f59e0b', keywords: ['wealth','infinite','karma','abundance'], meaning: 'Infinite wealth and abundance are flowing to you from all directions. This is the most powerful abundance sequence. Your karmic bank account is overflowing.', affirmation: 'I am a magnet for infinite abundance.', action: 'Take one bold financial or abundance-focused action today.' },
+  '9999': { theme: 'Cosmic Completion', color: '#ef4444', keywords: ['cosmic','completion','ascension','lightworker'], meaning: 'The highest completion sequence. A cosmic cycle is ending and a new one is about to begin. You are being called to your highest lightworker mission on Earth.', affirmation: 'I complete this cycle with grace and step into my highest calling.', action: 'Write a letter of gratitude for everything this cycle taught you.' },
+};
+
+const ALL_NUMBERS = Object.keys(NUMBERS);
+const CATEGORIES = [
+  { label: 'All', filter: (n: string) => true },
+  { label: '000-099', filter: (n: string) => parseInt(n) < 100 },
+  { label: '100-499', filter: (n: string) => parseInt(n) >= 100 && parseInt(n) < 500 },
+  { label: '500-999', filter: (n: string) => parseInt(n) >= 500 && parseInt(n) < 1000 },
+  { label: '1000+', filter: (n: string) => parseInt(n) >= 1000 },
 ];
 
 export default function DictionaryPage() {
-  const [selected, setSelected] = useState(NUMBERS[11]);
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState<'meaning'|'love'|'career'>('meaning');
+  const [selected, setSelected] = useState<string | null>(null);
+  const [category, setCategory] = useState(0);
 
-  const filtered = NUMBERS.filter(n =>
-    n.n.includes(search) ||
-    n.theme.toLowerCase().includes(search.toLowerCase()) ||
-    n.keywords.some(k => k.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filtered = ALL_NUMBERS.filter(n => {
+    const matchSearch = !search || n.includes(search) || NUMBERS[n].theme.toLowerCase().includes(search.toLowerCase()) || NUMBERS[n].keywords.some(k => k.includes(search.toLowerCase()));
+    const matchCat = CATEGORIES[category].filter(n);
+    return matchSearch && matchCat;
+  });
+
+  const entry = selected ? NUMBERS[selected] : null;
 
   return (
-    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Angel Number Dictionary</h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Complete guide to angel number meanings</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#a78bfa', fontFamily: 'Cormorant Garamond, serif' }}>Angel Number Dictionary</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Decode the messages from your guides</p>
       </div>
 
       {/* Search */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search numbers, themes, keywords..."
-          style={{
-            width: '100%', padding: '0.75rem 1rem', borderRadius: '999px',
-            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-            color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box'
-          }}
-        />
+      <div style={{
+        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+        border: '1px solid rgba(255,255,255,0.1)', padding: '0.25rem 0.25rem 0.25rem 1.25rem',
+        backdropFilter: 'blur(12px)', marginBottom: '1rem',
+        display: 'flex', alignItems: 'center', gap: '0.75rem'
+      }}>
+        <span style={{ opacity: 0.4 }}>🔍</span>
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search by number, theme, or keyword..."
+          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '1rem', padding: '0.75rem 0' }} />
+        {search && <button onClick={() => setSearch('')} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '999px', width: '2rem', height: '2rem', cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }}>✕</button>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1.5rem' }}>
-        {/* Number List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '70vh', overflowY: 'auto' }}>
-          {filtered.map(num => (
-            <button key={num.n} onClick={() => setSelected(num)} style={{
-              background: selected.n === num.n ? `${num.color}20` : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${selected.n === num.n ? num.color + '60' : 'rgba(255,255,255,0.08)'}`,
-              borderRadius: '0.75rem', padding: '0.6rem 0.75rem',
-              cursor: 'pointer', textAlign: 'left', width: '100%'
-            }}>
-              <div style={{ color: num.color, fontWeight: 800, fontSize: '1.1rem', fontFamily: 'Cormorant Garamond, serif' }}>{num.n}</div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem' }}>{num.theme}</div>
-            </button>
-          ))}
-        </div>
+      {/* Category chips */}
+      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        {CATEGORIES.map((c, i) => (
+          <button key={c.label} onClick={() => setCategory(i)} style={{
+            padding: '0.3rem 0.75rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.75rem',
+            background: category === i ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)',
+            border: category === i ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(255,255,255,0.07)',
+            color: category === i ? '#a78bfa' : 'rgba(255,255,255,0.4)'
+          }}>{c.label}</button>
+        ))}
+      </div>
 
-        {/* Detail */}
+      {/* Detail panel */}
+      {entry && selected && (
         <div style={{
-          background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
-          border: `1px solid ${selected.color}40`, padding: '1.5rem',
-          backdropFilter: 'blur(12px)'
+          background: `${entry.color}10`, borderRadius: '1.5rem',
+          border: `1px solid ${entry.color}30`, padding: '1.5rem',
+          backdropFilter: 'blur(12px)', marginBottom: '1.5rem',
+          boxShadow: `0 0 40px ${entry.color}10`
         }}>
-          {/* Header */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '3rem', fontWeight: 800, color: selected.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{selected.n}</div>
-            <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, marginTop: '0.25rem', fontFamily: 'Cormorant Garamond, serif' }}>{selected.theme}</div>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-              {selected.keywords.map(k => (
-                <span key={k} style={{
-                  background: `${selected.color}15`, border: `1px solid ${selected.color}30`,
-                  borderRadius: '999px', padding: '0.2rem 0.6rem',
-                  color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem'
-                }}>{k}</span>
-              ))}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: entry.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{selected}</div>
+              <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, marginTop: '0.25rem' }}>{entry.theme}</div>
             </div>
+            <button onClick={() => setSelected(null)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '999px', width: '2rem', height: '2rem', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '1rem' }}>✕</button>
           </div>
-
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-            {(['meaning','love','career'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{
-                padding: '0.35rem 0.9rem', borderRadius: '999px', cursor: 'pointer',
-                background: tab === t ? selected.color : 'rgba(255,255,255,0.08)',
-                color: tab === t ? '#000' : 'rgba(255,255,255,0.6)',
-                border: 'none', fontSize: '0.8rem', fontWeight: 600,
-                textTransform: 'capitalize'
-              }}>{t === 'meaning' ? '✨ Meaning' : t === 'love' ? '💕 Love' : '💼 Career'}</button>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '1rem' }}>{entry.meaning}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+            {entry.keywords.map(k => (
+              <span key={k} style={{ background: `${entry.color}15`, border: `1px solid ${entry.color}25`, borderRadius: '999px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', color: entry.color }}>{k}</span>
             ))}
           </div>
-
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', lineHeight: 1.7 }}>
-            {tab === 'meaning' ? selected.meaning : tab === 'love' ? selected.love : selected.career}
-          </p>
-
-          <div style={{
-            marginTop: '1.5rem', background: `${selected.color}10`,
-            borderRadius: '1rem', padding: '1rem',
-            borderLeft: `3px solid ${selected.color}`
-          }}>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', marginBottom: '0.25rem' }}>GUIDED ACTION</p>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem' }}>{selected.action}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.875rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>Affirmation</p>
+              <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem', lineHeight: 1.5, fontStyle: 'italic' }}>&ldquo;{entry.affirmation}&rdquo;</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.875rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>Action</p>
+              <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem', lineHeight: 1.5 }}>{entry.action}</p>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.6rem' }}>
+        {filtered.map(n => {
+          const e = NUMBERS[n];
+          return (
+            <button key={n} onClick={() => setSelected(selected === n ? null : n)} style={{
+              background: selected === n ? `${e.color}15` : 'rgba(8,6,28,0.88)',
+              borderRadius: '1.25rem',
+              border: selected === n ? `1px solid ${e.color}40` : '1px solid rgba(255,255,255,0.07)',
+              padding: '1rem 0.75rem', cursor: 'pointer', textAlign: 'center',
+              backdropFilter: 'blur(12px)', transition: 'all 0.2s'
+            }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: e.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1, marginBottom: '0.3rem' }}>{n}</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.68rem', lineHeight: 1.3 }}>{e.theme}</div>
+            </button>
+          );
+        })}
       </div>
+
+      {filtered.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📚</div>
+          <p>No numbers found for &ldquo;{search}&rdquo;</p>
+        </div>
+      )}
     </div>
   );
 }
