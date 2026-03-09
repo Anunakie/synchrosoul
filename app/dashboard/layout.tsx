@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home', emoji: '✦' },
   { href: '/dashboard/journal', label: 'Journal', emoji: '📖' },
   { href: '/dashboard/dreams', label: 'Dreams', emoji: '🌙' },
+  { href: '/dashboard/sync', label: 'Sync', emoji: '*' },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
