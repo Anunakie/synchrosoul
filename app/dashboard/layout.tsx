@@ -63,7 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         borderTop: '1px solid rgba(200,180,255,0.1)',
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         height: '4.5rem',
-        padding: '0 1rem',
+        padding: '0 0.25rem',
       }}>
         {NAV_ITEMS.map(item => {
           const isActive = item.href === '/dashboard'
@@ -75,15 +75,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href={item.href}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
-                gap: '0.25rem', textDecoration: 'none', padding: '0.5rem 1.5rem',
+                gap: '0.2rem', textDecoration: 'none', padding: '0.4rem 0.5rem',
                 borderRadius: '0.75rem', transition: 'all 0.2s',
                 background: isActive ? 'rgba(200,150,255,0.1)' : 'transparent',
                 border: isActive ? '1px solid rgba(200,150,255,0.2)' : '1px solid transparent',
               }}
             >
-              <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{item.emoji}</span>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>{item.emoji}</span>
               <span style={{
-                fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em',
+                fontSize: '0.55rem', textTransform: 'uppercase', letterSpacing: '0.05em',
                 color: isActive ? 'rgba(220,180,255,0.9)' : 'rgba(200,180,255,0.35)',
                 fontWeight: isActive ? 600 : 400,
               }}>{item.label}</span>
