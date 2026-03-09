@@ -16,6 +16,8 @@ const TOOL_SECTIONS = [
       { href: '/dashboard/oracle', emoji: '◈', name: 'Angel Oracle', desc: 'Draw sacred number spreads', color: '#e0e7ff' },
       { href: '/dashboard/dictionary', emoji: '📖', name: 'Number Dictionary', desc: 'All angel number meanings', color: '#34d399' },
       { href: '/dashboard/compatibility', emoji: '💞', name: 'Compatibility', desc: 'Numerology match score', color: '#ff6b9d' },
+      { href: '/dashboard/tarot', emoji: '🃏', name: 'Daily Tarot', desc: 'Major Arcana daily card', color: '#f472b6' },
+      { href: '/dashboard/crystals', emoji: '💎', name: 'Crystal Guide', desc: 'Crystals for your numbers', color: '#67e8f9' },
     ],
   },
   {
@@ -42,6 +44,7 @@ const TOOL_SECTIONS = [
       { href: '/dashboard/breathwork', emoji: '🌬', name: 'Breathwork', desc: 'Guided breathing exercises', color: '#6366f1' },
       { href: '/dashboard/moon', emoji: '🌙', name: 'Moon Phase', desc: 'Lunar calendar & rituals', color: '#c084fc' },
       { href: '/dashboard/numerology-deep', emoji: '✶', name: 'Deep Reading', desc: 'Full numerology profile', color: '#c9a84c' },
+      { href: '/dashboard/solfeggio', emoji: '🎵', name: 'Solfeggio', desc: '9 healing frequencies', color: '#22c55e' },
     ],
   },
   {
