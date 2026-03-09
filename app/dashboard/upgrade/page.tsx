@@ -1,184 +1,178 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 
 const TIERS = [
   {
     id: 'free',
     name: 'Seeker',
-    price: 0,
-    emoji: '🌱',
-    color: '#60a5fa',
-    description: 'Begin your cosmic journey',
+    price: 'Free',
+    period: '',
+    emoji: '✦',
+    color: 'rgba(180,160,255,0.6)',
+    border: 'rgba(200,180,255,0.15)',
     features: [
-      'Angel number logging (unlimited)',
+      'Angel Number Logger (unlimited)',
       'Thought Anchor Journal',
-      'Basic numerology profile',
-      'Dream journal',
-      'Daily guidance',
-      'Cosmic feed (read only)',
-      '3 affirmations per day',
+      'Basic Numerology Profile',
+      'Daily Guidance',
+      'Moon Phase Tracker',
+      'Breathwork Timer',
+      'Solfeggio Frequencies',
+      'Crystal Guide',
+      'Daily Tarot Card',
+      'Sync Matching (3 matches/day)',
     ],
     cta: 'Current Plan',
-    disabled: true,
+    ctaDisabled: true,
   },
   {
-    id: 'awakened',
-    name: 'Awakened',
-    price: 6.99,
-    emoji: '✨',
+    id: 'star',
+    name: 'Star Child',
+    price: '$6.99',
+    period: '/month',
+    emoji: '⭐',
     color: '#a78bfa',
-    description: 'Deepen your practice',
-    popular: true,
+    border: 'rgba(167,139,250,0.4)',
+    badge: 'Popular',
     features: [
       'Everything in Seeker',
-      'Truth Score + screenshot verification',
-      'Soul Twin Radar (full access)',
-      'Unlimited affirmations',
-      'Weekly Cosmic Synthesis report',
-      'Vision Board (unlimited cards)',
+      'Unlimited Sync Matching',
+      'Weekly Cosmic Synthesis Report',
+      'Angel Number Oracle (full spreads)',
+      'Vision Board (unlimited items)',
       'Manifestation Tracker',
-      'Angel Number Oracle',
-      'Cosmic Calendar',
-      'Profile Card sharing',
+      'Chakra Alignment Guide',
+      'Ritual Library (all rituals)',
+      'Guided Meditations (all 6)',
+      'Compatibility Calculator',
+      'Profile Card (shareable)',
+      'Soul Twin Radar',
+      'Badges & Milestones',
+      'Priority matching',
     ],
     cta: 'Start 7-Day Free Trial',
-    disabled: false,
+    ctaDisabled: false,
   },
   {
-    id: 'twin_flame',
+    id: 'twin',
     name: 'Twin Flame',
-    price: 9.99,
+    price: '$9.99',
+    period: '/month',
     emoji: '🔥',
-    color: '#ff6b9d',
-    description: 'The full cosmic experience',
+    color: '#c9a84c',
+    border: 'rgba(201,168,76,0.5)',
+    badge: 'Best Value',
     features: [
-      'Everything in Awakened',
-      'AI Angel Oracle (coming soon)',
-      'Soul Compatibility Reports',
-      'Shared Journal with matches',
-      'Private Angel Circles (groups)',
-      'Priority matching algorithm',
-      'Cosmic Rituals library',
-      'Guided meditations',
+      'Everything in Star Child',
+      'AI Angel Advisor (coming soon)',
+      'Soul Twin Private Chat',
+      'Shared Journal Peek (with matches)',
+      'Dream Oracle Interpretations',
+      'Personal Year Cycle Readings',
+      'Karmic Debt Number Analysis',
+      'Angel Circles (private groups)',
+      'Number Ritual Guides',
       'Early access to new features',
-      'Direct message matched souls',
+      'Export full spiritual journal (PDF)',
     ],
     cta: 'Start 7-Day Free Trial',
-    disabled: false,
+    ctaDisabled: false,
   },
 ]
 
 const FAQS = [
-  { q: 'Can I cancel anytime?', a: 'Yes, cancel anytime from your settings. Your access continues until the end of your billing period.' },
-  { q: 'What is the Truth Score?', a: 'Upload a screenshot of your angel number sighting to earn an Angel Approved badge, boosting your sync score with matches.' },
-  { q: 'When is the AI Oracle coming?', a: 'The AI Angel Oracle is in development and will be available to Twin Flame members first when it launches.' },
-  { q: 'Is my journal private?', a: 'Yes, 100% private. You choose what to share. Shared journal entries require explicit opt-in per entry.' },
+  { q: 'Can I cancel anytime?', a: 'Yes. Cancel anytime from Settings. Your data is always yours.' },
+  { q: 'Is my journal private?', a: 'Completely. Your thoughts and logs are stored locally and never shared without your explicit consent.' },
+  { q: 'When does AI Advisor launch?', a: 'We are integrating AI guidance in the next major update. Twin Flame members get first access.' },
+  { q: 'What payment methods are accepted?', a: 'All major credit cards, Apple Pay, and Google Pay via Stripe.' },
 ]
 
 export default function UpgradePage() {
-  const [billing, setBilling] = useState<'monthly'|'yearly'>('monthly')
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [faq, setFaq] = useState<number | null>(null)
+  const [annual, setAnnual] = useState(false)
 
-  const discount = 0.2 // 20% yearly discount
-
-  function getPrice(price: number) {
-    if (price === 0) return 'Free'
-    const p = billing === 'yearly' ? price * (1 - discount) : price
-    return '$' + p.toFixed(2)
-  }
-
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
+  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.5rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
+    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✦</div>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.5rem', fontWeight: 400 }}>Unlock Your Full Potential</h1>
-        <p style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.9rem', margin: '0 0 1.5rem' }}>Choose the plan that matches your cosmic journey</p>
-
-        {/* Billing toggle */}
-        <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '2rem', padding: '0.25rem', gap: '0.25rem' }}>
-          {(['monthly','yearly'] as const).map(b => (
-            <button key={b} onClick={() => setBilling(b)} style={{ padding: '0.4rem 1.25rem', borderRadius: '2rem', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'inherit', background: billing === b ? 'rgba(167,139,250,0.25)' : 'transparent', border: billing === b ? '1px solid rgba(167,139,250,0.4)' : '1px solid transparent', color: billing === b ? 'rgba(220,200,255,0.95)' : 'rgba(180,160,255,0.5)', transition: 'all 0.2s' }}>
-              {b === 'monthly' ? 'Monthly' : 'Yearly'}
-              {b === 'yearly' && <span style={{ marginLeft: '0.4rem', padding: '0.1rem 0.4rem', borderRadius: '2rem', background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: '0.65rem' }}>-20%</span>}
-            </button>
-          ))}
+        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>👑</div>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.5rem', fontWeight: 400 }}>Unlock Your Full Cosmic Potential</h1>
+        <p style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.88rem', margin: '0 0 1.25rem' }}>Deepen your spiritual practice with premium tools and real-time soul matching</p>
+        {/* Annual toggle */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '2rem', padding: '0.4rem 1rem', border: '1px solid rgba(200,180,255,0.1)' }}>
+          <span style={{ color: annual ? 'rgba(180,160,255,0.4)' : 'rgba(220,200,255,0.85)', fontSize: '0.8rem' }}>Monthly</span>
+          <div
+            onClick={() => setAnnual(a => !a)}
+            style={{ width: '2.5rem', height: '1.4rem', borderRadius: '1rem', background: annual ? '#a78bfa' : 'rgba(255,255,255,0.1)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+          >
+            <div style={{ position: 'absolute', top: '2px', left: annual ? '1.2rem' : '2px', width: '1rem', height: '1rem', borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+          </div>
+          <span style={{ color: annual ? 'rgba(220,200,255,0.85)' : 'rgba(180,160,255,0.4)', fontSize: '0.8rem' }}>Annual <span style={{ color: '#4ade80', fontSize: '0.7rem' }}>Save 30%</span></span>
         </div>
       </div>
 
       {/* Tier cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
         {TIERS.map(tier => (
-          <div key={tier.id} style={{ ...card, padding: '1.75rem', border: tier.popular ? `1px solid ${tier.color}55` : tier.id === 'twin_flame' ? `1px solid ${tier.color}44` : '1px solid rgba(200,180,255,0.1)', position: 'relative', overflow: 'hidden' }}>
-            {tier.popular && (
-              <div style={{ position: 'absolute', top: '1rem', right: '1rem', padding: '0.2rem 0.75rem', borderRadius: '2rem', background: `${tier.color}22`, border: `1px solid ${tier.color}55`, color: tier.color, fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Most Popular</div>
+          <div key={tier.id} style={{ ...card, border: `1px solid ${tier.border}`, padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+            {tier.badge && (
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: tier.id === 'twin' ? 'rgba(201,168,76,0.2)' : 'rgba(167,139,250,0.2)', border: `1px solid ${tier.border}`, borderRadius: '2rem', padding: '0.2rem 0.6rem', fontSize: '0.65rem', color: tier.color, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{tier.badge}</div>
             )}
-            {/* Glow */}
-            <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '180px', height: '180px', borderRadius: '50%', background: `radial-gradient(circle, ${tier.color}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
-
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '2rem', lineHeight: 1 }}>{tier.emoji}</div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '1.8rem' }}>{tier.emoji}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                  <span style={{ color: 'rgba(220,200,255,0.95)', fontSize: '1.2rem', fontWeight: 700 }}>{tier.name}</span>
-                  <span style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem' }}>{tier.description}</span>
-                </div>
-                <div style={{ marginTop: '0.4rem' }}>
-                  <span style={{ color: tier.color, fontSize: '1.8rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{getPrice(tier.price)}</span>
-                  {tier.price > 0 && <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', marginLeft: '0.3rem' }}>/ {billing === 'yearly' ? 'mo, billed yearly' : 'month'}</span>}
+                <div style={{ color: tier.color, fontSize: '1.1rem', fontFamily: 'Cormorant Garamond, serif', fontWeight: 600 }}>{tier.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem', marginTop: '0.2rem' }}>
+                  <span style={{ color: 'rgba(220,200,255,0.95)', fontSize: '1.6rem', fontWeight: 700 }}>
+                    {tier.price === 'Free' ? 'Free' : annual ? `$${(parseFloat(tier.price.slice(1)) * 0.7).toFixed(2)}` : tier.price}
+                  </span>
+                  {tier.period && <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.8rem' }}>{annual ? '/month, billed annually' : tier.period}</span>}
                 </div>
               </div>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.25rem' }}>
               {tier.features.map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
-                  <span style={{ color: tier.color, fontSize: '0.7rem', marginTop: '0.15rem', flexShrink: 0 }}>✦</span>
-                  <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.75rem', lineHeight: 1.4 }}>{f}</span>
+                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <span style={{ color: tier.color, fontSize: '0.75rem', marginTop: '0.1rem', flexShrink: 0 }}>✓</span>
+                  <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.8rem', lineHeight: 1.4 }}>{f}</span>
                 </div>
               ))}
             </div>
-
             <button
-              disabled={tier.disabled}
-              style={{ width: '100%', padding: '0.9rem', borderRadius: '0.75rem', cursor: tier.disabled ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, background: tier.disabled ? 'rgba(255,255,255,0.04)' : `${tier.color}22`, border: tier.disabled ? '1px solid rgba(200,180,255,0.1)' : `1px solid ${tier.color}55`, color: tier.disabled ? 'rgba(180,160,255,0.3)' : tier.color, transition: 'all 0.2s' }}
+              disabled={tier.ctaDisabled}
+              style={{
+                width: '100%', padding: '0.85rem', borderRadius: '0.875rem', border: 'none', cursor: tier.ctaDisabled ? 'default' : 'pointer',
+                background: tier.ctaDisabled ? 'rgba(255,255,255,0.05)' : tier.id === 'twin' ? 'linear-gradient(135deg, #c9a84c, #e8c96a)' : 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+                color: tier.ctaDisabled ? 'rgba(180,160,255,0.3)' : tier.id === 'twin' ? '#1a1000' : 'white',
+                fontSize: '0.88rem', fontWeight: 600, letterSpacing: '0.03em',
+                transition: 'opacity 0.2s',
+              }}
             >{tier.cta}</button>
           </div>
         ))}
       </div>
 
-      {/* Trust badges */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', marginBottom: '2.5rem' }}>
-        {[
-          { emoji: '🔒', label: 'Secure', desc: 'End-to-end encrypted' },
-          { emoji: '↩', label: 'Cancel Anytime', desc: 'No lock-in contracts' },
-          { emoji: '✦', label: '7-Day Trial', desc: 'Risk-free start' },
-        ].map(b => (
-          <div key={b.label} style={{ ...card, padding: '1rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.4rem', marginBottom: '0.3rem' }}>{b.emoji}</div>
-            <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.75rem', fontWeight: 600 }}>{b.label}</div>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', marginTop: '0.15rem' }}>{b.desc}</div>
+      {/* FAQ */}
+      <div style={{ ...card, padding: '1.25rem', marginBottom: '1.5rem' }}>
+        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Frequently Asked</div>
+        {FAQS.map((item, i) => (
+          <div key={i} style={{ borderBottom: i < FAQS.length - 1 ? '1px solid rgba(200,180,255,0.07)' : 'none', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+            <button
+              onClick={() => setFaq(faq === i ? null : i)}
+              style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 0 }}
+            >
+              <span style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', textAlign: 'left' }}>{item.q}</span>
+              <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '1rem', transition: 'transform 0.2s', transform: faq === i ? 'rotate(45deg)' : 'none' }}>+</span>
+            </button>
+            {faq === i && <p style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.8rem', margin: '0.5rem 0 0', lineHeight: 1.6 }}>{item.a}</p>}
           </div>
         ))}
       </div>
 
-      {/* FAQ */}
-      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: 'rgba(220,200,255,0.85)', margin: '0 0 1rem', fontWeight: 400 }}>Frequently Asked Questions</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {FAQS.map((faq, i) => (
-          <div key={i} style={{ ...card, overflow: 'hidden' }}>
-            <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: '100%', padding: '1rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontFamily: 'inherit' }}>
-              <span style={{ color: 'rgba(200,180,255,0.85)', fontSize: '0.85rem', textAlign: 'left' }}>{faq.q}</span>
-              <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.8rem', flexShrink: 0, transform: openFaq === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
-            </button>
-            {openFaq === i && (
-              <div style={{ padding: '0 1.25rem 1rem', color: 'rgba(180,160,255,0.65)', fontSize: '0.82rem', lineHeight: 1.6 }}>{faq.a}</div>
-            )}
-          </div>
-        ))}
-      </div>
+      <p style={{ textAlign: 'center', color: 'rgba(180,160,255,0.3)', fontSize: '0.72rem' }}>Secure payments via Stripe · Cancel anytime · No hidden fees</p>
     </div>
   )
 }

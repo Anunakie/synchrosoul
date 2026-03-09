@@ -1,135 +1,158 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { getLogs } from '@/lib/storage'
 
+const CATEGORIES = [
+  { id: 'all', label: 'All', emoji: '✦' },
+  { id: 'love', label: 'Love', emoji: '💞' },
+  { id: 'abundance', label: 'Abundance', emoji: '🌟' },
+  { id: 'healing', label: 'Healing', emoji: '🌿' },
+  { id: 'purpose', label: 'Purpose', emoji: '◈' },
+  { id: 'protection', label: 'Protection', emoji: '🛡' },
+  { id: 'intuition', label: 'Intuition', emoji: '🔮' },
+]
 
-const BASE_AFFIRMATIONS: Record<string, string[]> = {
-  '111': ['I am a powerful creator. My thoughts shape my reality.', 'Every thought I think is a seed I plant in the universe.', 'I am aligned with the frequency of manifestation.', 'My intentions are clear, focused, and powerful.'],
-  '222': ['I trust divine timing completely.', 'Everything is unfolding perfectly for my highest good.', 'I am in perfect balance with the universe.', 'Patience is my superpower. I trust the process.'],
-  '333': ['My creativity is a divine gift to the world.', 'I express my truth boldly and authentically.', 'The ascended masters guide my every step.', 'I am a channel for divine creative energy.'],
-  '444': ['I am safe, protected, and deeply loved.', 'My angels walk beside me always.', 'I build my life on solid, unshakeable foundations.', 'I am exactly where I am meant to be.'],
-  '555': ['I embrace change as my greatest teacher.', 'Every transformation leads me to my highest self.', 'I release the old with gratitude and welcome the new.', 'Change is not happening to me — it is happening for me.'],
-  '666': ['I release fear and return to love.', 'I balance the material and spiritual with grace.', 'My inner world creates my outer world.', 'I choose love over fear in every moment.'],
-  '777': ['I am in perfect alignment with the universe.', 'Miracles are my natural state of being.', 'I am on the right path. Everything is working out.', 'I am divinely guided, protected, and blessed.'],
-  '888': ['Abundance flows to me from all directions.', 'I am a magnet for prosperity and wealth.', 'I give and receive freely. The cycle is complete.', 'Financial freedom is my birthright.'],
-  '999': ['I release what no longer serves me with love.', 'I am ready for my next highest chapter.', 'My past has made me wise. My future is bright.', 'I complete cycles with grace and gratitude.'],
-  '1111': ['I am a portal for miracles.', 'My deepest desires are manifesting now.', 'I am the universe experiencing itself.', 'Magic is real and I am living proof.'],
-  '1212': ['I am cosmically aligned and divinely supported.', 'My positive energy creates a beautiful reality.', 'I am exactly where I need to be.', 'The universe conspires in my favor always.'],
-}
+const AFFIRMATIONS = [
+  { id: 1, text: 'I am divinely guided and protected on my path.', category: 'protection', number: '111' },
+  { id: 2, text: 'Abundance flows to me naturally and effortlessly.', category: 'abundance', number: '888' },
+  { id: 3, text: 'I am worthy of deep, soulful love.', category: 'love', number: '222' },
+  { id: 4, text: 'My intuition is my greatest superpower.', category: 'intuition', number: '777' },
+  { id: 5, text: 'I release what no longer serves my highest good.', category: 'healing', number: '999' },
+  { id: 6, text: 'I am aligned with my soul purpose.', category: 'purpose', number: '444' },
+  { id: 7, text: 'The universe conspires in my favor always.', category: 'abundance', number: '555' },
+  { id: 8, text: 'I attract relationships that mirror my highest self.', category: 'love', number: '1111' },
+  { id: 9, text: 'My body is a sacred vessel. I honor it with love.', category: 'healing', number: '333' },
+  { id: 10, text: 'I trust the timing of my life completely.', category: 'purpose', number: '1212' },
+  { id: 11, text: 'I am a magnet for miracles and synchronicities.', category: 'abundance', number: '1111' },
+  { id: 12, text: 'My heart is open and ready to give and receive love.', category: 'love', number: '222' },
+  { id: 13, text: 'I am protected by light on all sides.', category: 'protection', number: '444' },
+  { id: 14, text: 'Every ending is a sacred new beginning.', category: 'healing', number: '999' },
+  { id: 15, text: 'I hear the whispers of my angels clearly.', category: 'intuition', number: '777' },
+  { id: 16, text: 'I am exactly where I need to be right now.', category: 'purpose', number: '555' },
+  { id: 17, text: 'Wealth and prosperity are my divine birthright.', category: 'abundance', number: '888' },
+  { id: 18, text: 'I radiate love and it returns to me multiplied.', category: 'love', number: '333' },
+  { id: 19, text: 'My angels walk beside me in every moment.', category: 'protection', number: '1111' },
+  { id: 20, text: 'I am in perfect harmony with the universe.', category: 'intuition', number: '1212' },
+  { id: 21, text: 'Change is my ally. I embrace transformation.', category: 'healing', number: '555' },
+  { id: 22, text: 'I am a powerful co-creator of my reality.', category: 'purpose', number: '111' },
+  { id: 23, text: 'My soul knows the way. I follow its guidance.', category: 'intuition', number: '444' },
+  { id: 24, text: 'I deserve all the beautiful things life has to offer.', category: 'abundance', number: '333' },
+]
 
-const LIFE_PATH_AFFIRMATIONS: Record<number, string[]> = {
-  1: ['I am a natural leader. I blaze trails with courage.', 'My independence is my strength.', 'I initiate with confidence and complete with pride.'],
-  2: ['My sensitivity is my superpower.', 'I create harmony wherever I go.', 'My partnerships are blessed and beautiful.'],
-  3: ['My joy is contagious and healing.', 'I express myself with confidence and creativity.', 'My words uplift and inspire everyone around me.'],
-  4: ['I build lasting foundations with love.', 'My discipline creates extraordinary results.', 'I am reliable, strong, and deeply trustworthy.'],
-  5: ['I embrace freedom as my natural state.', 'Adventure and change are my greatest teachers.', 'I adapt with grace and thrive in all conditions.'],
-  6: ['My love heals and nurtures all it touches.', 'I create beauty and harmony in my world.', 'My compassion is a gift to humanity.'],
-  7: ['My wisdom runs deep as the ocean.', 'I trust my inner knowing above all else.', 'Solitude is sacred and I honor my need for it.'],
-  8: ['I am a master of the material world.', 'Power and abundance flow through me naturally.', 'I lead with integrity and create lasting impact.'],
-  9: ['I am here to serve and uplift humanity.', 'My compassion knows no bounds.', 'I complete my mission with love and wisdom.'],
-  11: ['I am a spiritual messenger of the highest order.', 'My intuition is my divine compass.', 'I illuminate the path for others.'],
-  22: ['I build dreams into reality.', 'My vision is vast and my power is limitless.', 'I create lasting change in the world.'],
-  33: ['I am a master healer and teacher.', 'My love transforms everything it touches.', 'I uplift humanity through compassion.'],
-}
-
-const MORNING = ['I wake with gratitude and intention.', 'Today I am open to miracles.', 'I begin this day aligned with my highest self.', 'This day is filled with divine possibilities.']
-const EVENING = ['I release this day with gratitude.', 'I have done enough. I am enough.', 'I rest in the arms of the universe.', 'Tomorrow holds infinite possibilities.']
-const UNIVERSAL = ['I am worthy of all good things.', 'Love is my natural state.', 'I am exactly who I am meant to be.', 'The universe supports me completely.']
+const FAV_KEY = 'synchrosoul_affirmation_favs'
+const CUSTOM_KEY = 'synchrosoul_custom_affirmations'
 
 export default function AffirmationsPage() {
-  const [affirmations, setAffirmations] = useState<string[]>([])
-  const [current, setCurrent] = useState(0)
-  const [saved, setSaved] = useState<string[]>([])
-  const [tab, setTab] = useState<'daily'|'saved'|'all'>('daily')
-  const [copied, setCopied] = useState(false)
+  const [category, setCategory] = useState('all')
+  const [favs, setFavs] = useState<number[]>([])
+  const [custom, setCustom] = useState<Array<{ id: number; text: string; category: string }>>( [])
+  const [showAdd, setShowAdd] = useState(false)
+  const [newText, setNewText] = useState('')
+  const [newCat, setNewCat] = useState('love')
+  const [daily, setDaily] = useState<typeof AFFIRMATIONS[0] | null>(null)
+  const [showFavsOnly, setShowFavsOnly] = useState(false)
 
   useEffect(() => {
-    const logs = getLogs().slice(0, 10)
-    const raw = localStorage.getItem('synchrosoul_numerology'); const profile = raw ? JSON.parse(raw) : null
-    const hour = new Date().getHours()
-    const isMorning = hour >= 5 && hour < 12
-    const isEvening = hour >= 18
-
-    const pool: string[] = []
-    // Time-based
-    if (isMorning) pool.push(...MORNING)
-    if (isEvening) pool.push(...EVENING)
-    pool.push(...UNIVERSAL)
-    // From recent logs
-    const recentNums = [...new Set(logs.map(l => l.number))].slice(0, 3)
-    recentNums.forEach(num => {
-      const key = Object.keys(BASE_AFFIRMATIONS).find(k => num.includes(k) || k.includes(num))
-      if (key) pool.push(...BASE_AFFIRMATIONS[key])
-    })
-    // From life path
-    if (profile?.lifePathNumber) {
-      const lp = LIFE_PATH_AFFIRMATIONS[profile.lifePathNumber]
-      if (lp) pool.push(...lp)
-    }
-    // Deduplicate and shuffle
-    const unique = [...new Set(pool)]
-    const shuffled = unique.sort(() => Math.random() - 0.5)
-    setAffirmations(shuffled)
-
-    const savedRaw = localStorage.getItem('synchrosoul_saved_affirmations')
-    if (savedRaw) setSaved(JSON.parse(savedRaw))
+    const f = localStorage.getItem(FAV_KEY)
+    if (f) setFavs(JSON.parse(f))
+    const c = localStorage.getItem(CUSTOM_KEY)
+    if (c) setCustom(JSON.parse(c))
+    const idx = new Date().getDate() % AFFIRMATIONS.length
+    setDaily(AFFIRMATIONS[idx])
   }, [])
 
-  function toggleSave(a: string) {
-    const next = saved.includes(a) ? saved.filter(s => s !== a) : [...saved, a]
-    setSaved(next)
-    localStorage.setItem('synchrosoul_saved_affirmations', JSON.stringify(next))
+  function toggleFav(id: number) {
+    const next = favs.includes(id) ? favs.filter(f => f !== id) : [...favs, id]
+    setFavs(next)
+    localStorage.setItem(FAV_KEY, JSON.stringify(next))
   }
 
-  function copyAffirmation(a: string) {
-    navigator.clipboard?.writeText(a).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+  function addCustom() {
+    if (!newText.trim()) return
+    const item = { id: Date.now(), text: newText.trim(), category: newCat }
+    const next = [...custom, item]
+    setCustom(next)
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(next))
+    setNewText('')
+    setShowAdd(false)
   }
 
-  const displayed = tab === 'daily' ? affirmations : tab === 'saved' ? saved : Object.values(BASE_AFFIRMATIONS).flat()
-  const current_aff = displayed[current % Math.max(displayed.length, 1)]
+  function deleteCustom(id: number) {
+    const next = custom.filter(c => c.id !== id)
+    setCustom(next)
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(next))
+  }
 
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
+  const allItems = [...AFFIRMATIONS, ...custom.map(c => ({ ...c, number: '✦' }))]
+  const filtered = allItems.filter(a => {
+    if (showFavsOnly && !favs.includes(a.id)) return false
+    if (category !== 'all' && a.category !== category) return false
+    return true
+  })
+
+  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
       <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Affirmations</h1>
-      <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '0 0 1.5rem' }}>Personalized to your angel numbers and numerology</p>
+      <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '0 0 1.25rem' }}>Words that align your energy with the cosmos</p>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        {(['daily','saved','all'] as const).map(t => (
-          <button key={t} onClick={() => { setTab(t); setCurrent(0) }} style={{ padding: '0.4rem 1rem', borderRadius: '2rem', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit', background: tab === t ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)', border: tab === t ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(255,255,255,0.08)', color: tab === t ? 'rgba(200,180,255,0.95)' : 'rgba(180,160,255,0.5)', textTransform: 'capitalize' }}>{t === 'daily' ? '✦ Daily' : t === 'saved' ? `♡ Saved (${saved.length})` : '∞ All'}</button>
-        ))}
-      </div>
-
-      {/* Hero affirmation card */}
-      {current_aff && (
-        <div style={{ ...card, padding: '2.5rem 2rem', textAlign: 'center', marginBottom: '1.5rem', background: 'rgba(20,10,50,0.92)', border: '1px solid rgba(167,139,250,0.2)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '1rem', left: '1.5rem', fontSize: '2rem', opacity: 0.08, fontFamily: 'Cormorant Garamond, serif' }}>“</div>
-          <div style={{ position: 'absolute', bottom: '1rem', right: '1.5rem', fontSize: '2rem', opacity: 0.08, fontFamily: 'Cormorant Garamond, serif' }}>”</div>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', color: 'rgba(220,200,255,0.95)', lineHeight: 1.6, margin: '0 0 1.5rem', fontStyle: 'italic', position: 'relative', zIndex: 1 }}>{current_aff}</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
-            <button onClick={() => setCurrent(c => (c - 1 + displayed.length) % displayed.length)} style={{ width: '2.2rem', height: '2.2rem', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(200,180,255,0.15)', cursor: 'pointer', color: 'rgba(200,180,255,0.7)', fontSize: '0.9rem' }}>←</button>
-            <button onClick={() => toggleSave(current_aff)} style={{ padding: '0.4rem 1rem', borderRadius: '2rem', background: saved.includes(current_aff) ? 'rgba(255,100,150,0.2)' : 'rgba(255,255,255,0.06)', border: saved.includes(current_aff) ? '1px solid rgba(255,100,150,0.5)' : '1px solid rgba(200,180,255,0.15)', cursor: 'pointer', color: saved.includes(current_aff) ? 'rgba(255,150,180,0.9)' : 'rgba(200,180,255,0.7)', fontSize: '0.8rem', fontFamily: 'inherit' }}>{saved.includes(current_aff) ? '♥ Saved' : '♡ Save'}</button>
-            <button onClick={() => copyAffirmation(current_aff)} style={{ padding: '0.4rem 1rem', borderRadius: '2rem', background: copied ? 'rgba(80,200,120,0.15)' : 'rgba(255,255,255,0.06)', border: copied ? '1px solid rgba(80,200,120,0.4)' : '1px solid rgba(200,180,255,0.15)', cursor: 'pointer', color: copied ? 'rgba(100,220,140,0.9)' : 'rgba(200,180,255,0.7)', fontSize: '0.8rem', fontFamily: 'inherit' }}>{copied ? '✓ Copied' : '⎘ Copy'}</button>
-            <button onClick={() => setCurrent(c => (c + 1) % displayed.length)} style={{ width: '2.2rem', height: '2.2rem', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(200,180,255,0.15)', cursor: 'pointer', color: 'rgba(200,180,255,0.7)', fontSize: '0.9rem' }}>→</button>
-          </div>
-          <div style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.65rem', marginTop: '1rem' }}>{current + 1} of {displayed.length}</div>
+      {daily && (
+        <div style={{ ...card, padding: '1.5rem', marginBottom: '1.25rem', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)', textAlign: 'center' }}>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>✦ Today&apos;s Affirmation ✦</div>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.75rem', lineHeight: 1.5, fontStyle: 'italic' }}>&ldquo;{daily.text}&rdquo;</p>
+          <span style={{ color: '#a78bfa', fontSize: '0.75rem' }}>{daily.number}</span>
         </div>
       )}
 
-      {/* All affirmations list */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'center' }}>
+        <button onClick={() => setShowFavsOnly(f => !f)} style={{ padding: '0.4rem 0.75rem', borderRadius: '2rem', border: showFavsOnly ? '1px solid rgba(201,168,76,0.6)' : '1px solid rgba(200,180,255,0.15)', background: showFavsOnly ? 'rgba(201,168,76,0.15)' : 'rgba(8,6,28,0.7)', color: showFavsOnly ? '#c9a84c' : 'rgba(180,160,255,0.6)', fontSize: '0.75rem', cursor: 'pointer' }}>
+          ♥ Saved ({favs.length})
+        </button>
+        <button onClick={() => setShowAdd(s => !s)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '2rem', border: '1px solid rgba(200,180,255,0.15)', background: 'rgba(8,6,28,0.7)', color: 'rgba(180,160,255,0.6)', fontSize: '0.75rem', cursor: 'pointer' }}>+ Add Custom</button>
+      </div>
+
+      {showAdd && (
+        <div style={{ ...card, padding: '1rem', marginBottom: '1rem' }}>
+          <textarea value={newText} onChange={e => setNewText(e.target.value)} placeholder="Write your personal affirmation..." rows={3}
+            style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.75rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.88rem', resize: 'none', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+            <select value={newCat} onChange={e => setNewCat(e.target.value)}
+              style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.5rem', color: 'rgba(180,160,255,0.8)', fontSize: '0.8rem', outline: 'none' }}>
+              {CATEGORIES.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+            </select>
+            <button onClick={addCustom} style={{ padding: '0.5rem 1.25rem', borderRadius: '0.75rem', background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', border: 'none', color: 'white', fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+        {CATEGORIES.map(c => (
+          <button key={c.id} onClick={() => setCategory(c.id)}
+            style={{ flexShrink: 0, padding: '0.35rem 0.75rem', borderRadius: '2rem', border: category === c.id ? '1px solid rgba(167,139,250,0.6)' : '1px solid rgba(200,180,255,0.12)', background: category === c.id ? 'rgba(167,139,250,0.15)' : 'rgba(8,6,28,0.7)', color: category === c.id ? '#a78bfa' : 'rgba(180,160,255,0.5)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            {c.emoji} {c.label}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-        {displayed.map((a, i) => (
-          <div key={i} onClick={() => setCurrent(i)} style={{ ...card, padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', border: i === current % displayed.length ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(200,180,255,0.08)', background: i === current % displayed.length ? 'rgba(20,10,50,0.95)' : 'rgba(8,6,28,0.88)' }}>
-            <p style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.82rem', margin: 0, lineHeight: 1.5, flex: 1 }}>{a}</p>
-            <button onClick={e => { e.stopPropagation(); toggleSave(a) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: saved.includes(a) ? 'rgba(255,100,150,0.8)' : 'rgba(200,180,255,0.25)', fontSize: '1rem', flexShrink: 0 }}>{saved.includes(a) ? '♥' : '♡'}</button>
+        {filtered.map(a => (
+          <div key={a.id} style={{ ...card, padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: 'rgba(220,200,255,0.88)', margin: '0 0 0.4rem', lineHeight: 1.55, fontStyle: 'italic' }}>{a.text}</p>
+              <span style={{ color: 'rgba(167,139,250,0.5)', fontSize: '0.7rem' }}>{a.number}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexShrink: 0 }}>
+              <button onClick={() => toggleFav(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: favs.includes(a.id) ? '#c9a84c' : 'rgba(180,160,255,0.25)', padding: '0.2rem' }}>
+                {favs.includes(a.id) ? '♥' : '♡'}
+              </button>
+              {custom.find(c => c.id === a.id) && (
+                <button onClick={() => deleteCustom(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: 'rgba(255,100,100,0.4)', padding: '0.2rem' }}>✕</button>
+              )}
+            </div>
           </div>
         ))}
-        {displayed.length === 0 && (
-          <div style={{ ...card, padding: '2rem', textAlign: 'center', color: 'rgba(180,160,255,0.5)', fontSize: '0.85rem' }}>No affirmations here yet</div>
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(180,160,255,0.35)', fontSize: '0.85rem' }}>No affirmations found. Try a different filter.</div>
         )}
       </div>
     </div>
