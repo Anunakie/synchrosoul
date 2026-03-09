@@ -20,6 +20,7 @@ export interface UserSocialProfile {
   displayName: string
   bio: string
   avatarColor: string
+  avatarImage?: string
   joinedAt: string
 }
 
@@ -28,10 +29,10 @@ const PROFILE_KEY = 'synchrosoul_social_profile'
 const USER_ID = 'local_user'
 
 export function getSocialProfile(): UserSocialProfile {
-  if (typeof window === 'undefined') return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', joinedAt: new Date().toISOString() }
+  if (typeof window === 'undefined') return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', avatarImage: undefined, joinedAt: new Date().toISOString() }
   const raw = localStorage.getItem(PROFILE_KEY)
   if (raw) return JSON.parse(raw)
-  return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', joinedAt: new Date().toISOString() }
+  return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', avatarImage: undefined, joinedAt: new Date().toISOString() }
 }
 
 export function saveSocialProfile(profile: UserSocialProfile): void {
