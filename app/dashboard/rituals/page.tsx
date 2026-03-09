@@ -1,225 +1,303 @@
 'use client'
 import { useState, useEffect } from 'react'
 
+const KEY = 'synchrosoul_rituals_log'
+
 const RITUALS = [
   {
     id: 'morning-alignment',
-    title: 'Morning Angel Alignment',
+    name: 'Morning Alignment',
     emoji: '🌅',
-    color: '#c9a84c',
-    duration: '5 min',
-    timing: 'Morning',
-    description: 'Start your day attuned to angelic frequencies.',
-    steps: [
-      { action: 'Breathe', detail: 'Take 3 deep breaths before looking at your phone.' },
-      { action: 'Set Intention', detail: 'Ask: What angel numbers will guide me today?' },
-      { action: 'Affirm', detail: 'Say aloud: I am open to receiving divine messages.' },
-      { action: 'Log', detail: 'Open SynchroSoul and log any numbers from your dreams.' },
-      { action: 'Gratitude', detail: 'Name 3 things you are grateful for right now.' },
-    ],
-    numbers: ['111', '444', '777'],
-  },
-  {
-    id: 'number-sighting',
-    title: 'Number Sighting Ritual',
-    emoji: '✦',
-    color: '#a78bfa',
-    duration: '2 min',
-    timing: 'When you see a number',
-    description: 'A sacred pause to honor each angel number sighting.',
-    steps: [
-      { action: 'Pause', detail: 'Stop what you are doing for 30 seconds.' },
-      { action: 'Breathe', detail: 'Take one deep breath and close your eyes briefly.' },
-      { action: 'Notice', detail: 'What were you thinking the moment before you saw it?' },
-      { action: 'Receive', detail: 'Feel the message without analyzing it yet.' },
-      { action: 'Log', detail: 'Record the number and your thought in SynchroSoul.' },
-    ],
-    numbers: ['any'],
-  },
-  {
-    id: 'full-moon',
-    title: 'Full Moon Release',
-    emoji: '🌕',
-    color: '#e0e7ff',
-    duration: '15 min',
-    timing: 'Full Moon night',
-    description: 'Release what no longer serves you under the full moon.',
-    steps: [
-      { action: 'Prepare', detail: 'Find a quiet space. Light a candle if possible.' },
-      { action: 'Write', detail: 'List 3 things you are ready to release on paper.' },
-      { action: 'Meditate', detail: 'Hold the paper and visualize 999 in violet light.' },
-      { action: 'Release', detail: 'Safely burn or tear the paper, saying: I release this with love.' },
-      { action: 'Receive', detail: 'Write 3 things you are calling in to replace what you released.' },
-      { action: 'Log', detail: 'Record any numbers that appeared during this ritual.' },
-    ],
-    numbers: ['999', '555', '333'],
-  },
-  {
-    id: 'new-moon',
-    title: 'New Moon Intention Setting',
-    emoji: '🌑',
-    color: '#60a5fa',
     duration: '10 min',
-    timing: 'New Moon night',
-    description: 'Plant seeds of intention in the fertile new moon energy.',
+    category: 'morning',
+    color: '#f59e0b',
+    description: 'Set the energetic tone for your entire day with this sacred morning practice.',
     steps: [
-      { action: 'Cleanse', detail: 'Open a window. Take 5 deep breaths of fresh air.' },
-      { action: 'Write', detail: 'Write your top 3 intentions for this lunar cycle.' },
-      { action: 'Visualize', detail: 'See each intention as already fulfilled. Feel it.' },
-      { action: 'Seal', detail: 'Draw the number 111 next to each intention.' },
-      { action: 'Trust', detail: 'Say: I plant these seeds and trust the universe to grow them.' },
+      'Sit upright in bed before checking your phone. Place hands on heart.',
+      'Take 3 deep breaths. With each exhale, release any tension from sleep.',
+      'Set one intention for the day. Make it a feeling, not a task.',
+      'Speak your angel number affirmation aloud 3 times.',
+      'Visualize your day unfolding in perfect divine order for 2 minutes.',
+      'Write down any dreams or angel numbers that came to you overnight.',
     ],
-    numbers: ['111', '1111', '222'],
+    angelNumbers: ['111', '333', '777'],
+    benefits: ['Mental clarity', 'Energetic protection', 'Intentional living'],
   },
   {
-    id: 'sync-calling',
-    title: 'Soul Twin Calling',
-    emoji: '💫',
-    color: '#ff6b9d',
-    duration: '8 min',
-    timing: 'Evening',
-    description: 'Send a cosmic signal to your soul&#39;s perfect match.',
-    steps: [
-      { action: 'Ground', detail: 'Sit with both feet on the floor. Feel rooted.' },
-      { action: 'Open', detail: 'Place your hand on your heart. Feel it beating.' },
-      { action: 'Visualize', detail: 'See a golden thread extending from your heart outward.' },
-      { action: 'Send', detail: 'Imagine your energy traveling along the thread to your match.' },
-      { action: 'Receive', detail: 'Feel their energy returning to you. Notice any numbers.' },
-      { action: 'Log', detail: 'Record any numbers, feelings, or images that came through.' },
-    ],
-    numbers: ['222', '1111', '444'],
-  },
-  {
-    id: 'abundance-activation',
-    title: 'Abundance Activation',
+    id: 'number-activation',
+    name: 'Angel Number Activation',
     emoji: '✨',
-    color: '#34d399',
-    duration: '7 min',
-    timing: 'Anytime',
-    description: 'Activate the 888 frequency to open your abundance channels.',
+    duration: '5 min',
+    category: 'anytime',
+    color: '#a78bfa',
+    description: 'Activate the energy of any angel number you have been seeing repeatedly.',
     steps: [
-      { action: 'Align', detail: 'Stand tall. Roll your shoulders back. Breathe deeply.' },
-      { action: 'Declare', detail: 'Say: I am a magnet for abundance in all forms.' },
-      { action: 'Visualize', detail: 'See the number 888 glowing in golden-green light.' },
-      { action: 'Feel', detail: 'Let the feeling of abundance fill every cell of your body.' },
-      { action: 'Act', detail: 'Take one small action toward your abundance goal today.' },
+      'Find a quiet space. Hold a crystal or place hands on heart.',
+      'Write the angel number you keep seeing on paper.',
+      'Close your eyes and visualize the number glowing in golden light.',
+      'Ask aloud: What message do you have for me?',
+      'Sit in silence for 2 minutes and receive whatever comes.',
+      'Journal any thoughts, feelings, or images that arose.',
     ],
-    numbers: ['888', '444', '111'],
+    angelNumbers: ['1111', '555', '444'],
+    benefits: ['Deeper number connection', 'Intuitive downloads', 'Spiritual clarity'],
+  },
+  {
+    id: 'full-moon-release',
+    name: 'Full Moon Release',
+    emoji: '🌕',
+    duration: '20 min',
+    category: 'lunar',
+    color: '#e879f9',
+    description: 'Harness the powerful releasing energy of the full moon to let go of what no longer serves you.',
+    steps: [
+      'Go outside or sit by a window where you can see or feel the moon.',
+      'Light a white or silver candle if available.',
+      'Write down everything you wish to release on paper.',
+      'Read each item aloud and say: I release this with love and gratitude.',
+      'Safely burn the paper or tear it into tiny pieces.',
+      'Sit in the moonlight for 5 minutes, feeling lighter and free.',
+      'Close with: I am complete. I am whole. I am free.',
+    ],
+    angelNumbers: ['999', '333', '777'],
+    benefits: ['Emotional release', 'Energetic clearing', 'Cycle completion'],
+  },
+  {
+    id: 'new-moon-manifestation',
+    name: 'New Moon Manifestation',
+    emoji: '🌑',
+    duration: '20 min',
+    category: 'lunar',
+    color: '#60a5fa',
+    description: 'Plant seeds of intention during the potent new moon energy for powerful manifestation.',
+    steps: [
+      'Create a sacred space. Dim lights, light a candle, play soft music.',
+      'Ground yourself with 5 deep breaths.',
+      'Write 10 intentions as if they have already happened. Use I am or I have.',
+      'For each intention, feel the emotion of it being real right now.',
+      'Fold the paper and place it under a crystal or in a special box.',
+      'Say: These seeds are planted. The universe conspires in my favor.',
+      'Leave the paper undisturbed until the full moon.',
+    ],
+    angelNumbers: ['111', '222', '888'],
+    benefits: ['Manifestation power', 'Clarity of desire', 'Cosmic alignment'],
+  },
+  {
+    id: 'evening-gratitude',
+    name: 'Evening Gratitude Ritual',
+    emoji: '🌟',
+    duration: '8 min',
+    category: 'evening',
+    color: '#34d399',
+    description: 'Close your day with a heart-opening gratitude practice that programs your subconscious for abundance.',
+    steps: [
+      'Lie down or sit comfortably. Place hands on heart.',
+      'Recall 3 specific moments from today that you are grateful for.',
+      'For each one, feel the gratitude in your body — not just think it.',
+      'Thank any angel numbers you saw today for their guidance.',
+      'Set an intention for your dreams tonight.',
+      'Breathe deeply 5 times, feeling completely at peace.',
+    ],
+    angelNumbers: ['444', '222', '999'],
+    benefits: ['Better sleep', 'Abundance mindset', 'Emotional healing'],
+  },
+  {
+    id: 'chakra-clearing',
+    name: 'Chakra Clearing Breath',
+    emoji: '🌀',
+    duration: '12 min',
+    category: 'healing',
+    color: '#f472b6',
+    description: 'Clear and activate all seven chakras using breath, visualization, and sound.',
+    steps: [
+      'Sit with spine straight. Close eyes and relax your jaw.',
+      'Root: Breathe red light into the base of your spine. Hum the sound LAM.',
+      'Sacral: Breathe orange light into your lower belly. Hum VAM.',
+      'Solar Plexus: Breathe yellow light into your upper belly. Hum RAM.',
+      'Heart: Breathe green light into your chest. Hum YAM.',
+      'Throat: Breathe blue light into your throat. Hum HAM.',
+      'Third Eye: Breathe indigo light between your brows. Hum OM.',
+      'Crown: Breathe violet light into the top of your head. Sit in silence.',
+      'Visualize all chakras spinning in harmony as one unified field of light.',
+    ],
+    angelNumbers: ['777', '333', '1111'],
+    benefits: ['Energy alignment', 'Emotional balance', 'Spiritual activation'],
+  },
+  {
+    id: 'mirror-work',
+    name: 'Mirror Affirmation Work',
+    emoji: '🪞',
+    duration: '5 min',
+    category: 'healing',
+    color: '#c9a84c',
+    description: 'The most powerful self-love practice. Look into your own eyes and speak truth.',
+    steps: [
+      'Stand before a mirror in private. Look directly into your own eyes.',
+      'Take 3 slow breaths and soften your gaze.',
+      'Say your name and speak: I love you. I really, truly love you.',
+      'Speak 5 affirmations that feel challenging but true.',
+      'Notice any resistance — that is exactly where healing is needed.',
+      'End with: I am enough. I have always been enough.',
+    ],
+    angelNumbers: ['222', '444', '666'],
+    benefits: ['Self-love', 'Confidence', 'Inner child healing'],
+  },
+  {
+    id: 'synchronicity-walk',
+    name: 'Synchronicity Walk',
+    emoji: '🚶',
+    duration: '20 min',
+    category: 'anytime',
+    color: '#fb923c',
+    description: 'A mindful walk where you actively invite and notice signs from the universe.',
+    steps: [
+      'Before leaving, set an intention: Show me a sign about [your question].',
+      'Walk slowly and mindfully. Leave your phone in your pocket.',
+      'Notice numbers on buildings, license plates, clocks, receipts.',
+      'Pay attention to animals, overheard conversations, and songs.',
+      'Trust that everything you notice is meaningful.',
+      'When you return, journal every synchronicity you experienced.',
+    ],
+    angelNumbers: ['555', '1111', '777'],
+    benefits: ['Heightened awareness', 'Divine connection', 'Playful spirituality'],
   },
 ]
 
+const CATEGORIES = [
+  { id: 'all', label: 'All', emoji: '✦' },
+  { id: 'morning', label: 'Morning', emoji: '🌅' },
+  { id: 'evening', label: 'Evening', emoji: '🌟' },
+  { id: 'lunar', label: 'Lunar', emoji: '🌕' },
+  { id: 'healing', label: 'Healing', emoji: '💚' },
+  { id: 'anytime', label: 'Anytime', emoji: '✨' },
+]
+
+interface RitualLog {
+  id: number
+  ritualId: string
+  notes: string
+  completedAt: string
+}
+
 export default function RitualsPage() {
-  const [selected, setSelected] = useState<typeof RITUALS[0] | null>(null)
-  const [completed, setCompleted] = useState<Record<string, boolean[]>>({})
+  const [logs, setLogs] = useState<RitualLog[]>([])
+  const [category, setCategory] = useState('all')
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [completing, setCompleting] = useState<string | null>(null)
+  const [notes, setNotes] = useState('')
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('synchrosoul_ritual_progress')
-      if (saved) setCompleted(JSON.parse(saved))
-    } catch {}
+    const s = localStorage.getItem(KEY)
+    if (s) setLogs(JSON.parse(s))
   }, [])
 
-  function toggleStep(ritualId: string, stepIdx: number) {
-    setCompleted(prev => {
-      const ritual = prev[ritualId] || []
-      const updated = [...ritual]
-      updated[stepIdx] = !updated[stepIdx]
-      const next = { ...prev, [ritualId]: updated }
-      localStorage.setItem('synchrosoul_ritual_progress', JSON.stringify(next))
-      return next
-    })
+  function completeRitual(ritualId: string) {
+    const log: RitualLog = { id: Date.now(), ritualId, notes, completedAt: new Date().toISOString() }
+    const next = [log, ...logs]
+    setLogs(next)
+    localStorage.setItem(KEY, JSON.stringify(next))
+    setCompleting(null)
+    setNotes('')
   }
 
-  function resetRitual(ritualId: string) {
-    setCompleted(prev => {
-      const next = { ...prev, [ritualId]: [] }
-      localStorage.setItem('synchrosoul_ritual_progress', JSON.stringify(next))
-      return next
-    })
+  function getCompletionCount(ritualId: string) {
+    return logs.filter(l => l.ritualId === ritualId).length
   }
 
+  function getLastCompleted(ritualId: string) {
+    const last = logs.find(l => l.ritualId === ritualId)
+    if (!last) return null
+    const d = new Date(last.completedAt)
+    const today = new Date(); today.setHours(0,0,0,0)
+    const diff = Math.floor((today.getTime() - d.setHours(0,0,0,0)) / 86400000)
+    if (diff === 0) return 'Today'
+    if (diff === 1) return 'Yesterday'
+    return `${diff}d ago`
+  }
+
+  const filtered = category === 'all' ? RITUALS : RITUALS.filter(r => r.category === category)
   const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
 
-  if (selected) {
-    const steps = completed[selected.id] || []
-    const doneCount = steps.filter(Boolean).length
-    const allDone = doneCount === selected.steps.length
-    return (
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-        <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', marginBottom: '1rem', fontFamily: 'inherit' }}>← Back</button>
-        <div style={{ ...card, padding: '1.75rem', marginBottom: '1rem', border: `1px solid ${selected.color}33`, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '150px', height: '150px', borderRadius: '50%', background: `radial-gradient(circle, ${selected.color}15 0%, transparent 70%)`, pointerEvents: 'none' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '2rem' }}>{selected.emoji}</span>
-            <div>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: 'rgba(220,200,255,0.95)', margin: 0, fontWeight: 400 }}>{selected.title}</h2>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                <span style={{ padding: '0.15rem 0.5rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.1)', color: 'rgba(180,160,255,0.5)', fontSize: '0.65rem' }}>{selected.timing}</span>
-                <span style={{ padding: '0.15rem 0.5rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.1)', color: 'rgba(180,160,255,0.5)', fontSize: '0.65rem' }}>{selected.duration}</span>
-              </div>
-            </div>
-          </div>
-          <p style={{ color: 'rgba(180,160,255,0.65)', fontSize: '0.85rem', lineHeight: 1.6, margin: '0 0 1rem' }}>{selected.description}</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ flex: 1, height: '4px', borderRadius: '9999px', background: 'rgba(255,255,255,0.06)' }}>
-              <div style={{ height: '100%', width: `${(doneCount / selected.steps.length) * 100}%`, background: `linear-gradient(90deg, ${selected.color}88, ${selected.color})`, borderRadius: '9999px', transition: 'width 0.3s ease' }} />
-            </div>
-            <span style={{ color: selected.color, fontSize: '0.75rem', fontWeight: 600 }}>{doneCount}/{selected.steps.length}</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-          {selected.steps.map((step, i) => {
-            const done = steps[i] || false
-            return (
-              <button key={i} onClick={() => toggleStep(selected.id, i)} style={{ ...card, padding: '1rem 1.25rem', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '0.875rem', border: done ? `1px solid ${selected.color}44` : '1px solid rgba(200,180,255,0.1)', background: done ? `${selected.color}0d` : 'rgba(8,6,28,0.88)', transition: 'all 0.2s' }}>
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: `1.5px solid ${done ? selected.color : 'rgba(200,180,255,0.2)'}`, background: done ? `${selected.color}22` : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px', transition: 'all 0.2s' }}>
-                  {done && <span style={{ color: selected.color, fontSize: '0.65rem' }}>✓</span>}
-                </div>
-                <div>
-                  <div style={{ color: done ? selected.color : 'rgba(220,200,255,0.85)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.2rem', transition: 'color 0.2s' }}>{step.action}</div>
-                  <div style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.78rem', lineHeight: 1.5 }}>{step.detail}</div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-
-        {allDone && (
-          <div style={{ ...card, padding: '1.25rem', textAlign: 'center', border: `1px solid ${selected.color}44`, background: `${selected.color}0d` }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '0.4rem' }}>✦</div>
-            <div style={{ color: selected.color, fontSize: '0.95rem', fontWeight: 600 }}>Ritual Complete</div>
-            <div style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.78rem', marginTop: '0.25rem' }}>You have aligned with the cosmic frequency.</div>
-            <button onClick={() => resetRitual(selected.id)} style={{ marginTop: '0.75rem', padding: '0.4rem 1rem', borderRadius: '2rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', color: 'rgba(180,160,255,0.5)', fontSize: '0.72rem', fontFamily: 'inherit' }}>Reset</button>
-          </div>
-        )}
-      </div>
-    )
-  }
-
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Sacred Rituals</h1>
-      <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '0 0 1.5rem' }}>Spiritual practices to deepen your angel number connection</p>
+    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Sacred Rituals</h1>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>{logs.length} rituals completed · {RITUALS.length} practices available</p>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        {[
+          { label: 'Completed', value: logs.length, emoji: '✦', color: '#c9a84c' },
+          { label: 'This Week', value: logs.filter(l => new Date(l.completedAt) > new Date(Date.now() - 7*86400000)).length, emoji: '🔥', color: '#f59e0b' },
+          { label: 'Unique', value: new Set(logs.map(l => l.ritualId)).size, emoji: '🌸', color: '#f472b6' },
+        ].map(s => (
+          <div key={s.label} style={{ ...card, padding: '0.875rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{s.emoji}</div>
+            <div style={{ color: s.color, fontSize: '1.2rem', fontWeight: 700 }}>{s.value}</div>
+            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Category filter */}
+      <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem', marginBottom: '1.25rem' }}>
+        {CATEGORIES.map(c => (
+          <button key={c.id} onClick={() => setCategory(c.id)} style={{ flexShrink: 0, padding: '0.35rem 0.75rem', borderRadius: '2rem', border: category === c.id ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.1)', background: category === c.id ? 'rgba(167,139,250,0.15)' : 'rgba(8,6,28,0.7)', color: category === c.id ? '#a78bfa' : 'rgba(180,160,255,0.45)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{c.emoji} {c.label}</button>
+        ))}
+      </div>
+
+      {/* Rituals */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {RITUALS.map(r => {
-          const steps = completed[r.id] || []
-          const doneCount = steps.filter(Boolean).length
-          const progress = (doneCount / r.steps.length) * 100
+        {filtered.map(ritual => {
+          const count = getCompletionCount(ritual.id)
+          const last = getLastCompleted(ritual.id)
+          const isExpanded = expanded === ritual.id
+          const isCompleting = completing === ritual.id
           return (
-            <button key={r.id} onClick={() => setSelected(r)} style={{ ...card, padding: '1.25rem', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '1rem', border: `1px solid ${r.color}22`, transition: 'all 0.2s' }}>
-              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: `${r.color}15`, border: `1px solid ${r.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>{r.emoji}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.15rem' }}>{r.title}</div>
-                <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.72rem', marginBottom: '0.4rem' }}>{r.timing} · {r.duration}</div>
-                {doneCount > 0 && (
-                  <div style={{ height: '3px', borderRadius: '9999px', background: 'rgba(255,255,255,0.06)' }}>
-                    <div style={{ height: '100%', width: `${progress}%`, background: `${r.color}`, borderRadius: '9999px' }} />
+            <div key={ritual.id} style={{ ...card, borderColor: isExpanded ? `${ritual.color}33` : 'rgba(200,180,255,0.12)' }}>
+              <div onClick={() => setExpanded(isExpanded ? null : ritual.id)} style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.875rem', background: `${ritual.color}18`, border: `1px solid ${ritual.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>{ritual.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.2rem' }}>{ritual.name}</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.7rem' }}>⏱ {ritual.duration}</span>
+                    {count > 0 && <span style={{ color: ritual.color, fontSize: '0.7rem' }}>✦ {count}x {last && `· ${last}`}</span>}
                   </div>
-                )}
+                </div>
+                <span style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.8rem', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>⌄</span>
               </div>
-              <span style={{ color: 'rgba(180,160,255,0.3)', fontSize: '1rem', flexShrink: 0 }}>›</span>
-            </button>
+
+              {isExpanded && (
+                <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid rgba(200,180,255,0.06)' }}>
+                  <p style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.85rem', margin: '0.875rem 0', lineHeight: 1.6 }}>{ritual.description}</p>
+
+                  <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.625rem' }}>Steps</div>
+                  {ritual.steps.map((step, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: '1.4rem', height: '1.4rem', borderRadius: '50%', background: `${ritual.color}18`, border: `1px solid ${ritual.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: ritual.color, fontSize: '0.65rem', fontWeight: 700, flexShrink: 0, marginTop: '0.05rem' }}>{i+1}</div>
+                      <p style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.82rem', margin: 0, lineHeight: 1.5 }}>{step}</p>
+                    </div>
+                  ))}
+
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', margin: '0.875rem 0' }}>
+                    {ritual.benefits.map(b => <span key={b} style={{ padding: '0.2rem 0.5rem', borderRadius: '2rem', background: `${ritual.color}10`, border: `1px solid ${ritual.color}22`, color: ritual.color, fontSize: '0.7rem' }}>{b}</span>)}
+                  </div>
+
+                  {!isCompleting ? (
+                    <button onClick={() => setCompleting(ritual.id)} style={{ width: '100%', padding: '0.65rem', borderRadius: '0.875rem', background: `linear-gradient(135deg, ${ritual.color}88, ${ritual.color})`, border: 'none', color: 'white', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>✦ Mark Complete</button>
+                  ) : (
+                    <div>
+                      <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="How did this ritual feel? Any insights?" rows={2} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.65rem 0.875rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', resize: 'none', marginBottom: '0.5rem' }} />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => completeRitual(ritual.id)} style={{ flex: 1, padding: '0.65rem', borderRadius: '0.75rem', background: `linear-gradient(135deg, ${ritual.color}88, ${ritual.color})`, border: 'none', color: 'white', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>Save ✦</button>
+                        <button onClick={() => setCompleting(null)} style={{ padding: '0.65rem 1rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.12)', color: 'rgba(180,160,255,0.5)', fontSize: '0.85rem', cursor: 'pointer' }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )
         })}
       </div>
