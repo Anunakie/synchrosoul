@@ -82,15 +82,21 @@ export default function ProfilePage() {
   }
 
   const handlePost = async () => {
-    if (!postText.trim()) return
+    const text = postText.trim()
+    if (!text || posting) return
     setPosting(true)
-    await new Promise(r => setTimeout(r, 400))
-    savePost(postText.trim(), postNumber || undefined, numerology?.lifePath)
-    setPosts(getPosts())
-    setPostText('')
-    setPostNumber('')
-    setComposing(false)
-    setPosting(false)
+    try {
+      await new Promise(r => setTimeout(r, 300))
+      savePost(text, postNumber.trim() || undefined, numerology?.lifePath ?? undefined)
+      setPosts(getPosts())
+      setPostText('')
+      setPostNumber('')
+      setComposing(false)
+    } catch (err) {
+      console.error('Post failed:', err)
+    } finally {
+      setPosting(false)
+    }
   }
 
   const handleResonate = (postId: string) => {
@@ -287,7 +293,6 @@ export default function ProfilePage() {
                 style={{ flex: 1, padding: '0.65rem', background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.7)', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
               <button
                 onClick={handlePost}
-                onTouchEnd={e => { e.preventDefault(); handlePost() }}
                 disabled={posting}
                 style={{ flex: 2, padding: '0.65rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(155,89,182,0.25))', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.75rem', color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: posting ? 0.5 : 1 }}>
                 {posting ? 'Posting...' : '✦ Post'}
