@@ -1,168 +1,270 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useTheme, THEMES, AppTheme } from '@/lib/theme-context'
 
+const KEY_SETTINGS = 'synchrosoul_app_settings'
 const KEY_PROFILE = 'synchrosoul_numerology_profile'
 const KEY_LOGS = 'synchrosoul_logs'
-const KEY_DREAMS = 'synchrosoul_dreams'
-const KEY_JOURNAL = 'synchrosoul_journal'
-const KEY_GRATITUDE = 'synchrosoul_gratitude'
-const KEY_MANIFEST = 'synchrosoul_manifestations'
-const KEY_VISION = 'synchrosoul_vision_board'
-const KEY_SOCIAL = 'synchrosoul_social_profile'
-const KEY_POSTS = 'synchrosoul_posts'
+
+type Settings = {
+  theme: string
+  dailyReminder: boolean
+  reminderTime: string
+  moonAlerts: boolean
+  matchAlerts: boolean
+  streakAlerts: boolean
+  soundEffects: boolean
+  haptics: boolean
+  privateMode: boolean
+  showTruthScore: boolean
+  defaultJournalPrivacy: 'private'|'matches'|'public'
+  numberFormat: 'standard'|'compact'
+  language: string
+  timezone: string
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  theme: 'starfield',
+  dailyReminder: true,
+  reminderTime: '09:00',
+  moonAlerts: true,
+  matchAlerts: true,
+  streakAlerts: true,
+  soundEffects: false,
+  haptics: true,
+  privateMode: false,
+  showTruthScore: true,
+  defaultJournalPrivacy: 'private',
+  numberFormat: 'standard',
+  language: 'English',
+  timezone: 'Auto-detect',
+}
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme()
-  const [name, setName] = useState('')
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
+  const [profile, setProfile] = useState<any>(null)
+  const [logCount, setLogCount] = useState(0)
   const [saved, setSaved] = useState(false)
-  const [cleared, setCleared] = useState<string>('')
-  const [dataSize, setDataSize] = useState<Record<string,number>>({})
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   useEffect(() => {
     try {
-      const p = JSON.parse(localStorage.getItem(KEY_PROFILE) || '{}')
-      setName(p.name || '')
-      const sizes: Record<string,number> = {}
-      const keys = [KEY_LOGS, KEY_DREAMS, KEY_JOURNAL, KEY_GRATITUDE, KEY_MANIFEST, KEY_VISION, KEY_POSTS]
-      keys.forEach(k => {
-        try { sizes[k] = JSON.parse(localStorage.getItem(k) || '[]').length } catch { sizes[k] = 0 }
-      })
-      setDataSize(sizes)
+      const s = localStorage.getItem(KEY_SETTINGS)
+      if(s) setSettings({...DEFAULT_SETTINGS,...JSON.parse(s)})
+      const p = localStorage.getItem(KEY_PROFILE); if(p) setProfile(JSON.parse(p))
+      const l = localStorage.getItem(KEY_LOGS); if(l) setLogCount(JSON.parse(l).length)
     } catch {}
   }, [])
 
-  function saveName() {
-    try {
-      const p = JSON.parse(localStorage.getItem(KEY_PROFILE) || '{}')
-      localStorage.setItem(KEY_PROFILE, JSON.stringify({ ...p, name }))
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch {}
+  function update<K extends keyof Settings>(key: K, value: Settings[K]) {
+    const updated = {...settings, [key]: value}
+    setSettings(updated)
+    localStorage.setItem(KEY_SETTINGS, JSON.stringify(updated))
+    setSaved(true)
+    setTimeout(()=>setSaved(false), 1500)
   }
 
-  function clearData(key: string, label: string) {
-    if (confirm('Clear all ' + label + '? This cannot be undone.')) {
-      localStorage.removeItem(key)
-      setCleared(label)
-      setTimeout(() => setCleared(''), 2000)
-      setDataSize(s => ({ ...s, [key]: 0 }))
-    }
+  function clearAllData() {
+    const keys = ['synchrosoul_logs','synchrosoul_numerology_profile','synchrosoul_social_profile',
+      'synchrosoul_posts','synchrosoul_dreams','synchrosoul_gratitude','synchrosoul_manifestations',
+      'synchrosoul_notifications','synchrosoul_connected','synchrosoul_avatar_image']
+    keys.forEach(k=>localStorage.removeItem(k))
+    setLogCount(0)
+    setProfile(null)
+    setShowClearConfirm(false)
   }
 
-  function exportData() {
-    const data: Record<string,any> = {}
-    const keys = [KEY_PROFILE, KEY_LOGS, KEY_DREAMS, KEY_JOURNAL, KEY_GRATITUDE, KEY_MANIFEST, KEY_VISION, KEY_SOCIAL, KEY_POSTS]
-    keys.forEach(k => { try { data[k] = JSON.parse(localStorage.getItem(k) || 'null') } catch {} })
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'synchrosoul-backup-' + new Date().toISOString().split('T')[0] + '.json'
-    a.click(); URL.revokeObjectURL(url)
+  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)',marginBottom:'0.875rem'}
+  const row: React.CSSProperties = {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.75rem 1.25rem',borderBottom:'1px solid rgba(200,180,255,0.05)'}
+  const lastRow: React.CSSProperties = {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.75rem 1.25rem'}
+  const label: React.CSSProperties = {color:'rgba(200,180,255,0.7)',fontSize:'0.85rem'}
+  const sublabel: React.CSSProperties = {color:'rgba(180,160,255,0.35)',fontSize:'0.7rem',marginTop:'0.1rem'}
+
+  function Toggle({value, onChange}: {value:boolean, onChange:(v:boolean)=>void}) {
+    return (
+      <button onClick={()=>onChange(!value)} style={{width:'42px',height:'24px',borderRadius:'12px',background:value?'rgba(167,139,250,0.5)':'rgba(200,180,255,0.08)',border:value?'1px solid rgba(167,139,250,0.6)':'1px solid rgba(200,180,255,0.12)',cursor:'pointer',position:'relative',transition:'all 0.2s',flexShrink:0}}>
+        <div style={{width:'18px',height:'18px',borderRadius:'50%',background:value?'#a78bfa':'rgba(180,160,255,0.3)',position:'absolute',top:'2px',left:value?'21px':'2px',transition:'all 0.2s',boxShadow:value?'0 0 6px rgba(167,139,250,0.5)':'none'}} />
+      </button>
+    )
   }
 
-  function importData(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target?.result as string)
-        Object.entries(data).forEach(([k, v]) => { if (v) localStorage.setItem(k, JSON.stringify(v)) })
-        alert('Data imported successfully! Refresh to see changes.')
-      } catch { alert('Invalid backup file.') }
-    }
-    reader.readAsText(file)
+  function SectionHeader({title,emoji}:{title:string,emoji:string}) {
+    return <div style={{padding:'0.875rem 1.25rem 0.4rem',color:'rgba(180,160,255,0.4)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',display:'flex',alignItems:'center',gap:'0.4rem'}}><span>{emoji}</span>{title}</div>
   }
-
-  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)', padding: '1.25rem', marginBottom: '0.875rem' }
-  const label: React.CSSProperties = { color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '0.75rem', display: 'block' }
 
   return (
-    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Settings</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Customize your SynchroSoul experience</p>
+    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.25rem'}}>
+        <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:0,fontWeight:400}}>Settings</h1>
+        {saved && <span style={{color:'#4ade80',fontSize:'0.78rem',animation:'fadeIn 0.3s ease'}}>✓ Saved</span>}
       </div>
+      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.5rem'}}>Customize your SynchroSoul experience</p>
 
-      {/* Profile */}
+      {/* Account */}
+      <SectionHeader title='Account' emoji='◎' />
       <div style={card}>
-        <span style={label}>Profile</span>
-        <div style={{ display: 'flex', gap: '0.625rem' }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder='Your name...' style={{ flex: 1, padding: '0.75rem', background: 'rgba(8,6,28,0.8)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.88rem', outline: 'none' }} />
-          <button onClick={saveName} style={{ padding: '0.75rem 1.25rem', borderRadius: '0.75rem', border: '1px solid rgba(167,139,250,0.3)', background: saved ? 'rgba(74,222,128,0.1)' : 'rgba(167,139,250,0.1)', color: saved ? '#4ade80' : '#a78bfa', fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{saved ? '✓ Saved' : 'Save'}</button>
+        <div style={row}>
+          <div>
+            <div style={label}>Profile</div>
+            <div style={sublabel}>{profile?.name || 'Not set up'} {profile?.lifePathNumber ? '· Life Path '+profile.lifePathNumber : ''}</div>
+          </div>
+          <Link href='/dashboard/profile' style={{color:'rgba(167,139,250,0.6)',fontSize:'0.78rem',textDecoration:'none'}}>Edit →</Link>
         </div>
-        <div style={{ marginTop: '0.75rem' }}>
-          <Link href='/dashboard/onboarding' style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.78rem', textDecoration: 'none' }}>↺ Redo onboarding setup</Link>
+        <div style={row}>
+          <div>
+            <div style={label}>Numerology Profile</div>
+            <div style={sublabel}>{profile?.lifePathNumber ? 'Complete' : 'Not calculated'}</div>
+          </div>
+          <Link href='/dashboard/numerology-deep' style={{color:'rgba(167,139,250,0.6)',fontSize:'0.78rem',textDecoration:'none'}}>{profile?.lifePathNumber?'View →':'Set up →'}</Link>
         </div>
-      </div>
-
-      {/* Background Theme */}
-      <div style={card}>
-        <span style={label}>Background Theme</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {THEMES.map(t => (
-            <button key={t.id} onClick={() => setTheme(t.id as AppTheme)} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem', borderRadius: '0.875rem', border: theme === t.id ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(200,180,255,0.08)', background: theme === t.id ? 'rgba(167,139,250,0.1)' : 'transparent', cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '0.5rem', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', backgroundImage: t.thumbnail ? 'url(' + t.thumbnail + ')' : undefined, backgroundSize: 'cover', backgroundPosition: 'center', background: t.thumbnail ? undefined : 'radial-gradient(ellipse at 30% 40%, rgba(120,60,200,0.9) 0%, rgba(20,10,60,1) 70%)' }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ color: theme === t.id ? '#a78bfa' : 'rgba(200,180,255,0.75)', fontSize: '0.85rem' }}>{t.emoji} {t.label}</div>
-              </div>
-              {theme === t.id && <span style={{ color: '#a78bfa', fontSize: '0.8rem' }}>✓</span>}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick links */}
-      <div style={card}>
-        <span style={label}>Preferences</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {[
-            { href: '/dashboard/notifications', emoji: '🔔', label: 'Notification Settings' },
-            { href: '/dashboard/upgrade', emoji: '⭐', label: 'Upgrade to Premium' },
-            { href: '/dashboard/profile-card', emoji: '🪪', label: 'View Soul Card' },
-          ].map(item => (
-            <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(200,180,255,0.08)', background: 'rgba(8,6,28,0.5)', textDecoration: 'none', color: 'rgba(200,180,255,0.7)', fontSize: '0.85rem' }}>
-              <span>{item.emoji}</span><span>{item.label}</span><span style={{ marginLeft: 'auto', opacity: 0.3 }}>›</span>
-            </Link>
-          ))}
+        <div style={lastRow}>
+          <div>
+            <div style={label}>Data stored</div>
+            <div style={sublabel}>{logCount} angel number logs · Local storage</div>
+          </div>
+          <Link href='/dashboard/insights' style={{color:'rgba(167,139,250,0.6)',fontSize:'0.78rem',textDecoration:'none'}}>View →</Link>
         </div>
       </div>
 
-      {/* Data Management */}
+      {/* Notifications */}
+      <SectionHeader title='Notifications' emoji='🔔' />
       <div style={card}>
-        <span style={label}>Data Management</span>
-        <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1rem' }}>
-          <button onClick={exportData} style={{ flex: 1, padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.08)', color: '#60a5fa', fontSize: '0.82rem', cursor: 'pointer' }}>📤 Export Backup</button>
-          <label style={{ flex: 1, padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.08)', color: '#4ade80', fontSize: '0.82rem', cursor: 'pointer', textAlign: 'center' as const }}>
-            📥 Import Backup
-            <input type='file' accept='.json' onChange={importData} style={{ display: 'none' }} />
-          </label>
+        <div style={row}>
+          <div>
+            <div style={label}>Daily Reminder</div>
+            <div style={sublabel}>Remind me to log angel numbers</div>
+          </div>
+          <Toggle value={settings.dailyReminder} onChange={v=>update('dailyReminder',v)} />
         </div>
-        {cleared && <div style={{ color: '#4ade80', fontSize: '0.78rem', marginBottom: '0.75rem', textAlign: 'center' }}>✓ {cleared} cleared</div>}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          {[
-            { key: KEY_LOGS, label: 'Angel Number Logs', color: '#a78bfa' },
-            { key: KEY_DREAMS, label: 'Dream Journal', color: '#818cf8' },
-            { key: KEY_GRATITUDE, label: 'Gratitude Entries', color: '#c9a84c' },
-            { key: KEY_MANIFEST, label: 'Manifestations', color: '#4ade80' },
-          ].map(item => (
-            <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0.75rem', borderRadius: '0.75rem', background: 'rgba(8,6,28,0.5)', border: '1px solid rgba(200,180,255,0.06)' }}>
-              <div>
-                <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.82rem' }}>{item.label}</span>
-                <span style={{ color: item.color, fontSize: '0.72rem', marginLeft: '0.5rem' }}>{dataSize[item.key] || 0} entries</span>
-              </div>
-              <button onClick={() => clearData(item.key, item.label)} style={{ padding: '0.25rem 0.625rem', borderRadius: '0.5rem', border: '1px solid rgba(248,113,113,0.2)', background: 'rgba(248,113,113,0.06)', color: 'rgba(248,113,113,0.6)', fontSize: '0.68rem', cursor: 'pointer' }}>Clear</button>
+        {settings.dailyReminder && (
+          <div style={row}>
+            <div style={label}>Reminder Time</div>
+            <input type='time' value={settings.reminderTime} onChange={e=>update('reminderTime',e.target.value)}
+              style={{background:'rgba(200,180,255,0.06)',border:'1px solid rgba(200,180,255,0.12)',borderRadius:'0.5rem',padding:'0.3rem 0.5rem',color:'rgba(220,200,255,0.8)',fontSize:'0.82rem',fontFamily:'inherit',outline:'none'}} />
+          </div>
+        )}
+        <div style={row}>
+          <div>
+            <div style={label}>Moon Phase Alerts</div>
+            <div style={sublabel}>New & Full Moon notifications</div>
+          </div>
+          <Toggle value={settings.moonAlerts} onChange={v=>update('moonAlerts',v)} />
+        </div>
+        <div style={row}>
+          <div>
+            <div style={label}>Soul Match Alerts</div>
+            <div style={sublabel}>When someone syncs with your numbers</div>
+          </div>
+          <Toggle value={settings.matchAlerts} onChange={v=>update('matchAlerts',v)} />
+        </div>
+        <div style={lastRow}>
+          <div>
+            <div style={label}>Streak Alerts</div>
+            <div style={sublabel}>Daily streak milestones</div>
+          </div>
+          <Toggle value={settings.streakAlerts} onChange={v=>update('streakAlerts',v)} />
+        </div>
+      </div>
+
+      {/* Privacy */}
+      <SectionHeader title='Privacy' emoji='🔒' />
+      <div style={card}>
+        <div style={row}>
+          <div>
+            <div style={label}>Private Mode</div>
+            <div style={sublabel}>Hide your profile from matching</div>
+          </div>
+          <Toggle value={settings.privateMode} onChange={v=>update('privateMode',v)} />
+        </div>
+        <div style={row}>
+          <div>
+            <div style={label}>Show Truth Score</div>
+            <div style={sublabel}>Display Angel Approved badge on posts</div>
+          </div>
+          <Toggle value={settings.showTruthScore} onChange={v=>update('showTruthScore',v)} />
+        </div>
+        <div style={lastRow}>
+          <div>
+            <div style={label}>Default Journal Privacy</div>
+            <div style={sublabel}>Who can see new journal entries</div>
+          </div>
+          <select value={settings.defaultJournalPrivacy} onChange={e=>update('defaultJournalPrivacy',e.target.value as any)}
+            style={{background:'rgba(200,180,255,0.06)',border:'1px solid rgba(200,180,255,0.12)',borderRadius:'0.5rem',padding:'0.3rem 0.5rem',color:'rgba(220,200,255,0.8)',fontSize:'0.78rem',fontFamily:'inherit',outline:'none'}}>
+            <option value='private'>Private</option>
+            <option value='matches'>Matches only</option>
+            <option value='public'>Public</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Experience */}
+      <SectionHeader title='Experience' emoji='✨' />
+      <div style={card}>
+        <div style={row}>
+          <div>
+            <div style={label}>Sound Effects</div>
+            <div style={sublabel}>Subtle sounds when logging numbers</div>
+          </div>
+          <Toggle value={settings.soundEffects} onChange={v=>update('soundEffects',v)} />
+        </div>
+        <div style={row}>
+          <div>
+            <div style={label}>Haptic Feedback</div>
+            <div style={sublabel}>Vibration on mobile interactions</div>
+          </div>
+          <Toggle value={settings.haptics} onChange={v=>update('haptics',v)} />
+        </div>
+        <div style={lastRow}>
+          <div>
+            <div style={label}>Background Theme</div>
+            <div style={sublabel}>Use the 🎨 button in the corner</div>
+          </div>
+          <span style={{color:'rgba(180,160,255,0.35)',fontSize:'0.78rem'}}>3 themes</span>
+        </div>
+      </div>
+
+      {/* About */}
+      <SectionHeader title='About' emoji='ℹ️' />
+      <div style={card}>
+        <div style={row}>
+          <div style={label}>Version</div>
+          <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.78rem'}}>SynchroSoul 1.0.0</div>
+        </div>
+        <div style={row}>
+          <div style={label}>Built with</div>
+          <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.78rem'}}>Next.js 16 · Tailwind · Supabase</div>
+        </div>
+        <div style={row}>
+          <Link href='/dashboard/upgrade' style={{...label,textDecoration:'none'}}>Premium Features</Link>
+          <Link href='/dashboard/upgrade' style={{color:'#c9a84c',fontSize:'0.78rem',textDecoration:'none'}}>View plans →</Link>
+        </div>
+        <div style={lastRow}>
+          <Link href='/dashboard/badges' style={{...label,textDecoration:'none'}}>Achievements</Link>
+          <Link href='/dashboard/badges' style={{color:'rgba(167,139,250,0.6)',fontSize:'0.78rem',textDecoration:'none'}}>View badges →</Link>
+        </div>
+      </div>
+
+      {/* Danger zone */}
+      <SectionHeader title='Data' emoji='⚠️' />
+      <div style={{...card,borderColor:'rgba(248,113,113,0.1)'}}>
+        {!showClearConfirm ? (
+          <div style={lastRow}>
+            <div>
+              <div style={{...label,color:'rgba(248,113,113,0.6)'}}>Clear All Data</div>
+              <div style={sublabel}>Delete all logs, journal entries, and profile</div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* App info */}
-      <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-        <div style={{ color: 'rgba(180,160,255,0.25)', fontSize: '0.72rem' }}>SynchroSoul v1.0 · Angel Number Sync Dating App</div>
-        <div style={{ color: 'rgba(180,160,255,0.15)', fontSize: '0.65rem', marginTop: '0.25rem' }}>Built with ✦ and cosmic intention</div>
+            <button onClick={()=>setShowClearConfirm(true)} style={{padding:'0.35rem 0.75rem',borderRadius:'0.5rem',border:'1px solid rgba(248,113,113,0.2)',background:'rgba(248,113,113,0.06)',color:'rgba(248,113,113,0.6)',fontSize:'0.75rem',cursor:'pointer'}}>Clear</button>
+          </div>
+        ) : (
+          <div style={{padding:'1rem 1.25rem'}}>
+            <div style={{color:'rgba(248,113,113,0.8)',fontSize:'0.85rem',marginBottom:'0.5rem',fontWeight:600}}>Are you sure?</div>
+            <div style={{color:'rgba(180,160,255,0.45)',fontSize:'0.78rem',marginBottom:'0.875rem'}}>This will permanently delete all your angel number logs, journal entries, dreams, and profile data. This cannot be undone.</div>
+            <div style={{display:'flex',gap:'0.5rem'}}>
+              <button onClick={clearAllData} style={{flex:1,padding:'0.5rem',borderRadius:'0.625rem',border:'none',background:'rgba(248,113,113,0.15)',color:'rgba(248,113,113,0.8)',fontSize:'0.82rem',cursor:'pointer',fontWeight:600}}>Yes, delete everything</button>
+              <button onClick={()=>setShowClearConfirm(false)} style={{flex:1,padding:'0.5rem',borderRadius:'0.625rem',border:'1px solid rgba(200,180,255,0.12)',background:'transparent',color:'rgba(180,160,255,0.5)',fontSize:'0.82rem',cursor:'pointer'}}>Cancel</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
