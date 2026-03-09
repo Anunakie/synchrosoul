@@ -35,6 +35,14 @@ const TOOL_SECTIONS = [
     ],
   },
   {
+    title: 'Wellness',
+    tools: [
+      { href: '/dashboard/chakras', emoji: '⚡', name: 'Chakras', desc: 'Align your energy centers', color: '#a855f7' },
+      { href: '/dashboard/gratitude', emoji: '💛', name: 'Gratitude', desc: 'Daily gratitude practice', color: '#fbbf24' },
+      { href: '/dashboard/numerology-deep', emoji: '✶', name: 'Deep Reading', desc: 'Full numerology profile', color: '#c9a84c' },
+    ],
+  },
+  {
     title: 'Journey',
     tools: [
       { href: '/dashboard/badges', emoji: '🎖', name: 'Badges', desc: 'Your spiritual milestones', color: '#c9a84c' },
@@ -67,6 +75,16 @@ export default function ToolsPage() {
         </div>
       ))}
 
+      <Link href="/dashboard/settings" style={{ textDecoration: 'none' }}>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(200,180,255,0.1)', borderRadius: '1.25rem', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+          <span style={{ fontSize: '1.4rem' }}>⚙️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.88rem', fontWeight: 600 }}>Settings</div>
+            <div style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.72rem' }}>Notifications, data export, preferences</div>
+          </div>
+          <span style={{ color: 'rgba(180,160,255,0.3)', fontSize: '1rem' }}>›</span>
+        </div>
+      </Link>
       <Link href="/dashboard/upgrade" style={{ textDecoration: 'none' }}>
         <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '1.25rem', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
           <span style={{ fontSize: '1.8rem' }}>👑</span>
