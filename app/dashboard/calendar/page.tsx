@@ -1,128 +1,154 @@
-
 'use client'
 import { useState, useEffect } from 'react'
-import { buildCalendarMonth, CalendarDay } from '@/lib/cosmic-calendar'
-import { getNumerologyProfile } from '@/lib/storage'
+import { getLogs } from '@/lib/storage'
+
+const MOON_PHASES = [
+  { name: 'New Moon', emoji: '🌑', energy: 'New beginnings, set intentions, plant seeds', numbers: ['111','1111','222'] },
+  { name: 'Waxing Crescent', emoji: '🌒', energy: 'Growth, momentum, take action', numbers: ['333','444','555'] },
+  { name: 'First Quarter', emoji: '🌓', energy: 'Decisions, challenges, push forward', numbers: ['444','777','888'] },
+  { name: 'Waxing Gibbous', emoji: '🌔', energy: 'Refinement, patience, trust the process', numbers: ['222','666','999'] },
+  { name: 'Full Moon', emoji: '🌕', energy: 'Manifestation, release, peak energy', numbers: ['999','1111','777'] },
+  { name: 'Waning Gibbous', emoji: '🌖', energy: 'Gratitude, sharing, reflection', numbers: ['999','333','666'] },
+  { name: 'Last Quarter', emoji: '🌗', energy: 'Release, forgiveness, let go', numbers: ['999','555','888'] },
+  { name: 'Waning Crescent', emoji: '🌘', energy: 'Rest, surrender, prepare for rebirth', numbers: ['222','111','444'] },
+]
+
+const ANGEL_ENERGY: Record<string, { color: string; energy: string; affirmation: string }> = {
+  '1': { color: '#ff6b6b', energy: 'Leadership & New Starts', affirmation: 'I boldly begin.' },
+  '2': { color: '#60a5fa', energy: 'Balance & Partnership', affirmation: 'I trust divine timing.' },
+  '3': { color: '#fbbf24', energy: 'Creativity & Expression', affirmation: 'I create freely.' },
+  '4': { color: '#34d399', energy: 'Foundation & Stability', affirmation: 'I build with love.' },
+  '5': { color: '#a78bfa', energy: 'Change & Freedom', affirmation: 'I embrace transformation.' },
+  '6': { color: '#f472b6', energy: 'Love & Harmony', affirmation: 'I radiate love.' },
+  '7': { color: '#818cf8', energy: 'Wisdom & Spirituality', affirmation: 'I trust my knowing.' },
+  '8': { color: '#c9a84c', energy: 'Abundance & Power', affirmation: 'I attract prosperity.' },
+  '9': { color: '#fb923c', energy: 'Completion & Service', affirmation: 'I serve with grace.' },
+}
+
+function getMoonPhase(date: Date): typeof MOON_PHASES[0] {
+  const known = new Date('2000-01-06')
+  const diff = (date.getTime() - known.getTime()) / (1000 * 60 * 60 * 24)
+  const cycle = 29.53058867
+  const phase = ((diff % cycle) + cycle) % cycle
+  const idx = Math.floor(phase / (cycle / 8)) % 8
+  return MOON_PHASES[idx]
+}
+
+function getDayEnergy(date: Date): typeof ANGEL_ENERGY['1'] {
+  const sum = date.getFullYear() + (date.getMonth() + 1) + date.getDate()
+  let n = sum
+  while (n > 9) { n = String(n).split('').reduce((a, b) => a + parseInt(b), 0) }
+  return ANGEL_ENERGY[String(n)] || ANGEL_ENERGY['1']
+}
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate()
+}
 
 export default function CosmicCalendarPage() {
-  const today = new Date()
-  const [year, setYear] = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth())
-  const [lifePath, setLifePath] = useState(0)
-  const [selected, setSelected] = useState<CalendarDay | null>(null)
-  const [calData, setCalData] = useState(() => buildCalendarMonth(today.getFullYear(), today.getMonth(), 0))
+  const [today] = useState(new Date())
+  const [viewDate, setViewDate] = useState(new Date())
+  const [logs, setLogs] = useState<any[]>([])
+  const [selectedDay, setSelectedDay] = useState<number | null>(today.getDate())
 
-  useEffect(() => {
-    const profile = getNumerologyProfile()
-    const lp = profile?.lifePath || 0
-    setLifePath(lp)
-    setCalData(buildCalendarMonth(year, month, lp))
-  }, [year, month])
+  useEffect(() => { setLogs(getLogs()) }, [])
 
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const daysInMonth = getDaysInMonth(year, month)
   const firstDayOfWeek = new Date(year, month, 1).getDay()
-  const todayStr = today.toISOString().split('T')[0]
+  const monthName = viewDate.toLocaleString('default', { month: 'long' })
 
-  const powerColors = [
-    'rgba(30,20,60,0.7)','rgba(40,25,80,0.7)','rgba(50,30,90,0.7)',
-    'rgba(60,35,100,0.7)','rgba(80,40,110,0.7)','rgba(100,50,120,0.7)',
-    'rgba(130,60,130,0.7)','rgba(160,80,80,0.7)','rgba(190,130,40,0.7)','rgba(201,168,76,0.85)'
-  ]
+  const logsByDay: Record<number, string[]> = {}
+  logs.forEach(log => {
+    const d = new Date(log.createdAt)
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate()
+      if (!logsByDay[day]) logsByDay[day] = []
+      if (!logsByDay[day].includes(log.number)) logsByDay[day].push(log.number)
+    }
+  })
 
-  function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1) }
-    else setMonth(m => m - 1)
-  }
-  function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1) }
-    else setMonth(m => m + 1)
-  }
+  const selectedDate = selectedDay ? new Date(year, month, selectedDay) : today
+  const moonPhase = getMoonPhase(selectedDate)
+  const dayEnergy = getDayEnergy(selectedDate)
+  const isToday = (d: number) => d === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+
+  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
 
   return (
-    <div style={{ minHeight: '100vh', padding: '1.5rem 1rem 2rem', maxWidth: '480px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: 0 }}>Cosmic Calendar</h1>
-        <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.8rem', marginTop: '0.25rem' }}>Your personal power days and moon phases</p>
-        {lifePath > 0 && (
-          <div style={{ display: 'inline-block', marginTop: '0.5rem', padding: '0.2rem 0.75rem', borderRadius: '9999px', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontSize: '0.75rem' }}>
-            Life Path {lifePath} · Personal Month {calData.personalMonthNumber} · {calData.personalMonthTheme}
-          </div>
-        )}
-      </div>
+    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Cosmic Calendar</h1>
+      <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '0 0 1.5rem' }}>Moon phases, angel energy, and your number sightings</p>
 
+      {/* Month nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <button onClick={prevMonth} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: 'rgba(220,200,255,0.8)', padding: '0.4rem 0.9rem', cursor: 'pointer', fontSize: '1.1rem' }}>&#8249;</button>
-        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: 'rgba(220,200,255,0.9)' }}>{monthNames[month]} {year}</span>
-        <button onClick={nextMonth} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: 'rgba(220,200,255,0.8)', padding: '0.4rem 0.9rem', cursor: 'pointer', fontSize: '1.1rem' }}>&#8250;</button>
+        <button onClick={() => setViewDate(new Date(year, month - 1, 1))} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '0.5rem', padding: '0.4rem 0.75rem', cursor: 'pointer', color: 'rgba(200,180,255,0.7)', fontFamily: 'inherit' }}>←</button>
+        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: 'rgba(220,200,255,0.9)' }}>{monthName} {year}</span>
+        <button onClick={() => setViewDate(new Date(year, month + 1, 1))} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '0.5rem', padding: '0.4rem 0.75rem', cursor: 'pointer', color: 'rgba(200,180,255,0.7)', fontFamily: 'inherit' }}>→</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
-        {dayNames.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: '0.6rem', color: 'rgba(200,180,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.25rem 0' }}>{d}</div>
-        ))}
+      {/* Calendar grid */}
+      <div style={{ ...card, padding: '1.25rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '0.25rem', marginBottom: '0.5rem' }}>
+          {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+            <div key={d} style={{ textAlign: 'center', color: 'rgba(180,160,255,0.35)', fontSize: '0.65rem', padding: '0.25rem 0' }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '0.25rem' }}>
+          {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={'e'+i} />)}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1
+            const date = new Date(year, month, day)
+            const moon = getMoonPhase(date)
+            const energy = getDayEnergy(date)
+            const hasLogs = logsByDay[day]?.length > 0
+            const selected = selectedDay === day
+            const todayDay = isToday(day)
+            return (
+              <button key={day} onClick={() => setSelectedDay(day)} style={{ aspectRatio: '1', borderRadius: '0.5rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', background: selected ? `${energy.color}22` : todayDay ? 'rgba(167,139,250,0.12)' : 'rgba(255,255,255,0.03)', border: selected ? `1px solid ${energy.color}66` : todayDay ? '1px solid rgba(167,139,250,0.4)' : '1px solid transparent', transition: 'all 0.15s', padding: '0.2rem' }}>
+                <span style={{ fontSize: '0.55rem', lineHeight: 1 }}>{moon.emoji}</span>
+                <span style={{ color: selected ? energy.color : todayDay ? 'rgba(200,180,255,0.95)' : 'rgba(200,180,255,0.65)', fontSize: '0.75rem', fontWeight: todayDay ? 700 : 400 }}>{day}</span>
+                {hasLogs && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#c9a84c' }} />}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
-        {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={i} />)}
-        {calData.days.map((day) => {
-          const isToday = day.dateStr === todayStr
-          const isSelected = selected?.dateStr === day.dateStr
-          const bg = powerColors[Math.min(day.powerLevel - 1, 9)]
-          return (
-            <button key={day.dateStr} onClick={() => setSelected(isSelected ? null : day)}
-              style={{
-                aspectRatio: '1', borderRadius: '0.5rem', background: isSelected ? 'rgba(201,168,76,0.35)' : bg,
-                border: isToday ? '2px solid #c9a84c' : isSelected ? '1px solid rgba(201,168,76,0.6)' : '1px solid rgba(255,255,255,0.05)',
-                cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: '1px', padding: '2px', transition: 'all 0.15s ease',
-              }}
-            >
-              <span style={{ fontSize: '0.5rem', lineHeight: 1 }}>{day.moonEmoji}</span>
-              <span style={{ fontSize: '0.72rem', fontWeight: isToday ? 700 : 400, color: isToday ? '#c9a84c' : 'rgba(255,255,255,0.85)', lineHeight: 1 }}>{day.dayNumber}</span>
-              {day.isMasterDay && <span style={{ fontSize: '0.38rem', color: '#ffd700', lineHeight: 1 }}>&#10022;</span>}
-            </button>
-          )
-        })}
-      </div>
+      {/* Selected day detail */}
+      {selectedDay && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ ...card, padding: '1.25rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.75rem', border: '1px solid rgba(200,180,255,0.08)' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>{moonPhase.emoji}</div>
+              <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.82rem', fontWeight: 600 }}>{moonPhase.name}</div>
+              <div style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.72rem', marginTop: '0.25rem', lineHeight: 1.4 }}>{moonPhase.energy}</div>
+            </div>
+            <div style={{ padding: '1rem', background: `${dayEnergy.color}0d`, borderRadius: '0.75rem', border: `1px solid ${dayEnergy.color}22` }}>
+              <div style={{ color: dayEnergy.color, fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.3rem' }}>✦</div>
+              <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.82rem', fontWeight: 600 }}>{dayEnergy.energy}</div>
+              <div style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.72rem', marginTop: '0.25rem', fontStyle: 'italic' }}>{dayEnergy.affirmation}</div>
+            </div>
+          </div>
 
-      <div style={{ textAlign: 'center', marginTop: '0.6rem' }}>
-        <span style={{ fontSize: '0.62rem', color: 'rgba(200,180,255,0.35)' }}>Brighter = higher power day &nbsp;&#10022; Master number &nbsp; Tap any day for details</span>
-      </div>
+          {/* Moon numbers */}
+          <div style={{ ...card, padding: '1rem 1.25rem' }}>
+            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Aligned Numbers Today</div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {moonPhase.numbers.map(n => <span key={n} style={{ padding: '0.25rem 0.65rem', borderRadius: '2rem', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontSize: '0.8rem' }}>{n}</span>)}
+            </div>
+          </div>
 
-      {selected && (
-        <div style={{ marginTop: '1.25rem', padding: '1.25rem', borderRadius: '1rem', background: 'rgba(8,6,28,0.9)', border: '1px solid rgba(201,168,76,0.25)', backdropFilter: 'blur(12px)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-            <div>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: 'rgba(220,200,255,0.95)' }}>
-                {selected.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          {/* Logged numbers for this day */}
+          {logsByDay[selectedDay] && (
+            <div style={{ ...card, padding: '1rem 1.25rem' }}>
+              <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Your Sightings This Day</div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {logsByDay[selectedDay].map(n => <span key={n} style={{ padding: '0.25rem 0.65rem', borderRadius: '2rem', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)', color: '#a78bfa', fontSize: '0.8rem' }}>{n}</span>)}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(200,180,255,0.5)', marginTop: '0.2rem' }}>{selected.moonEmoji} {selected.moonPhase}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 700, color: selected.powerColor }}>{selected.powerLevel}</div>
-              <div style={{ fontSize: '0.58rem', color: 'rgba(200,180,255,0.4)', textTransform: 'uppercase' }}>Power</div>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: '0.58rem', color: 'rgba(200,180,255,0.4)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Universal Day</div>
-              <div style={{ fontSize: '1.1rem', color: selected.powerColor, fontWeight: 600 }}>{selected.universalDay}</div>
-            </div>
-            <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: '0.58rem', color: 'rgba(200,180,255,0.4)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Theme</div>
-              <div style={{ fontSize: '0.8rem', color: 'rgba(220,200,255,0.85)' }}>{selected.theme}</div>
-            </div>
-          </div>
-          {selected.isMasterDay && (
-            <div style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#c9a84c' }}>&#10022; Master Number Day - heightened spiritual energy</span>
             </div>
           )}
-          <div style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid ' + selected.powerColor }}>
-            <div style={{ fontSize: '0.62rem', color: 'rgba(200,180,255,0.4)', textTransform: 'uppercase', marginBottom: '0.3rem' }}>Daily Affirmation</div>
-            <div style={{ fontSize: '0.88rem', color: 'rgba(220,200,255,0.88)', fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>"{selected.affirmation}"</div>
-          </div>
         </div>
       )}
     </div>
