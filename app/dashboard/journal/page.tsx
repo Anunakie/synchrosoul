@@ -1,4 +1,5 @@
 'use client'
+import JournalExport from '@/components/JournalExport'
 
 import { useState, useEffect, useMemo } from 'react'
 import { getLogs, saveLog, searchLogs, getStats, AngelLog } from '@/lib/storage'

@@ -179,6 +179,26 @@ export default function SettingsPage() {
       </Link>
 
       <p style={{ textAlign: 'center', color: 'rgba(180,160,255,0.25)', fontSize: '0.7rem', marginTop: '1.5rem' }}>SynchroSoul v1.0 ✦ All data stored locally on your device</p>
+    
+      {/* Quick Links */}
+      <div style={{ ...card, overflow: 'hidden', marginBottom: '1.25rem' }}>
+        <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid rgba(200,180,255,0.06)' }}>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Quick Links</div>
+        </div>
+        {[
+          { href: '/dashboard/stats', emoji: '📊', label: 'Your Stats & Heatmap' },
+          { href: '/dashboard/notifications', emoji: '🔔', label: 'Notification Preferences' },
+          { href: '/dashboard/personal-year', emoji: '📅', label: 'Personal Year Calculator' },
+          { href: '/dashboard/karmic-debt', emoji: '⚡', label: 'Karmic Debt Analyzer' },
+          { href: '/dashboard/upgrade', emoji: '✦', label: 'Upgrade to Premium' },
+        ].map((item, i, arr) => (
+          <a key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1.25rem', borderBottom: i < arr.length-1 ? '1px solid rgba(200,180,255,0.06)' : 'none', textDecoration: 'none' }}>
+            <span style={{ fontSize: '1.1rem' }}>{item.emoji}</span>
+            <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.85rem', flex: 1 }}>{item.label}</span>
+            <span style={{ color: 'rgba(180,160,255,0.25)', fontSize: '0.8rem' }}>›</span>
+          </a>
+        ))}
+      </div>
     </div>
   )
 }

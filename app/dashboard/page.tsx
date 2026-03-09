@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AngelLogger from '@/components/AngelLogger'
+import AngelOfTheDay from '@/components/AngelOfTheDay'
 import { generateDailyGuidance } from '@/lib/daily-guidance'
 
 const KEY_LOGS = 'synchrosoul_logs'
@@ -77,6 +78,9 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Angel of the Day */}
+      <AngelOfTheDay />
 
       {/* Angel Logger */}
       <div style={{ marginBottom: '1.5rem' }}>
