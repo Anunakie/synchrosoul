@@ -1,149 +1,73 @@
 'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 
-interface Notification {
-  id: string;
-  type: 'match' | 'milestone' | 'guidance' | 'reminder' | 'cosmic';
-  title: string;
-  body: string;
-  href: string;
-  emoji: string;
-  color: string;
-  time: string;
-  read: boolean;
-}
-
-function generateNotifications(logs: any[], profile: any): Notification[] {
-  const notes: Notification[] = [];
-  const now = new Date();
-
-  // Streak milestone
-  const dates = [...new Set(logs.map((l: any) => new Date(l.createdAt).toDateString()))];
-  if (dates.length >= 7) notes.push({ id: 'streak-7', type: 'milestone', title: '7-Day Streak! 🔥', body: 'You have logged angel numbers 7 days in a row. The universe is responding to your awareness.', href: '/dashboard/streak', emoji: '🔥', color: '#f97316', time: 'Today', read: false });
-  if (dates.length >= 3) notes.push({ id: 'streak-3', type: 'milestone', title: '3-Day Streak Achieved', body: 'Three days of consistent logging. Your vibration is rising.', href: '/dashboard/streak', emoji: '✦', color: '#c9a84c', time: 'Yesterday', read: true });
-
-  // First log
-  if (logs.length >= 1) notes.push({ id: 'first-log', type: 'milestone', title: 'First Angel Number Logged', body: `You logged ${logs[logs.length-1]?.number} — your journey with the angels has begun.`, href: '/dashboard/journal', emoji: '🌟', color: '#c9a84c', time: logs.length > 0 ? new Date(logs[logs.length-1]?.createdAt).toLocaleDateString() : 'Recently', read: true });
-
-  // Numerology profile
-  if (profile) notes.push({ id: 'profile-complete', type: 'milestone', title: 'Cosmic Blueprint Unlocked', body: `Your Life Path ${profile.lifePath || ''} has been calculated. Explore your full soul report.`, href: '/dashboard/cosmic-report', emoji: '📜', color: '#a78bfa', time: 'This week', read: false });
-
-  // Daily cosmic weather
-  notes.push({ id: 'cosmic-today', type: 'cosmic', title: "Today's Cosmic Weather is Ready", body: 'Check the universal day number, moon phase, and your personal energy forecast.', href: '/dashboard/cosmic-weather', emoji: '🌌', color: '#60a5fa', time: 'Today', read: false });
-
-  // Sync match
-  notes.push({ id: 'sync-match', type: 'match', title: 'New Soul Sync Detected', body: '3 souls are seeing the same numbers as you in the last 24 hours. Check your matches.', href: '/dashboard/sync', emoji: '⟳', color: '#4ade80', time: '2 hours ago', read: false });
-
-  // Oracle reminder
-  notes.push({ id: 'oracle-reminder', type: 'reminder', title: 'Your Oracle Awaits', body: "You haven't consulted the Angel Oracle today. Your guides have a message for you.", href: '/dashboard/oracle', emoji: '◈', color: '#c9a84c', time: 'Today', read: true });
-
-  // Guidance
-  notes.push({ id: 'guidance-1', type: 'guidance', title: 'Angel Message: Trust the Timing', body: "The numbers you've been seeing point to divine orchestration. Everything is unfolding perfectly.", href: '/dashboard', emoji: '💫', color: '#f472b6', time: '3 hours ago', read: true });
-
-  // 1111 portal
-  const d = now.getDate() + now.getMonth() + 1;
-  if (d % 11 === 0) notes.push({ id: 'portal-1111', type: 'cosmic', title: '1111 Portal Open Today', body: 'Numerological alignment creates a manifestation portal. Log your intentions now.', href: '/dashboard', emoji: '🌀', color: '#8b5cf6', time: 'Today', read: false });
-
-  return notes.slice(0, 10);
-}
-
-const TYPE_COLORS: Record<string, string> = { match: '#4ade80', milestone: '#c9a84c', guidance: '#f472b6', reminder: '#60a5fa', cosmic: '#8b5cf6' };
+const SAMPLE = [
+  { id: '1', emoji: '💫', title: 'New Sync Match!', body: 'Someone just logged 1111 — your sync score is 94%', time: Date.now() - 300000, read: false, color: '#c9a84c' },
+  { id: '2', emoji: '🔥', title: '3-Day Streak!', body: 'You have logged angel numbers 3 days in a row. Keep going!', time: Date.now() - 3600000, read: false, color: '#f59e0b' },
+  { id: '3', emoji: '✨', title: 'Daily Guidance Ready', body: 'Your angel message for today is waiting', time: Date.now() - 7200000, read: true, color: '#a78bfa' },
+  { id: '4', emoji: '🌕', title: 'Full Moon Tonight', body: 'Charge your crystals and set your release intentions', time: Date.now() - 86400000, read: true, color: '#f472b6' },
+  { id: '5', emoji: '🔢', title: 'Personal Year Insight', body: 'You are in a Personal Year 7 — a year of deep spiritual growth', time: Date.now() - 172800000, read: true, color: '#22d3ee' },
+  { id: '6', emoji: '🔮', title: 'Oracle Message', body: 'The High Priestess has a message for you today', time: Date.now() - 259200000, read: true, color: '#8b5cf6' },
+];
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [filter, setFilter] = useState<string>('all');
+  const [notifs, setNotifs] = useState(SAMPLE);
+  const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    try {
-      const logs = JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]');
-      const profile = JSON.parse(localStorage.getItem('synchrosoul_numerology_profile') || 'null');
-      const generated = generateNotifications(logs, profile);
-      // Merge with any saved read states
-      const saved: Record<string, boolean> = JSON.parse(localStorage.getItem('synchrosoul_notif_read') || '{}');
-      setNotifications(generated.map(n => ({ ...n, read: saved[n.id] ?? n.read })));
-    } catch {}
-  }, []);
+  const markAllRead = () => setNotifs(n => n.map(x => ({ ...x, read: true })));
+  const markRead = (id: string) => setNotifs(n => n.map(x => x.id === id ? { ...x, read: true } : x));
+  const remove = (id: string) => setNotifs(n => n.filter(x => x.id !== id));
 
-  const markRead = (id: string) => {
-    setNotifications(prev => {
-      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-      const readMap: Record<string, boolean> = {};
-      updated.forEach(n => { readMap[n.id] = n.read; });
-      try { localStorage.setItem('synchrosoul_notif_read', JSON.stringify(readMap)); } catch {}
-      return updated;
-    });
+  const unread = notifs.filter(n => !n.read).length;
+  const filtered = filter === 'unread' ? notifs.filter(n => !n.read) : notifs;
+
+  const fmt = (ts: number) => {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
   };
-
-  const markAllRead = () => {
-    setNotifications(prev => {
-      const updated = prev.map(n => ({ ...n, read: true }));
-      const readMap: Record<string, boolean> = {};
-      updated.forEach(n => { readMap[n.id] = true; });
-      try { localStorage.setItem('synchrosoul_notif_read', JSON.stringify(readMap)); } catch {}
-      return updated;
-    });
-  };
-
-  const filtered = filter === 'all' ? notifications : filter === 'unread' ? notifications.filter(n => !n.read) : notifications.filter(n => n.type === filter);
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', fontFamily: 'Cormorant Garamond, serif' }}>Notifications</h1>
-          {unreadCount > 0 && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.25rem' }}>{unreadCount} unread messages</p>}
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#a78bfa', fontFamily: 'Cormorant Garamond, serif' }}>Notifications</h1>
+          {unread > 0 && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.15rem' }}>{unread} unread</p>}
         </div>
-        {unreadCount > 0 && (
-          <button onClick={markAllRead} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', padding: '0.4rem 0.875rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', cursor: 'pointer' }}>Mark all read</button>
+        {unread > 0 && (
+          <button onClick={markAllRead} style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '999px', padding: '0.4rem 0.875rem', cursor: 'pointer', color: '#a78bfa', fontSize: '0.75rem', fontWeight: 600 }}>Mark all read</button>
         )}
       </div>
-
-      {/* Filter chips */}
-      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        {['all', 'unread', 'match', 'milestone', 'cosmic', 'guidance'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '0.3rem 0.75rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.75rem',
-            background: filter === f ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
-            border: filter === f ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.07)',
-            color: filter === f ? '#fff' : 'rgba(255,255,255,0.4)', textTransform: 'capitalize'
-          }}>{f}</button>
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.25rem' }}>
+        {['all', 'unread'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.35rem 0.875rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: filter === f ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)', border: filter === f ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(255,255,255,0.08)', color: filter === f ? '#a78bfa' : 'rgba(255,255,255,0.4)' }}>
+            {f === 'all' ? 'All' : `Unread${unread > 0 ? ` (${unread})` : ''}`}
+          </button>
         ))}
       </div>
-
-      {/* Notifications list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔔</div>
-            <p>No notifications here</p>
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✨</div>
+            <p>All caught up! No {filter === 'unread' ? 'unread ' : ''}notifications.</p>
           </div>
-        )}
-        {filtered.map(n => (
-          <Link key={n.id} href={n.href} onClick={() => markRead(n.id)} style={{
-            background: n.read ? 'rgba(8,6,28,0.7)' : 'rgba(8,6,28,0.92)',
-            borderRadius: '1.25rem',
-            border: n.read ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${n.color}30`,
-            padding: '1rem 1.125rem', textDecoration: 'none',
-            display: 'flex', alignItems: 'flex-start', gap: '0.875rem',
-            backdropFilter: 'blur(12px)', position: 'relative', overflow: 'hidden'
-          }}>
-            {!n.read && <div style={{ position: 'absolute', top: '1rem', right: '1rem', width: '7px', height: '7px', borderRadius: '50%', background: n.color, boxShadow: `0 0 8px ${n.color}` }} />}
-            <div style={{
-              width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
-              background: `${n.color}15`, border: `1px solid ${n.color}30`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'
-            }}>{n.emoji}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ color: n.read ? 'rgba(255,255,255,0.6)' : '#fff', fontWeight: n.read ? 400 : 700, fontSize: '0.9rem', marginBottom: '0.2rem' }}>{n.title}</p>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', lineHeight: 1.5 }}>{n.body}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem' }}>
-                <span style={{ background: `${TYPE_COLORS[n.type]}15`, border: `1px solid ${TYPE_COLORS[n.type]}25`, borderRadius: '999px', padding: '0.1rem 0.4rem', fontSize: '0.6rem', color: TYPE_COLORS[n.type], textTransform: 'capitalize' }}>{n.type}</span>
-                <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.72rem' }}>{n.time}</span>
+        ) : filtered.map(n => (
+          <div key={n.id} onClick={() => markRead(n.id)} style={{ background: n.read ? 'rgba(8,6,28,0.88)' : 'rgba(8,6,28,0.95)', borderRadius: '1.25rem', border: n.read ? '1px solid rgba(255,255,255,0.07)' : `1px solid ${n.color}20`, padding: '1rem 1.25rem', backdropFilter: 'blur(12px)', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: `${n.color}15`, border: `1px solid ${n.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{n.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                  <p style={{ color: n.read ? 'rgba(255,255,255,0.7)' : '#fff', fontWeight: n.read ? 500 : 700, fontSize: '0.88rem' }}>{n.title}</p>
+                  {!n.read && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: n.color, flexShrink: 0 }} />}
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.78rem', lineHeight: 1.5 }}>{n.body}</p>
+                <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.68rem', marginTop: '0.35rem' }}>{fmt(n.time)}</p>
               </div>
+              <button onClick={e => { e.stopPropagation(); remove(n.id); }} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', flexShrink: 0 }}>×</button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>
