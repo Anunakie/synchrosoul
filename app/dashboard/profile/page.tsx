@@ -156,18 +156,33 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : (
-              <div style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: avatarImage ? 'transparent' : profile.avatarColor + '33',
-                border: '3px solid ' + profile.avatarColor,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.4rem', fontWeight: 700, color: profile.avatarColor,
-                flexShrink: 0, overflow: 'hidden'
-              }}>
-                {avatarImage
-                  ? <img src={avatarImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : initials
-                }
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div style={{
+                  width: 72, height: 72, borderRadius: '50%',
+                  background: avatarImage ? 'transparent' : profile.avatarColor + '33',
+                  border: '3px solid ' + profile.avatarColor,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.4rem', fontWeight: 700, color: profile.avatarColor,
+                  overflow: 'hidden'
+                }}>
+                  {avatarImage
+                    ? <img src={avatarImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : initials
+                  }
+                </div>
+                {/* Always-visible camera badge */}
+                <button
+                  onClick={() => { setEditing(true); setTimeout(() => fileInputRef.current?.click(), 100) }}
+                  title="Upload profile photo"
+                  style={{
+                    position: 'absolute', bottom: 0, right: 0,
+                    width: 24, height: 24, borderRadius: '50%',
+                    background: '#1a1a2e', border: '2px solid ' + profile.avatarColor,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: '0.7rem', color: profile.avatarColor,
+                    lineHeight: 1
+                  }}
+                >+</button>
               </div>
             )}
 
