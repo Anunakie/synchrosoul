@@ -52,6 +52,7 @@ const TOOL_SECTIONS = [
       { href: '/dashboard/insights', emoji: '📊', name: 'Insights', desc: 'Your number patterns', color: '#a78bfa' },
       { href: '/dashboard/badges', emoji: '🏆', name: 'Badges', desc: 'Achievements & milestones', color: '#fbbf24' },
       { href: '/dashboard/stats', emoji: '📊', name: 'Stats', desc: 'Number frequency & heatmap', color: '#60a5fa' },
+      { href: '/dashboard/streak', emoji: '🔥', name: 'Streak', desc: 'Daily devotion milestones', color: '#f97316' },
     ],
   },
   {
