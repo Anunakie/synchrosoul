@@ -6,7 +6,7 @@ import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
 
 interface Props {
-  onLogged: (log: AngelLog) => void
+  onLogged?: (log: AngelLog) => void
 }
 
 export default function AngelLogger({ onLogged }: Props) {
@@ -51,7 +51,7 @@ export default function AngelLogger({ onLogged }: Props) {
     setLastLog(log)
     setStep('done')
     setSaving(false)
-    onLogged(log)
+    onLogged?.(log)
   }
 
   function handleReset() {

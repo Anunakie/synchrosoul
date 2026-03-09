@@ -2,169 +2,119 @@
 import { useState, useEffect } from 'react'
 
 const KEY_LOGS = 'synchrosoul_logs'
-const KEY_DREAMS = 'synchrosoul_dreams'
-const KEY_GRATITUDE = 'synchrosoul_gratitude'
-const KEY_MANIFEST = 'synchrosoul_manifestations'
 const KEY_PROFILE = 'synchrosoul_numerology_profile'
-const KEY_VISION = 'synchrosoul_vision_board'
+const KEY_STREAK = 'synchrosoul_streak'
 
-interface Badge {
-  id: string
-  emoji: string
-  name: string
-  description: string
-  category: string
-  color: string
-  check: (data: AppData) => boolean
-  progress?: (data: AppData) => { current: number; total: number }
-}
-
-interface AppData {
-  logs: any[]
-  dreams: any[]
-  gratitude: any[]
-  manifests: any[]
-  profile: any
-  visionItems: any[]
-  streak: number
-}
-
-function calcStreak(logs: any[]): number {
-  if (!logs.length) return 0
-  const days = new Set(logs.map(l => new Date(l.createdAt).toDateString()))
-  let streak = 0
-  const today = new Date()
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today)
-    d.setDate(today.getDate() - i)
-    if (days.has(d.toDateString())) streak++
-    else if (i > 0) break
-  }
-  return streak
-}
-
-const ALL_BADGES: Badge[] = [
-  // Logging badges
-  { id: 'first_sign', emoji: '✦', name: 'First Sign', description: 'Log your first angel number', category: 'Logger', color: '#a78bfa', check: d => d.logs.length >= 1 },
-  { id: 'signs_10', emoji: '🌟', name: 'Awakening', description: 'Log 10 angel numbers', category: 'Logger', color: '#a78bfa', check: d => d.logs.length >= 10, progress: d => ({ current: Math.min(d.logs.length, 10), total: 10 }) },
-  { id: 'signs_50', emoji: '💫', name: 'Attuned', description: 'Log 50 angel numbers', category: 'Logger', color: '#a78bfa', check: d => d.logs.length >= 50, progress: d => ({ current: Math.min(d.logs.length, 50), total: 50 }) },
-  { id: 'signs_100', emoji: '🌠', name: 'Cosmic Receiver', description: 'Log 100 angel numbers', category: 'Logger', color: '#a78bfa', check: d => d.logs.length >= 100, progress: d => ({ current: Math.min(d.logs.length, 100), total: 100 }) },
-  { id: 'signs_333', emoji: '🔮', name: 'Ascended Logger', description: 'Log 333 angel numbers', category: 'Logger', color: '#a78bfa', check: d => d.logs.length >= 333, progress: d => ({ current: Math.min(d.logs.length, 333), total: 333 }) },
-  { id: 'truth_score', emoji: '📸', name: 'Truth Seeker', description: 'Upload a screenshot for Truth Score', category: 'Logger', color: '#60a5fa', check: d => d.logs.some(l => l.truthScore) },
-  { id: 'thought_anchor', emoji: '💭', name: 'Thought Anchor', description: 'Add a thought to 5 logs', category: 'Logger', color: '#60a5fa', check: d => d.logs.filter(l => l.thought).length >= 5, progress: d => ({ current: Math.min(d.logs.filter((l: any) => l.thought).length, 5), total: 5 }) },
+const ALL_BADGES = [
+  // Logging milestones
+  { id:'first_log', emoji:'✦', name:'First Sighting', desc:'Log your first angel number', category:'journey', req:(l:any[],s:number,p:any)=>l.length>=1 },
+  { id:'logs_10', emoji:'◎', name:'Awakening', desc:'Log 10 angel numbers', category:'journey', req:(l:any[])=>l.length>=10 },
+  { id:'logs_50', emoji:'🌟', name:'Seeker', desc:'Log 50 angel numbers', category:'journey', req:(l:any[])=>l.length>=50 },
+  { id:'logs_100', emoji:'💫', name:'Devoted', desc:'Log 100 angel numbers', category:'journey', req:(l:any[])=>l.length>=100 },
+  { id:'logs_333', emoji:'✶', name:'Sacred 333', desc:'Log 333 angel numbers', category:'journey', req:(l:any[])=>l.length>=333 },
+  { id:'logs_1000', emoji:'🌌', name:'Cosmic Master', desc:'Log 1000 angel numbers', category:'journey', req:(l:any[])=>l.length>=1000 },
   // Streak badges
-  { id: 'streak_3', emoji: '🔥', name: 'Spark', description: '3-day logging streak', category: 'Streak', color: '#fb923c', check: d => d.streak >= 3, progress: d => ({ current: Math.min(d.streak, 3), total: 3 }) },
-  { id: 'streak_7', emoji: '🌞', name: 'Solar Week', description: '7-day logging streak', category: 'Streak', color: '#fb923c', check: d => d.streak >= 7, progress: d => ({ current: Math.min(d.streak, 7), total: 7 }) },
-  { id: 'streak_21', emoji: '🌙', name: 'Lunar Cycle', description: '21-day logging streak', category: 'Streak', color: '#fb923c', check: d => d.streak >= 21, progress: d => ({ current: Math.min(d.streak, 21), total: 21 }) },
-  { id: 'streak_33', emoji: '⚡', name: 'Master Number', description: '33-day logging streak', category: 'Streak', color: '#fb923c', check: d => d.streak >= 33, progress: d => ({ current: Math.min(d.streak, 33), total: 33 }) },
-  // Dream badges
-  { id: 'first_dream', emoji: '🌙', name: 'Dream Walker', description: 'Record your first dream', category: 'Dreams', color: '#818cf8', check: d => d.dreams.length >= 1 },
-  { id: 'dreams_7', emoji: '🌌', name: 'Dream Weaver', description: 'Record 7 dreams', category: 'Dreams', color: '#818cf8', check: d => d.dreams.length >= 7, progress: d => ({ current: Math.min(d.dreams.length, 7), total: 7 }) },
-  { id: 'dreams_30', emoji: '🔭', name: 'Astral Traveler', description: 'Record 30 dreams', category: 'Dreams', color: '#818cf8', check: d => d.dreams.length >= 30, progress: d => ({ current: Math.min(d.dreams.length, 30), total: 30 }) },
-  // Gratitude badges
-  { id: 'first_gratitude', emoji: '💛', name: 'Grateful Heart', description: 'Write your first gratitude entry', category: 'Gratitude', color: '#c9a84c', check: d => d.gratitude.length >= 1 },
-  { id: 'gratitude_7', emoji: '🌻', name: 'Golden Week', description: '7 gratitude entries', category: 'Gratitude', color: '#c9a84c', check: d => d.gratitude.length >= 7, progress: d => ({ current: Math.min(d.gratitude.length, 7), total: 7 }) },
-  { id: 'gratitude_30', emoji: '☀️', name: 'Abundance Mindset', description: '30 gratitude entries', category: 'Gratitude', color: '#c9a84c', check: d => d.gratitude.length >= 30, progress: d => ({ current: Math.min(d.gratitude.length, 30), total: 30 }) },
-  // Manifestation badges
-  { id: 'first_manifest', emoji: '🌱', name: 'Seed Planter', description: 'Create your first manifestation', category: 'Manifestation', color: '#4ade80', check: d => d.manifests.length >= 1 },
-  { id: 'manifest_achieved', emoji: '✨', name: 'Manifestor', description: 'Mark a manifestation as achieved', category: 'Manifestation', color: '#4ade80', check: d => d.manifests.some((m: any) => m.status === 'manifested') },
-  { id: 'manifest_5', emoji: '🌳', name: 'Abundant Creator', description: '5 active manifestations', category: 'Manifestation', color: '#4ade80', check: d => d.manifests.length >= 5, progress: d => ({ current: Math.min(d.manifests.length, 5), total: 5 }) },
-  // Profile badges
-  { id: 'numerology_profile', emoji: '🔢', name: 'Soul Blueprint', description: 'Complete your numerology profile', category: 'Profile', color: '#f472b6', check: d => !!(d.profile?.lifePathNumber) },
-  { id: 'vision_board', emoji: '🎯', name: 'Visionary', description: 'Add 3 items to your vision board', category: 'Profile', color: '#f472b6', check: d => d.visionItems.length >= 3, progress: d => ({ current: Math.min(d.visionItems.length, 3), total: 3 }) },
-  // Special
-  { id: 'all_numbers', emoji: '🌈', name: 'Number Collector', description: 'Log 10 different angel numbers', category: 'Special', color: '#c9a84c', check: d => new Set(d.logs.map((l: any) => l.number)).size >= 10, progress: d => ({ current: Math.min(new Set(d.logs.map((l: any) => l.number)).size, 10), total: 10 }) },
-  { id: 'triple_crown', emoji: '👑', name: 'Triple Crown', description: 'Log 111, 222, and 333 in the same day', category: 'Special', color: '#c9a84c', check: d => {
-    const byDay: Record<string, Set<string>> = {}
-    d.logs.forEach((l: any) => {
-      const day = new Date(l.createdAt).toDateString()
-      if (!byDay[day]) byDay[day] = new Set()
-      byDay[day].add(l.number)
-    })
-    return Object.values(byDay).some(s => s.has('111') && s.has('222') && s.has('333'))
-  }},
-  { id: 'master_number', emoji: '⚡', name: 'Master Vibration', description: 'Log 1111 five times', category: 'Special', color: '#c9a84c', check: d => d.logs.filter((l: any) => l.number === '1111').length >= 5, progress: d => ({ current: Math.min(d.logs.filter((l: any) => l.number === '1111').length, 5), total: 5 }) },
+  { id:'streak_3', emoji:'🔥', name:'Spark', desc:'3-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=3 },
+  { id:'streak_7', emoji:'⚡', name:'Lightning', desc:'7-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=7 },
+  { id:'streak_21', emoji:'🌙', name:'Moon Cycle', desc:'21-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=21 },
+  { id:'streak_30', emoji:'☀️', name:'Solar Month', desc:'30-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=30 },
+  { id:'streak_111', emoji:'👑', name:'111 Days', desc:'111-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=111 },
+  // Number-specific badges
+  { id:'seen_1111', emoji:'🌠', name:'Portal Keeper', desc:'Log 1111 five times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='1111').length>=5 },
+  { id:'seen_777', emoji:'🍀', name:'Lucky Star', desc:'Log 777 three times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='777').length>=3 },
+  { id:'seen_888', emoji:'💰', name:'Abundance Flow', desc:'Log 888 three times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='888').length>=3 },
+  { id:'seen_999', emoji:'🦋', name:'Completion', desc:'Log 999 three times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='999').length>=3 },
+  { id:'seen_444', emoji:'🛡️', name:'Protected', desc:'Log 444 five times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='444').length>=5 },
+  { id:'seen_555', emoji:'🌊', name:'Change Rider', desc:'Log 555 five times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='555').length>=5 },
+  { id:'unique_10', emoji:'🎨', name:'Number Collector', desc:'See 10 unique numbers', category:'numbers', req:(l:any[])=>new Set(l.map((x:any)=>x.number)).size>=10 },
+  { id:'unique_20', emoji:'🔮', name:'Number Sage', desc:'See 20 unique numbers', category:'numbers', req:(l:any[])=>new Set(l.map((x:any)=>x.number)).size>=20 },
+  // Truth Score badges
+  { id:'first_proof', emoji:'📸', name:'Truth Seeker', desc:'Upload your first screenshot proof', category:'truth', req:(l:any[])=>l.some((x:any)=>x.screenshotUrl) },
+  { id:'proof_10', emoji:'✅', name:'Angel Approved', desc:'Upload 10 screenshot proofs', category:'truth', req:(l:any[])=>l.filter((x:any)=>x.screenshotUrl).length>=10 },
+  { id:'proof_50', emoji:'🏆', name:'Truth Champion', desc:'Upload 50 screenshot proofs', category:'truth', req:(l:any[])=>l.filter((x:any)=>x.screenshotUrl).length>=50 },
+  // Journal badges
+  { id:'first_thought', emoji:'💭', name:'Thought Anchor', desc:'Record your first thought', category:'journal', req:(l:any[])=>l.some((x:any)=>x.thought?.trim()) },
+  { id:'thoughts_20', emoji:'📖', name:'Soul Journalist', desc:'Record 20 thoughts', category:'journal', req:(l:any[])=>l.filter((x:any)=>x.thought?.trim()).length>=20 },
+  { id:'thoughts_100', emoji:'📚', name:'Cosmic Scribe', desc:'Record 100 thoughts', category:'journal', req:(l:any[])=>l.filter((x:any)=>x.thought?.trim()).length>=100 },
+  // Numerology badges
+  { id:'numerology_done', emoji:'🧮', name:'Blueprint Revealed', desc:'Complete your numerology profile', category:'numerology', req:(_:any[],__:number,p:any)=>!!p?.lifePathNumber },
+  { id:'life_path_11', emoji:'⚡', name:'Master 11', desc:'Have Life Path 11', category:'numerology', req:(_:any[],__:number,p:any)=>p?.lifePathNumber===11 },
+  { id:'life_path_22', emoji:'🏗️', name:'Master 22', desc:'Have Life Path 22', category:'numerology', req:(_:any[],__:number,p:any)=>p?.lifePathNumber===22 },
+  { id:'life_path_33', emoji:'💝', name:'Master 33', desc:'Have Life Path 33', category:'numerology', req:(_:any[],__:number,p:any)=>p?.lifePathNumber===33 },
 ]
 
-const CATEGORIES = ['All', 'Logger', 'Streak', 'Dreams', 'Gratitude', 'Manifestation', 'Profile', 'Special']
+const CATEGORIES = ['all','journey','streak','numbers','truth','journal','numerology']
+const CAT_COLORS: Record<string,string> = {
+  journey:'#a78bfa', streak:'#f97316', numbers:'#c9a84c',
+  truth:'#4ade80', journal:'#60a5fa', numerology:'#f472b6'
+}
 
 export default function BadgesPage() {
-  const [data, setData] = useState<AppData | null>(null)
-  const [filter, setFilter] = useState('All')
-  const [showLocked, setShowLocked] = useState(true)
+  const [logs, setLogs] = useState<any[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [streak, setStreak] = useState(0)
+  const [category, setCategory] = useState('all')
 
   useEffect(() => {
     try {
-      const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]')
-      const dreams = JSON.parse(localStorage.getItem(KEY_DREAMS) || '[]')
-      const gratitude = JSON.parse(localStorage.getItem(KEY_GRATITUDE) || '[]')
-      const manifests = JSON.parse(localStorage.getItem(KEY_MANIFEST) || '[]')
-      const profile = JSON.parse(localStorage.getItem(KEY_PROFILE) || 'null')
-      const visionItems = JSON.parse(localStorage.getItem(KEY_VISION) || '[]')
-      const streak = calcStreak(logs)
-      setData({ logs, dreams, gratitude, manifests, profile, visionItems, streak })
+      const l = localStorage.getItem(KEY_LOGS); if(l) setLogs(JSON.parse(l))
+      const p = localStorage.getItem(KEY_PROFILE); if(p) setProfile(JSON.parse(p))
+      // Calc streak
+      const allLogs = l ? JSON.parse(l) : []
+      const logDays = new Set(allLogs.map((x:any)=>new Date(x.timestamp).toDateString()))
+      let s = 0, d = new Date()
+      while(logDays.has(d.toDateString())) { s++; d.setDate(d.getDate()-1) }
+      setStreak(s)
     } catch {}
   }, [])
 
-  if (!data) return <div style={{ padding: '3rem', textAlign: 'center', color: 'rgba(180,160,255,0.4)' }}>Loading...</div>
-
-  const earned = ALL_BADGES.filter(b => b.check(data))
-  const filtered = ALL_BADGES.filter(b => filter === 'All' || b.category === filter).filter(b => showLocked || b.check(data))
+  const earned = ALL_BADGES.filter(b => { try { return b.req(logs, streak, profile) } catch { return false } })
+  const filtered = (category==='all' ? ALL_BADGES : ALL_BADGES.filter(b=>b.category===category))
+  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
 
   return (
-    <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Achievements</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>{earned.length} of {ALL_BADGES.length} badges earned</p>
+    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
+      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Sacred Badges</h1>
+      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 0.875rem'}}>Milestones on your spiritual journey</p>
+
+      {/* Progress summary */}
+      <div style={{...card,padding:'1rem',marginBottom:'1.25rem',display:'flex',alignItems:'center',gap:'1.25rem',background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(201,168,76,0.05))',borderColor:'rgba(167,139,250,0.2)'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{color:'#a78bfa',fontSize:'2rem',fontWeight:700,lineHeight:1}}>{earned.length}</div>
+          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Earned</div>
+        </div>
+        <div style={{width:'1px',height:'40px',background:'rgba(200,180,255,0.1)'}} />
+        <div style={{textAlign:'center'}}>
+          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'2rem',fontWeight:700,lineHeight:1}}>{ALL_BADGES.length - earned.length}</div>
+          <div style={{color:'rgba(180,160,255,0.3)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Remaining</div>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{height:'6px',background:'rgba(200,180,255,0.06)',borderRadius:'3px',overflow:'hidden'}}>
+            <div style={{height:'100%',width:(earned.length/ALL_BADGES.length*100)+'%',background:'linear-gradient(90deg,#a78bfa,#c9a84c)',borderRadius:'3px',transition:'width 1s ease'}} />
+          </div>
+          <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.7rem',marginTop:'0.3rem'}}>{Math.round(earned.length/ALL_BADGES.length*100)}% complete</div>
+        </div>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.1)', borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backdropFilter: 'blur(12px)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <span style={{ color: 'rgba(200,180,255,0.6)', fontSize: '0.8rem' }}>Overall Progress</span>
-          <span style={{ color: '#a78bfa', fontSize: '0.8rem', fontWeight: 600 }}>{Math.round(earned.length/ALL_BADGES.length*100)}%</span>
-        </div>
-        <div style={{ height: '6px', background: 'rgba(200,180,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: (earned.length/ALL_BADGES.length*100)+'%', background: 'linear-gradient(90deg, #a78bfa, #c9a84c)', borderRadius: '9999px', transition: 'width 0.5s ease' }} />
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-          {earned.slice(-5).map(b => <span key={b.id} style={{ fontSize: '1.2rem' }} title={b.name}>{b.emoji}</span>)}
-          {earned.length > 5 && <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', alignSelf: 'center' }}>+{earned.length-5} more</span>}
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.875rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-        {CATEGORIES.map(c => (
-          <button key={c} onClick={() => setFilter(c)} style={{ padding: '0.3rem 0.75rem', borderRadius: '9999px', border: filter === c ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.1)', background: filter === c ? 'rgba(167,139,250,0.15)' : 'transparent', color: filter === c ? '#a78bfa' : 'rgba(180,160,255,0.4)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{c}</button>
+      {/* Category filter */}
+      <div style={{display:'flex',gap:'0.35rem',flexWrap:'wrap',marginBottom:'1.25rem'}}>
+        {CATEGORIES.map(c=>(
+          <button key={c} onClick={()=>setCategory(c)} style={{padding:'0.3rem 0.625rem',borderRadius:'9999px',border:category===c?'1px solid '+(CAT_COLORS[c]||'rgba(167,139,250,0.5)'):'1px solid rgba(200,180,255,0.1)',background:category===c?((CAT_COLORS[c]||'#a78bfa')+'18'):'transparent',color:category===c?(CAT_COLORS[c]||'#a78bfa'):'rgba(180,160,255,0.4)',fontSize:'0.7rem',cursor:'pointer',textTransform:'capitalize'}}>{c}</button>
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.875rem' }}>
-        <button onClick={() => setShowLocked(s => !s)} style={{ background: 'none', border: 'none', color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', cursor: 'pointer' }}>{showLocked ? '🔒 Hide locked' : '🔓 Show locked'}</button>
-      </div>
-
-      {/* Badge grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.625rem' }}>
-        {filtered.map(badge => {
-          const unlocked = badge.check(data)
-          const prog = badge.progress?.(data)
+      {/* Badges grid */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.5rem'}}>
+        {filtered.map(badge=>{
+          const isEarned = earned.some(e=>e.id===badge.id)
+          const color = CAT_COLORS[badge.category] || '#a78bfa'
           return (
-            <div key={badge.id} style={{ background: unlocked ? 'rgba(8,6,28,0.92)' : 'rgba(8,6,28,0.6)', border: unlocked ? '1px solid ' + badge.color + '30' : '1px solid rgba(200,180,255,0.06)', borderRadius: '1rem', padding: '1rem', backdropFilter: 'blur(12px)', opacity: unlocked ? 1 : 0.55, transition: 'all 0.2s' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem', filter: unlocked ? 'none' : 'grayscale(1)' }}>{badge.emoji}</div>
-              <div style={{ color: unlocked ? 'rgba(220,200,255,0.9)' : 'rgba(180,160,255,0.4)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.2rem' }}>{badge.name}</div>
-              <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.72rem', lineHeight: 1.4, marginBottom: prog && !unlocked ? '0.5rem' : 0 }}>{badge.description}</div>
-              {prog && !unlocked && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-                    <span style={{ color: badge.color, fontSize: '0.65rem' }}>{prog.current}/{prog.total}</span>
-                  </div>
-                  <div style={{ height: '3px', background: 'rgba(200,180,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: (prog.current/prog.total*100)+'%', background: badge.color, opacity: 0.6, borderRadius: '9999px' }} />
-                  </div>
-                </div>
-              )}
-              {unlocked && <div style={{ color: badge.color, fontSize: '0.65rem', marginTop: '0.3rem' }}>✓ Earned</div>}
+            <div key={badge.id} style={{...card,padding:'1rem',opacity:isEarned?1:0.45,borderColor:isEarned?color+'30':'rgba(200,180,255,0.06)',background:isEarned?color+'06':'rgba(8,6,28,0.6)',transition:'all 0.3s'}}>
+              <div style={{fontSize:'1.8rem',marginBottom:'0.4rem',filter:isEarned?'none':'grayscale(1)'}}>{badge.emoji}</div>
+              <div style={{color:isEarned?color:'rgba(180,160,255,0.4)',fontSize:'0.82rem',fontWeight:600,marginBottom:'0.15rem'}}>{badge.name}</div>
+              <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.7rem',lineHeight:1.4,marginBottom:'0.4rem'}}>{badge.desc}</div>
+              {isEarned && <div style={{color:color,fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>✓ Earned</div>}
+              {!isEarned && <div style={{color:'rgba(180,160,255,0.2)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Locked</div>}
             </div>
           )
         })}

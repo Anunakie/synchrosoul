@@ -1,157 +1,152 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-interface OracleCard {
-  number: string
-  title: string
-  message: string
-  guidance: string
-  affirmation: string
-  emoji: string
-  color: string
-  element: string
-}
+const KEY_LOGS = 'synchrosoul_logs'
+const KEY_PROFILE = 'synchrosoul_numerology_profile'
 
-const ORACLE_CARDS: OracleCard[] = [
-  { number: '111', title: 'The Awakening Gate', message: 'A portal of new beginnings opens before you. Your thoughts are seeds — plant only what you wish to grow.', guidance: 'This is a powerful manifestation window. Write down your deepest desire and speak it aloud three times at sunrise.', affirmation: 'I am a conscious creator. My thoughts shape my reality.', emoji: '🌟', color: '#fbbf24', element: 'Fire' },
-  { number: '222', title: 'The Balance Point', message: 'Divine timing is at work. Trust the process even when you cannot see the full picture. Partnership and harmony are near.', guidance: 'Seek balance in all areas. Where have you been giving too much or too little? Restore equilibrium today.', affirmation: 'I trust divine timing. Everything unfolds perfectly for my highest good.', emoji: '⚖️', color: '#60a5fa', element: 'Air' },
-  { number: '333', title: 'The Ascended Council', message: 'The masters of light surround you. Your creative gifts are needed in the world. Express yourself without fear.', guidance: 'Create something today — write, paint, sing, dance. The ascended masters amplify your creative energy now.', affirmation: 'I express my divine gifts freely. My creativity heals and inspires.', emoji: '🔺', color: '#a78bfa', element: 'Ether' },
-  { number: '444', title: 'The Angel Shield', message: 'You are completely surrounded by angelic protection. The foundation you are building is blessed and solid.', guidance: 'Take the practical step you have been avoiding. Angels are holding the space for your success right now.', affirmation: 'I am divinely protected and guided. My foundation is strong and blessed.', emoji: '🏛️', color: '#34d399', element: 'Earth' },
-  { number: '555', title: 'The Great Shift', message: 'Massive transformation is underway. Release what no longer serves you — the universe is clearing space for miracles.', guidance: 'Identify one thing to release today. Write it on paper and burn it, flush it, or bury it as a ritual of letting go.', affirmation: 'I embrace change with grace. Every ending births a magnificent new beginning.', emoji: '🌀', color: '#fb923c', element: 'Fire' },
-  { number: '666', title: 'The Rebalancing', message: "Return to your spiritual center. Material concerns have pulled your focus — reconnect with your soul's true purpose.", guidance: 'Spend 20 minutes in nature today. Touch the earth, breathe deeply, and remember what truly matters to you.', affirmation: "I am more than my circumstances. My soul's wisdom guides every decision.", emoji: '🌿', color: '#86efac', element: 'Earth' },
-  { number: '777', title: 'The Mystic Path', message: 'You are on the right path. Spiritual luck and divine synchronicity are flowing through your life in extraordinary ways.', guidance: 'Pay attention to every coincidence today — they are messages. Keep a synchronicity journal for the next 7 days.', affirmation: 'I am aligned with divine flow. Magic and miracles are my natural state.', emoji: '🔮', color: '#818cf8', element: 'Ether' },
-  { number: '888', title: 'The Abundance Flow', message: 'Infinite abundance is your birthright. Financial and material blessings are flowing toward you now.', guidance: 'Open yourself to receiving. Say yes to an opportunity you would normally decline. Abundance requires open hands.', affirmation: 'I am a magnet for abundance. Prosperity flows to me from expected and unexpected sources.', emoji: '♾️', color: '#c9a84c', element: 'Earth' },
-  { number: '999', title: 'The Sacred Completion', message: 'A major cycle in your life is completing. Honor what has been, release with gratitude, and prepare for rebirth.', guidance: 'Write a letter of gratitude and farewell to what is ending. This ritual seals the cycle and opens the next.', affirmation: 'I complete this cycle with grace and gratitude. I am ready for my magnificent new beginning.', emoji: '🌙', color: '#f472b6', element: 'Water' },
-  { number: '1010', title: 'The Divine Reset', message: 'God/Source is speaking directly to you. A divine reset is occurring — your soul is being upgraded for its next mission.', guidance: 'Meditate for 10 minutes in complete silence. Listen for the still small voice within. It has important guidance for you.', affirmation: 'I am in direct communication with the divine. My soul receives its perfect upgrade now.', emoji: '✦', color: '#e0e7ff', element: 'Ether' },
-  { number: '1111', title: 'The Manifestation Portal', message: 'The most powerful manifestation portal is open. What you focus on now will materialize with extraordinary speed.', guidance: 'Write your top 3 desires as if already fulfilled. Read them at 11:11 AM and 11:11 PM for 11 days straight.', affirmation: 'I am a master manifestor. My desires align with divine will and materialize now.', emoji: '🌟', color: '#fde68a', element: 'Fire' },
-  { number: '1212', title: 'The Twin Flame Mirror', message: "Your twin flame or soul mirror is near. A profound soul connection is either arriving or deepening in your life.", guidance: "Open your heart fully today. Release any walls you have built around love. Your soul's mirror is seeking you.", affirmation: "I am open to profound soul connection. Love in its highest form flows to me now.", emoji: '💫', color: '#f9a8d4', element: 'Water' },
+const ORACLE_READINGS = [
+  { theme: 'manifestation', message: 'The numbers you are seeing are not coincidences — they are coordinates. The universe has been trying to show you the exact frequency you need to broadcast. Your desires are already formed in the etheric realm. The only work left is to believe they are already yours.', action: 'Write down one thing you are calling in. Hold it in your heart for 60 seconds.', symbol: '✦' },
+  { theme: 'transition', message: 'You are standing at a threshold. The old version of you served its purpose beautifully — honor it before you release it. The angel numbers appearing now are not warnings; they are escorts guiding you through the doorway. Trust the dissolution.', action: 'Identify one thing you are ready to release. Say its name aloud and let it go.', symbol: '◈' },
+  { theme: 'alignment', message: 'Your soul is recalibrating. The sequences you have been seeing form a pattern that points to deep inner alignment — your thoughts, emotions, and actions are beginning to vibrate at the same frequency. This is rare. This is sacred. Do not rush it.', action: 'Sit in stillness for 5 minutes. Notice what arises without judgment.', symbol: '◎' },
+  { theme: 'love', message: 'The universe is orchestrating a meeting of souls. Whether romantic, platonic, or a reunion with yourself — love in its purest form is moving toward you. The numbers you see are breadcrumbs on the path. Follow the warmth, not the logic.', action: 'Send a loving thought to someone who needs it today, including yourself.', symbol: '♡' },
+  { theme: 'awakening', message: 'Something ancient within you is stirring. You have been here before — not in this body, but in this knowing. The angel numbers are activating dormant codes in your consciousness. Pay attention to what feels familiar that should not.', action: 'Journal about a recurring dream, feeling, or knowing you cannot explain.', symbol: '✶' },
+  { theme: 'abundance', message: 'The frequency of abundance is not about money — it is about flow. You have been blocking the river with worry. The numbers appearing now are asking you to open your hands. What you release will return multiplied. What you grip will wither.', action: 'Give something away today — time, kindness, or a resource. Watch what returns.', symbol: '∞' },
+  { theme: 'protection', message: 'You are held. Even in the moments that felt like freefall, invisible hands were beneath you. The sequences you have been logging are confirmation that your guides are unusually close right now. You are not alone in this. You never were.', action: 'Place your hand on your heart and say: I am protected. I am guided. I am loved.', symbol: '⊕' },
+  { theme: 'purpose', message: 'The question you keep returning to — the one about why you are here — is about to receive an answer. Not in words, but in a feeling so clear it will rearrange your priorities. The numbers have been preparing you for this clarity. Stay open.', action: 'Ask yourself: What would I do if I knew I could not fail? Write the first answer that comes.', symbol: '⟡' },
 ]
 
-const SPREADS = [
-  { id: 'single', name: 'Single Card', desc: 'One message for now', count: 1, emoji: '✦' },
-  { id: 'three', name: 'Past · Present · Future', desc: 'Your timeline reading', count: 3, emoji: '◈' },
-  { id: 'cross', name: 'Soul Cross', desc: 'Challenge & guidance', count: 4, emoji: '✚' },
+const QUESTIONS = [
+  'What does the universe want me to know right now?',
+  'What is blocking my highest path?',
+  'What is my soul trying to tell me?',
+  'What should I focus on this week?',
+  'What is the meaning of the numbers I keep seeing?',
+  'What am I ready to release?',
+  'What is coming toward me?',
+  'How can I align with my purpose?',
 ]
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-
-function OracleCardDisplay({ card, label, delay = 0 }: { card: OracleCard; label?: string; delay?: number }) {
-  const [flipped, setFlipped] = useState(false)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setVisible(true), delay)
-    const t2 = setTimeout(() => setFlipped(true), delay + 400)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [delay])
-
-  return (
-    <div style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.4s ease', marginBottom: '1rem' }}>
-      {label && <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', marginBottom: '0.5rem' }}>{label}</div>}
-      <div style={{ background: 'rgba(8,6,28,0.92)', border: '1px solid ' + card.color + '40', borderRadius: '1.25rem', backdropFilter: 'blur(12px)', padding: '1.5rem', transition: 'all 0.6s ease', transform: flipped ? 'rotateY(0deg)' : 'rotateY(90deg)', boxShadow: '0 0 30px ' + card.color + '15' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
-          <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: card.color + '18', border: '1px solid ' + card.color + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', flexShrink: 0, boxShadow: '0 0 20px ' + card.color + '25' }}>{card.emoji}</div>
-          <div>
-            <div style={{ color: card.color, fontSize: '1.4rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{card.number}</div>
-            <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', marginTop: '0.2rem', fontFamily: 'Cormorant Garamond, serif' }}>{card.title}</div>
-            <div style={{ color: card.color + 'aa', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.15rem' }}>{card.element} · Oracle</div>
-          </div>
-        </div>
-        <p style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.88rem', lineHeight: 1.7, margin: '0 0 1rem', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic' }}>{card.message}</p>
-        <div style={{ background: card.color + '0c', border: '1px solid ' + card.color + '20', borderRadius: '0.75rem', padding: '0.875rem', marginBottom: '0.75rem' }}>
-          <div style={{ color: card.color, fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>✦ Guidance</div>
-          <p style={{ color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', lineHeight: 1.6, margin: 0 }}>{card.guidance}</p>
-        </div>
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(200,180,255,0.08)', borderRadius: '0.75rem', padding: '0.75rem' }}>
-          <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.35rem' }}>Affirmation</div>
-          <p style={{ color: 'rgba(220,200,255,0.65)', fontSize: '0.8rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>&ldquo;{card.affirmation}&rdquo;</p>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function OraclePage() {
-  const [spread, setSpread] = useState(SPREADS[0])
-  const [drawn, setDrawn] = useState<OracleCard[]>([])
-  const [drawing, setDrawing] = useState(false)
-  const [history, setHistory] = useState<{ date: string; spread: string; numbers: string[] }[]>([])
+  const [phase, setPhase] = useState<'ask'|'channeling'|'revealed'>('ask')
+  const [question, setQuestion] = useState('')
+  const [customQ, setCustomQ] = useState('')
+  const [reading, setReading] = useState<typeof ORACLE_READINGS[0]|null>(null)
+  const [logs, setLogs] = useState<any[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [history, setHistory] = useState<{q:string,r:typeof ORACLE_READINGS[0],ts:number}[]>([])
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem('synchrosoul_oracle_history')
-    if (saved) setHistory(JSON.parse(saved))
+    try {
+      const l = localStorage.getItem(KEY_LOGS); if(l) setLogs(JSON.parse(l))
+      const p = localStorage.getItem(KEY_PROFILE); if(p) setProfile(JSON.parse(p))
+      const h = localStorage.getItem('synchrosoul_oracle_history'); if(h) setHistory(JSON.parse(h))
+    } catch {}
   }, [])
 
-  function drawCards() {
-    setDrawing(true)
-    setDrawn([])
+  function askOracle(q: string) {
+    if (!q.trim()) return
+    setQuestion(q)
+    setPhase('channeling')
     setTimeout(() => {
-      const cards = shuffle(ORACLE_CARDS).slice(0, spread.count)
-      setDrawn(cards)
-      const entry = { date: new Date().toLocaleDateString(), spread: spread.name, numbers: cards.map(c => c.number) }
-      const updated = [entry, ...history].slice(0, 10)
-      setHistory(updated)
-      localStorage.setItem('synchrosoul_oracle_history', JSON.stringify(updated))
-      setDrawing(false)
-    }, 800)
+      const idx = Math.floor(Math.random() * ORACLE_READINGS.length)
+      const r = ORACLE_READINGS[idx]
+      setReading(r)
+      setPhase('revealed')
+      const newHistory = [{q, r, ts: Date.now()}, ...history].slice(0, 10)
+      setHistory(newHistory)
+      localStorage.setItem('synchrosoul_oracle_history', JSON.stringify(newHistory))
+    }, 2800)
   }
 
-  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
-  const LABELS: Record<string, string[]> = {
-    single: ['Your Message'],
-    three: ['Past', 'Present', 'Future'],
-    cross: ['Foundation', 'Challenge', 'Guidance', 'Outcome'],
+  function reset() {
+    setPhase('ask')
+    setQuestion('')
+    setCustomQ('')
+    setReading(null)
   }
+
+  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
 
   return (
-    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Angel Oracle</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Draw sacred number cards for divine guidance</p>
+    <div style={{maxWidth:'520px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.25rem'}}>
+        <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:0,fontWeight:400}}>The Oracle</h1>
+        <button onClick={()=>setShowHistory(!showHistory)} style={{background:'none',border:'none',color:'rgba(180,160,255,0.4)',fontSize:'0.75rem',cursor:'pointer'}}>History</button>
       </div>
+      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.5rem'}}>Ask and the universe will answer through your numbers</p>
 
-      {/* Spread selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
-        {SPREADS.map(s => (
-          <button key={s.id} onClick={() => { setSpread(s); setDrawn([]) }} style={{ ...card, padding: '0.875rem 0.5rem', border: spread.id===s.id ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(200,180,255,0.1)', background: spread.id===s.id ? 'rgba(201,168,76,0.12)' : 'rgba(8,6,28,0.7)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>{s.emoji}</span>
-            <span style={{ color: spread.id===s.id ? '#c9a84c' : 'rgba(220,200,255,0.6)', fontSize: '0.72rem', fontWeight: 600, textAlign: 'center', lineHeight: 1.3 }}>{s.name}</span>
-            <span style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.62rem', textAlign: 'center' }}>{s.desc}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Draw button */}
-      <button onClick={drawCards} disabled={drawing} style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(201,168,76,0.4)', background: drawing ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.15)', color: '#c9a84c', fontSize: '1rem', cursor: drawing ? 'not-allowed' : 'pointer', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.08em', marginBottom: '1.5rem', transition: 'all 0.3s' }}>
-        {drawing ? '✦ The cards are speaking...' : drawn.length ? '✦ Draw Again' : '✦ Draw Your Cards'}
-      </button>
-
-      {/* Cards */}
-      {drawn.map((c, i) => (
-        <OracleCardDisplay key={c.number + i} card={c} label={LABELS[spread.id]?.[i]} delay={i * 300} />
-      ))}
-
-      {/* History */}
-      {history.length > 0 && drawn.length === 0 && (
-        <div style={{ ...card, padding: '1.25rem' }}>
-          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.875rem' }}>Recent Readings</div>
-          {history.slice(0, 5).map((h, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: i < 4 ? '1px solid rgba(200,180,255,0.06)' : 'none' }}>
-              <div>
-                <span style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.8rem' }}>{h.spread}</span>
-                <span style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.72rem', marginLeft: '0.5rem' }}>{h.numbers.join(' · ')}</span>
-              </div>
-              <span style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.7rem' }}>{h.date}</span>
+      {showHistory && history.length > 0 && (
+        <div style={{...card,padding:'1rem',marginBottom:'1.25rem'}}>
+          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>Past Readings</div>
+          {history.slice(0,5).map((h,i)=>(
+            <div key={i} style={{padding:'0.625rem 0',borderBottom:'1px solid rgba(200,180,255,0.05)'}}>
+              <div style={{color:'rgba(200,180,255,0.6)',fontSize:'0.78rem',marginBottom:'0.2rem',fontStyle:'italic'}}>“{h.q}”</div>
+              <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.7rem'}}>{h.r.theme} · {new Date(h.ts).toLocaleDateString()}</div>
             </div>
           ))}
         </div>
+      )}
+
+      {phase === 'ask' && (
+        <>
+          {/* Suggested questions */}
+          <div style={{...card,padding:'1.25rem',marginBottom:'1rem'}}>
+            <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.75rem'}}>Choose a Question</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'0.4rem'}}>
+              {QUESTIONS.map(q=>(
+                <button key={q} onClick={()=>askOracle(q)}
+                  style={{padding:'0.625rem 0.875rem',borderRadius:'0.75rem',border:'1px solid rgba(200,180,255,0.08)',background:'rgba(200,180,255,0.03)',color:'rgba(200,180,255,0.65)',fontSize:'0.82rem',cursor:'pointer',textAlign:'left',fontFamily:'inherit',transition:'all 0.2s'}}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom question */}
+          <div style={{...card,padding:'1.25rem'}}>
+            <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>Or Ask Your Own</div>
+            <textarea
+              value={customQ}
+              onChange={e=>setCustomQ(e.target.value)}
+              placeholder='What is on your heart right now...'
+              rows={3}
+              style={{width:'100%',background:'rgba(200,180,255,0.04)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'0.75rem',padding:'0.75rem',color:'rgba(220,200,255,0.85)',fontSize:'0.88rem',fontFamily:'inherit',outline:'none',resize:'none',boxSizing:'border-box'}}
+            />
+            <button
+              onClick={()=>askOracle(customQ)}
+              disabled={!customQ.trim()}
+              style={{marginTop:'0.625rem',width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:customQ.trim()?'rgba(167,139,250,0.15)':'rgba(200,180,255,0.04)',border:customQ.trim()?'1px solid rgba(167,139,250,0.3)':'1px solid rgba(200,180,255,0.08)',color:customQ.trim()?'#a78bfa':'rgba(180,160,255,0.25)',fontSize:'0.88rem',cursor:customQ.trim()?'pointer':'default',fontFamily:'inherit',transition:'all 0.2s'}}
+            >Ask the Oracle ✦</button>
+          </div>
+        </>
+      )}
+
+      {phase === 'channeling' && (
+        <div style={{textAlign:'center',padding:'4rem 2rem'}}>
+          <div style={{fontSize:'3rem',marginBottom:'1.25rem',animation:'spin 3s linear infinite'}}>◈</div>
+          <p style={{color:'rgba(180,160,255,0.6)',fontSize:'0.9rem',fontFamily:'Cormorant Garamond,serif',fontStyle:'italic',marginBottom:'0.5rem'}}>Channeling your answer...</p>
+          <p style={{color:'rgba(180,160,255,0.35)',fontSize:'0.78rem',fontStyle:'italic'}}>“{question}”</p>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {phase === 'revealed' && reading && (
+        <>
+          <div style={{...card,padding:'1.75rem',marginBottom:'1rem',background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(201,168,76,0.06))',borderColor:'rgba(167,139,250,0.25)'}}>
+            <div style={{textAlign:'center',marginBottom:'1.25rem'}}>
+              <div style={{fontSize:'2.5rem',marginBottom:'0.5rem',color:'#a78bfa'}}>{reading.symbol}</div>
+              <div style={{color:'rgba(167,139,250,0.5)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.15em'}}>{reading.theme}</div>
+            </div>
+            <div style={{color:'rgba(180,160,255,0.3)',fontSize:'0.72rem',fontStyle:'italic',marginBottom:'0.875rem',textAlign:'center'}}>“{question}”</div>
+            <p style={{color:'rgba(220,200,255,0.85)',fontSize:'1.05rem'}}>{reading.message}</p>
+            <div style={{background:'rgba(201,168,76,0.06)',border:'1px solid rgba(201,168,76,0.15)',borderRadius:'0.875rem',padding:'0.875rem'}}>
+              <div style={{color:'rgba(201,168,76,0.5)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.35rem'}}>Your Action</div>
+              <p style={{color:'rgba(220,200,255,0.75)',fontSize:'0.85rem',lineHeight:1.6,margin:0}}>{reading.action}</p>
+            </div>
+          </div>
+          <button onClick={reset} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:'rgba(200,180,255,0.06)',border:'1px solid rgba(200,180,255,0.12)',color:'rgba(180,160,255,0.6)',fontSize:'0.88rem',cursor:'pointer',fontFamily:'inherit'}}>Ask Another Question</button>
+        </>
       )}
     </div>
   )
