@@ -1,107 +1,81 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { getLogs } from '@/lib/storage'
+import { useState } from 'react'
 
-const CRYSTAL_DB = [
-  { name: 'Clear Quartz', emoji: '💎', color: '#e0e7ff', element: 'All', chakra: 'Crown', numbers: ['111','1111','777','000'], properties: 'Master healer. Amplifies intentions and energy. Enhances clarity and spiritual connection.', affirmation: 'I am clear, focused, and aligned with my highest purpose.', care: 'Cleanse in sunlight or moonlight. Charge on selenite.' },
-  { name: 'Amethyst', emoji: '🔮', color: '#a78bfa', element: 'Air', chakra: 'Third Eye', numbers: ['777','333','999','1111'], properties: 'Enhances intuition, psychic abilities, and spiritual wisdom. Protects against negative energy.', affirmation: 'I trust my intuition. I am divinely guided.', care: 'Cleanse in moonlight. Avoid prolonged sunlight (fades color).' },
-  { name: 'Rose Quartz', emoji: '🌸', color: '#f9a8d4', element: 'Water', chakra: 'Heart', numbers: ['222','444','6','66'], properties: 'Stone of unconditional love. Attracts romantic love, self-love, and compassion.', affirmation: 'I am worthy of love. Love flows to me effortlessly.', care: 'Cleanse in rose water or moonlight. Charge with rose petals.' },
-  { name: 'Citrine', emoji: '🌟', color: '#fbbf24', element: 'Fire', chakra: 'Solar Plexus', numbers: ['888','333','555','3'], properties: 'Stone of abundance and manifestation. Attracts wealth, success, and positive energy.', affirmation: 'I attract abundance in all forms. I am a magnet for prosperity.', care: 'Cleanse in sunlight. Never needs cleansing (self-clearing).' },
-  { name: 'Black Tourmaline', emoji: '🖤', color: '#6b7280', element: 'Earth', chakra: 'Root', numbers: ['444','000','4','8'], properties: 'Powerful protection stone. Shields against negative energy, EMF, and psychic attacks.', affirmation: 'I am protected. I am grounded. Only love enters my space.', care: 'Bury in earth overnight. Cleanse with sage.' },
-  { name: 'Lapis Lazuli', emoji: '🌊', color: '#3b82f6', element: 'Water', chakra: 'Throat', numbers: ['555','741','33','5'], properties: 'Stone of truth and wisdom. Enhances communication, self-expression, and inner knowing.', affirmation: 'I speak my truth with confidence and grace.', care: 'Cleanse in moonlight. Avoid water (contains pyrite).' },
-  { name: 'Selenite', emoji: '🤍', color: '#f1f5f9', element: 'Spirit', chakra: 'Crown', numbers: ['111','999','11','22'], properties: 'High vibration stone. Cleanses other crystals, opens crown chakra, connects to higher realms.', affirmation: 'I am connected to divine light and infinite wisdom.', care: 'Never cleanse in water (dissolves). Charge in moonlight.' },
-  { name: 'Obsidian', emoji: '⚫', color: '#1f2937', element: 'Fire/Earth', chakra: 'Root', numbers: ['999','000','8','88'], properties: 'Volcanic glass. Reveals truth, releases past trauma, provides deep soul healing.', affirmation: 'I release the past. I am free to create my future.', care: 'Cleanse in running water or sage smoke.' },
-  { name: 'Labradorite', emoji: '🌈', color: '#67e8f9', element: 'Water', chakra: 'Third Eye', numbers: ['1111','777','11','33'], properties: 'Stone of magic and transformation. Awakens psychic abilities and protects the aura.', affirmation: 'I embrace transformation. Magic flows through my life.', care: 'Cleanse in moonlight. Charge under northern lights or full moon.' },
-  { name: 'Green Aventurine', emoji: '🍀', color: '#4ade80', element: 'Earth', chakra: 'Heart', numbers: ['444','888','4','6'], properties: 'Stone of opportunity and luck. Attracts prosperity, growth, and new beginnings.', affirmation: 'I am open to new opportunities. Luck flows to me naturally.', care: 'Cleanse in running water. Charge in sunlight.' },
-  { name: 'Moonstone', emoji: '🌙', color: '#e2e8f0', element: 'Water', chakra: 'Crown/Sacral', numbers: ['222','2','11','1212'], properties: 'Stone of new beginnings and feminine energy. Enhances intuition and emotional balance.', affirmation: 'I flow with the cycles of life. I trust divine timing.', care: 'Charge under full moon. Cleanse in moonlight.' },
-  { name: 'Pyrite', emoji: '✨', color: '#d97706', element: 'Earth/Fire', chakra: 'Solar Plexus', numbers: ['888','8','333','1234'], properties: 'Fools gold but real power. Attracts wealth, boosts confidence, shields against negativity.', affirmation: 'I am confident, powerful, and worthy of success.', care: 'Cleanse with dry salt. Avoid water (rusts).' },
+const CRYSTALS = [
+  { number: '111', name: 'Clear Quartz', aka: 'The Master Amplifier', color: '#f0f9ff', hex: '#e0f2fe', emoji: '💎', element: 'All', chakra: 'Crown', affinity: 'Manifestation & Clarity', howToUse: 'Hold during meditation or place on your journal while writing intentions. Program it by speaking your desires into it under sunlight.', properties: ['Amplifies all intentions', 'Clears mental fog', 'Connects to higher self', 'Accelerates manifestation'], pairsWith: 'Citrine' },
+  { number: '222', name: 'Rose Quartz', aka: 'The Heart Stone', color: '#fdf2f8', hex: '#fce7f3', emoji: '🌸', element: 'Water', chakra: 'Heart', affinity: 'Love & Harmony', howToUse: 'Sleep with it under your pillow to attract love. Place in the relationship corner of your home (far right from entrance).', properties: ['Opens the heart chakra', 'Attracts soul connections', 'Heals emotional wounds', 'Cultivates self-love'], pairsWith: 'Moonstone' },
+  { number: '333', name: 'Amethyst', aka: 'The Ascension Stone', color: '#f5f3ff', hex: '#ede9fe', emoji: '🔮', element: 'Air', chakra: 'Third Eye', affinity: 'Creativity & Intuition', howToUse: 'Place on your third eye during meditation. Keep on your desk while creating. Charge under the full moon monthly.', properties: ['Enhances psychic abilities', 'Stimulates creativity', 'Connects to ascended masters', 'Promotes spiritual growth'], pairsWith: 'Labradorite' },
+  { number: '444', name: 'Black Tourmaline', aka: 'The Protector', color: '#1c1917', hex: '#292524', emoji: '🖤', element: 'Earth', chakra: 'Root', affinity: 'Protection & Grounding', howToUse: 'Place at the four corners of your home or bedroom. Carry in your left pocket for personal protection. Cleanse weekly with smoke.', properties: ['Creates energetic shields', 'Grounds scattered energy', 'Repels negative forces', 'Builds solid foundations'], pairsWith: 'Selenite' },
+  { number: '555', name: 'Labradorite', aka: 'The Transformation Stone', color: '#ecfdf5', hex: '#d1fae5', emoji: '🌊', element: 'Fire', chakra: 'Throat', affinity: 'Change & Magic', howToUse: 'Hold during times of transition. Gaze into its iridescent surface to receive visions. Wear as jewelry during major life changes.', properties: ['Facilitates transformation', 'Reveals hidden truths', 'Strengthens intuition', 'Protects during change'], pairsWith: 'Moldavite' },
+  { number: '666', name: 'Green Aventurine', aka: 'The Balancer', color: '#f0fdf4', hex: '#dcfce7', emoji: '🍃', element: 'Earth', chakra: 'Heart', affinity: 'Balance & Healing', howToUse: 'Carry in your pocket for daily balance. Place on your heart during breathwork. Bury in your garden to heal the land around you.', properties: ['Restores energetic balance', 'Heals the heart', 'Attracts good luck', 'Soothes anxiety'], pairsWith: 'Rose Quartz' },
+  { number: '777', name: 'Lapis Lazuli', aka: 'The Mystic Stone', color: '#eff6ff', hex: '#dbeafe', emoji: '⭐', element: 'Ether', chakra: 'Third Eye', affinity: 'Wisdom & Luck', howToUse: 'Wear around your neck to keep wisdom close to your heart. Meditate with it on your forehead. Journal with it nearby to access deeper truths.', properties: ['Activates spiritual luck', 'Enhances wisdom', 'Opens psychic channels', 'Reveals life purpose'], pairsWith: 'Amethyst' },
+  { number: '888', name: 'Citrine', aka: 'The Merchant Stone', color: '#fffbeb', hex: '#fef3c7', emoji: '✨', element: 'Fire', chakra: 'Solar Plexus', affinity: 'Abundance & Success', howToUse: 'Place in your wallet or cash register. Keep in the wealth corner of your home (far left from entrance). Never cleanse with water — use sunlight.', properties: ['Attracts wealth and success', 'Boosts confidence', 'Energizes manifestation', 'Never absorbs negative energy'], pairsWith: 'Pyrite' },
+  { number: '999', name: 'Obsidian', aka: 'The Completion Stone', color: '#0c0a09', hex: '#1c1917', emoji: '🌑', element: 'Fire', chakra: 'Root', affinity: 'Release & Completion', howToUse: 'Use during cord-cutting rituals. Gaze into a polished sphere to release the past. Bury with written intentions of what you are releasing.', properties: ['Cuts energetic cords', 'Reveals shadow self', 'Completes karmic cycles', 'Protects during endings'], pairsWith: 'Selenite' },
+  { number: '1010', name: 'Selenite', aka: 'The Divine Channel', color: '#fafaf9', hex: '#f5f5f4', emoji: '🌙', element: 'Ether', chakra: 'Crown', affinity: 'Divine Connection', howToUse: 'Never cleanse with water. Use to cleanse other crystals by placing them on a selenite plate overnight. Hold during prayer or channeling.', properties: ['Opens divine channels', 'Cleanses other crystals', 'Connects to higher realms', 'Brings mental clarity'], pairsWith: 'Clear Quartz' },
+  { number: '1111', name: 'Moldavite', aka: 'The Portal Stone', color: '#f0fdf4', hex: '#bbf7d0', emoji: '☄️', element: 'Ether', chakra: 'All', affinity: 'Rapid Transformation', howToUse: 'Use with caution — its energy is intense. Hold briefly during 11:11 portal activations. Combine with grounding stones like black tourmaline.', properties: ['Opens manifestation portals', 'Accelerates spiritual evolution', 'Extraterrestrial origin', 'Catalyzes rapid change'], pairsWith: 'Black Tourmaline' },
+  { number: '1212', name: 'Moonstone', aka: 'The Twin Flame Stone', color: '#f8fafc', hex: '#f1f5f9', emoji: '🌕', element: 'Water', chakra: 'Sacral', affinity: 'Soul Connections', howToUse: 'Charge under the full moon. Carry when seeking your twin flame. Place under your pillow to receive dream messages from your soul mirror.', properties: ['Attracts twin flame connections', 'Enhances feminine energy', 'Reveals soul contracts', 'Deepens intuition'], pairsWith: 'Rose Quartz' },
 ]
 
 export default function CrystalsPage() {
-  const [recentNumbers, setRecentNumbers] = useState<string[]>([])
-  const [filter, setFilter] = useState<'all' | 'recommended'>('recommended')
-  const [selected, setSelected] = useState<typeof CRYSTAL_DB[0] | null>(null)
-  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<typeof CRYSTALS[0] | null>(null)
+  const [filter, setFilter] = useState('all')
 
-  useEffect(() => {
-    const logs = getLogs()
-    const nums = [...new Set(logs.slice(0, 20).map(l => l.number))]
-    setRecentNumbers(nums)
-  }, [])
+  const numbers = ['all', ...CRYSTALS.map(c => c.number)]
+  const visible = filter === 'all' ? CRYSTALS : CRYSTALS.filter(c => c.number === filter)
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
 
-  const recommended = CRYSTAL_DB.filter(c =>
-    recentNumbers.some(n => c.numbers.includes(n))
-  )
-
-  const displayed = (filter === 'recommended' && recommended.length > 0 ? recommended : CRYSTAL_DB)
-    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.properties.toLowerCase().includes(search.toLowerCase()))
-
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
-
-  if (selected) {
-    return (
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-        <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', marginBottom: '1.5rem', fontFamily: 'inherit' }}>← Back to Crystals</button>
-        <div style={{ ...card, padding: '2rem', border: `1px solid ${selected.color}33`, background: `radial-gradient(ellipse at 50% 0%, ${selected.color}10 0%, rgba(8,6,28,0.95) 70%)` }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '0.5rem', filter: `drop-shadow(0 0 16px ${selected.color}66)` }}>{selected.emoji}</div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: selected.color, margin: '0 0 0.25rem', fontWeight: 400 }}>{selected.name}</h2>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(180,160,255,0.6)', fontSize: '0.7rem' }}>{selected.chakra} Chakra</span>
-              <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(180,160,255,0.6)', fontSize: '0.7rem' }}>{selected.element}</span>
+  if (selected) return (
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: 'rgba(180,160,255,0.5)', cursor: 'pointer', fontSize: '0.8rem', marginBottom: '1rem', padding: 0 }}>← All Crystals</button>
+      <div style={{ ...card, padding: '1.75rem', borderColor: 'rgba(201,168,76,0.2)', marginBottom: '1rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '0.75rem' }}>{selected.emoji}</div>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.25rem' }}>Angel Number {selected.number}</div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>{selected.name}</h2>
+          <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.82rem', fontStyle: 'italic' }}>{selected.aka}</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
+          {[{ label: 'Element', value: selected.element }, { label: 'Chakra', value: selected.chakra }, { label: 'Pairs With', value: selected.pairsWith }].map(s => (
+            <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.75rem', padding: '0.625rem', textAlign: 'center' }}>
+              <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>{s.label}</div>
+              <div style={{ color: 'rgba(220,200,255,0.75)', fontSize: '0.72rem', fontWeight: 600 }}>{s.value}</div>
             </div>
-          </div>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Properties</div>
-            <p style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.88rem', lineHeight: 1.7, margin: 0 }}>{selected.properties}</p>
-          </div>
-          <div style={{ ...card, padding: '1rem', marginBottom: '1rem', background: `${selected.color}08`, border: `1px solid ${selected.color}22` }}>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>Affirmation</div>
-            <p style={{ color: selected.color, fontSize: '1rem', lineHeight: 1.6, margin: 0, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>“{selected.affirmation}”</p>
-          </div>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Care Instructions</div>
-            <p style={{ color: 'rgba(180,160,255,0.65)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>{selected.care}</p>
-          </div>
-          <div>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Resonates with Angel Numbers</div>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {selected.numbers.map(n => <span key={n} style={{ padding: '0.25rem 0.65rem', borderRadius: '2rem', background: `${selected.color}15`, border: `1px solid ${selected.color}33`, color: selected.color, fontSize: '0.78rem', fontWeight: 600 }}>{n}</span>)}
-            </div>
+          ))}
+        </div>
+        <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.875rem', padding: '1rem', marginBottom: '1rem' }}>
+          <div style={{ color: '#c9a84c', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>✦ Affinity: {selected.affinity}</div>
+          <p style={{ color: 'rgba(180,160,255,0.7)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>{selected.howToUse}</p>
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.625rem' }}>Properties</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {selected.properties.map(p => (
+              <span key={p} style={{ padding: '0.3rem 0.75rem', borderRadius: '2rem', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', color: 'rgba(200,180,255,0.7)', fontSize: '0.72rem' }}>{p}</span>
+            ))}
           </div>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Crystal Guide</h1>
-      <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '0 0 1.25rem' }}>Crystals aligned with your angel numbers.</p>
-
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search crystals..." style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.9)', padding: '0.65rem 1rem', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit', marginBottom: '0.75rem', boxSizing: 'border-box' }} />
-
-      {recentNumbers.length > 0 && (
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-          {(['recommended', 'all'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.35rem 0.9rem', borderRadius: '2rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.75rem', background: filter === f ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)', border: filter === f ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.1)', color: filter === f ? '#a78bfa' : 'rgba(180,160,255,0.5)' }}>
-              {f === 'recommended' ? `✨ For You (${recommended.length})` : 'All Crystals'}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-        {displayed.map(c => (
-          <button key={c.name} onClick={() => setSelected(c)}
-            style={{ ...card, padding: '1.1rem', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', border: `1px solid ${c.color}22`, transition: 'all 0.2s' }}
-          >
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem', filter: `drop-shadow(0 0 8px ${c.color}55)` }}>{c.emoji}</div>
-            <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.2rem' }}>{c.name}</div>
-            <div style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.68rem', marginBottom: '0.4rem' }}>{c.chakra} • {c.element}</div>
-            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-              {c.numbers.slice(0,2).map(n => <span key={n} style={{ padding: '0.1rem 0.4rem', borderRadius: '2rem', background: `${c.color}12`, border: `1px solid ${c.color}25`, color: c.color, fontSize: '0.62rem' }}>{n}</span>)}
-            </div>
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Crystal Guide</h1>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Sacred stones aligned with your angel numbers</p>
+      </div>
+      <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem' }}>
+        {numbers.map(n => (
+          <button key={n} onClick={() => setFilter(n)} style={{ flexShrink: 0, padding: '0.35rem 0.75rem', borderRadius: '2rem', border: filter===n ? '1px solid rgba(201,168,76,0.6)' : '1px solid rgba(200,180,255,0.12)', background: filter===n ? 'rgba(201,168,76,0.15)' : 'rgba(8,6,28,0.6)', color: filter===n ? '#c9a84c' : 'rgba(180,160,255,0.4)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{n === 'all' ? 'All' : n}</button>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.75rem' }}>
+        {visible.map(c => (
+          <button key={c.number} onClick={() => setSelected(c)} style={{ ...card, padding: '1.25rem', textAlign: 'center', cursor: 'pointer', border: '1px solid rgba(200,180,255,0.1)', transition: 'all 0.2s' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{c.emoji}</div>
+            <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.2rem' }}>{c.number}</div>
+            <div style={{ color: 'rgba(220,200,255,0.85)', fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontWeight: 400, marginBottom: '0.2rem' }}>{c.name}</div>
+            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem' }}>{c.affinity}</div>
           </button>
         ))}
       </div>

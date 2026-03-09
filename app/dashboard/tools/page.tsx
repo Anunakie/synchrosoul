@@ -7,6 +7,7 @@ const TOOL_SECTIONS = [
     emoji: '🌅',
     tools: [
       { href: '/dashboard/meditations', emoji: '🧘', name: 'Meditations', desc: '6 guided practices', color: '#a78bfa' },
+      { href: '/dashboard/circles', emoji: '⭕', name: 'Angel Circles', desc: 'Private number communities', color: '#f472b6' },
       { href: '/dashboard/rituals', emoji: '✦', name: 'Rituals', desc: 'Sacred daily practices', color: '#c9a84c' },
       { href: '/dashboard/affirmations', emoji: '💫', name: 'Affirmations', desc: 'Daily cosmic affirmations', color: '#60a5fa' },
       { href: '/dashboard/gratitude', emoji: '💛', name: 'Gratitude', desc: 'Gratitude journal & streaks', color: '#fbbf24' },

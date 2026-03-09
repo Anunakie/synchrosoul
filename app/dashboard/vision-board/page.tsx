@@ -1,177 +1,171 @@
 'use client'
-import { useState, useEffect } from 'react'
-
-const BOARD_KEY = 'synchrosoul_vision_board_v2'
-
-const CATEGORIES = [
-  { id: 'love', label: 'Love & Relationships', emoji: '💞', color: '#f472b6' },
-  { id: 'abundance', label: 'Abundance & Career', emoji: '🌟', color: '#c9a84c' },
-  { id: 'health', label: 'Health & Vitality', emoji: '🌿', color: '#34d399' },
-  { id: 'purpose', label: 'Purpose & Growth', emoji: '◈', color: '#a78bfa' },
-  { id: 'travel', label: 'Travel & Adventure', emoji: '🌍', color: '#60a5fa' },
-  { id: 'home', label: 'Home & Sanctuary', emoji: '🏡', color: '#fb923c' },
-  { id: 'spiritual', label: 'Spiritual Evolution', emoji: '✨', color: '#e879f9' },
-  { id: 'creativity', label: 'Creativity & Art', emoji: '🎨', color: '#f59e0b' },
-]
-
-const EMOJIS = ['🌟','💞','🔥','🌍','🏡','💫','🌹','💎','🛸','🏆','💰','🌊','✨','🌙','🦋','🌴','🎨','📝','🎵','🧠']
+import { useState, useEffect, useRef } from 'react'
 
 interface VisionItem {
-  id: number
-  text: string
-  category: string
-  emoji: string
-  affirmation: string
+  id: string
+  type: 'image' | 'affirmation' | 'number' | 'intention'
+  content: string
+  label: string
+  color: string
+  x: number
+  y: number
   createdAt: string
-  achieved: boolean
 }
+
+const VB_KEY = 'synchrosoul_visionboard_v2'
+const COLORS = ['#a78bfa','#f472b6','#c9a84c','#34d399','#60a5fa','#fb923c','#e0e7ff']
+
+const INTENTION_TEMPLATES = [
+  'I am aligned with my highest purpose',
+  'Abundance flows to me effortlessly',
+  'I attract love that mirrors my soul',
+  'My angel numbers guide me daily',
+  'I trust the divine timing of my life',
+  'I am a magnet for miracles',
+  'My dreams are becoming reality',
+  'I radiate light and attract light',
+]
 
 export default function VisionBoardPage() {
   const [items, setItems] = useState<VisionItem[]>([])
-  const [activeCategory, setActiveCategory] = useState('all')
-  const [showAdd, setShowAdd] = useState(false)
-  const [newText, setNewText] = useState('')
-  const [newCat, setNewCat] = useState('love')
-  const [newEmoji, setNewEmoji] = useState('🌟')
-  const [newAffirmation, setNewAffirmation] = useState('')
-  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [mode, setMode] = useState<'view'|'add'>('view')
+  const [addType, setAddType] = useState<'affirmation'|'number'|'intention'|'image'>('intention')
+  const [text, setText] = useState('')
+  const [label, setLabel] = useState('')
+  const [color, setColor] = useState(COLORS[0])
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem(BOARD_KEY)
+    const saved = localStorage.getItem(VB_KEY)
     if (saved) setItems(JSON.parse(saved))
   }, [])
 
-  function save(next: VisionItem[]) {
-    setItems(next)
-    localStorage.setItem(BOARD_KEY, JSON.stringify(next))
+  function save(updated: VisionItem[]) {
+    setItems(updated)
+    localStorage.setItem(VB_KEY, JSON.stringify(updated))
   }
 
-  function addItem() {
-    if (!newText.trim()) return
+  function addItem(content: string, type: VisionItem['type']) {
+    if (!content.trim()) return
     const item: VisionItem = {
-      id: Date.now(), text: newText.trim(), category: newCat,
-      emoji: newEmoji, affirmation: newAffirmation.trim() || `I am manifesting ${newText.trim().toLowerCase()}.`,
-      createdAt: new Date().toISOString(), achieved: false,
+      id: Date.now().toString(),
+      type,
+      content: content.trim(),
+      label: label.trim() || (type === 'number' ? 'Angel Number' : type === 'image' ? 'Vision' : 'Intention'),
+      color,
+      x: Math.random() * 60 + 10,
+      y: Math.random() * 60 + 10,
+      createdAt: new Date().toISOString(),
     }
-    save([...items, item])
-    setNewText(''); setNewAffirmation(''); setShowAdd(false)
+    save([item, ...items])
+    setText('')
+    setLabel('')
+    setSelectedTemplate('')
+    setMode('view')
   }
 
-  function toggleAchieved(id: number) {
-    save(items.map(i => i.id === id ? { ...i, achieved: !i.achieved } : i))
+  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string
+      addItem(dataUrl, 'image')
+    }
+    reader.readAsDataURL(file)
   }
 
-  function deleteItem(id: number) {
+  function removeItem(id: string) {
     save(items.filter(i => i.id !== id))
   }
 
-  const filtered = activeCategory === 'all' ? items : items.filter(i => i.category === activeCategory)
-  const achieved = items.filter(i => i.achieved).length
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
+  const input: React.CSSProperties = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.75rem 1rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
         <div>
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Vision Board</h1>
-          <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>{achieved}/{items.length} visions manifested</p>
+          <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Manifest your cosmic intentions</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => setView(v => v === 'grid' ? 'list' : 'grid')} style={{ padding: '0.4rem 0.75rem', borderRadius: '0.625rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.12)', color: 'rgba(180,160,255,0.6)', fontSize: '0.75rem', cursor: 'pointer' }}>{view === 'grid' ? '☰ List' : '⊡ Grid'}</button>
-          <button onClick={() => setShowAdd(s => !s)} style={{ padding: '0.4rem 0.875rem', borderRadius: '0.625rem', background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', border: 'none', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>+ Add Vision</button>
-        </div>
+        <button onClick={() => setMode(mode === 'add' ? 'view' : 'add')} style={{ padding: '0.5rem 1rem', borderRadius: '2rem', border: '1px solid rgba(201,168,76,0.4)', background: mode === 'add' ? 'rgba(244,114,182,0.15)' : 'rgba(201,168,76,0.15)', color: mode === 'add' ? '#f472b6' : '#c9a84c', fontSize: '0.8rem', cursor: 'pointer' }}>{mode === 'add' ? '✕ Cancel' : '+ Add'}</button>
       </div>
 
-      {/* Progress bar */}
-      {items.length > 0 && (
-        <div style={{ ...card, padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Manifestation Progress</span>
-            <span style={{ color: '#c9a84c', fontSize: '0.78rem', fontWeight: 600 }}>{items.length > 0 ? Math.round((achieved / items.length) * 100) : 0}%</span>
+      {/* Add panel */}
+      {mode === 'add' && (
+        <div style={{ ...card, padding: '1.25rem', marginBottom: '1.25rem' }}>
+          {/* Type selector */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.4rem', marginBottom: '1rem' }}>
+            {([['intention','🌟','Intention'],['affirmation','💫','Affirmation'],['number','✦','Number'],['image','🖼️','Image']] as const).map(([t,e,l]) => (
+              <button key={t} onClick={() => setAddType(t)} style={{ padding: '0.5rem 0.25rem', borderRadius: '0.75rem', border: addType===t ? '1px solid rgba(201,168,76,0.6)' : '1px solid rgba(200,180,255,0.1)', background: addType===t ? 'rgba(201,168,76,0.15)' : 'rgba(8,6,28,0.5)', color: addType===t ? '#c9a84c' : 'rgba(180,160,255,0.4)', fontSize: '0.65rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
+                <span style={{ fontSize: '1rem' }}>{e}</span>{l}
+              </button>
+            ))}
           </div>
-          <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.05)' }}>
-            <div style={{ height: '100%', width: `${items.length > 0 ? (achieved / items.length) * 100 : 0}%`, background: 'linear-gradient(90deg, #7c3aed, #c9a84c)', borderRadius: '3px', transition: 'width 0.5s' }} />
-          </div>
-        </div>
-      )}
 
-      {/* Add form */}
-      {showAdd && (
-        <div style={{ ...card, padding: '1.25rem', marginBottom: '1rem' }}>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Choose Emoji</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {EMOJIS.map(e => (
-                <button key={e} onClick={() => setNewEmoji(e)} style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: newEmoji === e ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)', border: newEmoji === e ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.08)', cursor: 'pointer', fontSize: '1rem' }}>{e}</button>
-              ))}
+          {addType === 'image' ? (
+            <div>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
+              <input placeholder="Label (optional)" value={label} onChange={e => setLabel(e.target.value)} style={{ ...input, marginBottom: '0.75rem' }} />
+              <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '2rem', borderRadius: '0.875rem', border: '2px dashed rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.05)', color: '#c9a84c', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '2rem' }}>🖼️</span>
+                Tap to upload an image
+              </button>
             </div>
-          </div>
-          <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="What do you want to manifest?" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.65rem 0.875rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.88rem', outline: 'none', boxSizing: 'border-box', marginBottom: '0.5rem' }} />
-          <input value={newAffirmation} onChange={e => setNewAffirmation(e.target.value)} placeholder="Affirmation (optional)" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.65rem 0.875rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.88rem', outline: 'none', boxSizing: 'border-box', marginBottom: '0.5rem' }} />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <select value={newCat} onChange={e => setNewCat(e.target.value)} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.5rem', color: 'rgba(180,160,255,0.8)', fontSize: '0.8rem', outline: 'none' }}>
-              {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
-            </select>
-            <button onClick={addItem} style={{ padding: '0.5rem 1.25rem', borderRadius: '0.75rem', background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', border: 'none', color: 'white', fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600 }}>Add</button>
-          </div>
+          ) : (
+            <div>
+              {addType === 'intention' && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Quick templates</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {INTENTION_TEMPLATES.map(t => (
+                      <button key={t} onClick={() => { setText(t); setSelectedTemplate(t) }} style={{ padding: '0.3rem 0.625rem', borderRadius: '2rem', border: selectedTemplate===t ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(200,180,255,0.1)', background: selectedTemplate===t ? 'rgba(201,168,76,0.12)' : 'rgba(8,6,28,0.5)', color: selectedTemplate===t ? '#c9a84c' : 'rgba(180,160,255,0.45)', fontSize: '0.68rem', cursor: 'pointer' }}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <input placeholder={addType === 'number' ? 'Angel number (e.g. 1111)' : 'Your intention...'} value={text} onChange={e => setText(e.target.value)} style={{ ...input, marginBottom: '0.625rem' }} />
+              <input placeholder="Label (optional)" value={label} onChange={e => setLabel(e.target.value)} style={{ ...input, marginBottom: '0.75rem' }} />
+              <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.875rem' }}>
+                {COLORS.map(c => (
+                  <button key={c} onClick={() => setColor(c)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: c, border: color===c ? '2px solid white' : '2px solid transparent', cursor: 'pointer', flexShrink: 0 }} />
+                ))}
+              </div>
+              <button onClick={() => addItem(text, addType)} disabled={!text.trim()} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.15)', color: '#c9a84c', fontSize: '0.85rem', cursor: text.trim() ? 'pointer' : 'not-allowed', opacity: text.trim() ? 1 : 0.4 }}>✦ Add to Board</button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Category filter */}
-      <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => setActiveCategory('all')} style={{ flexShrink: 0, padding: '0.35rem 0.75rem', borderRadius: '2rem', border: activeCategory === 'all' ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.1)', background: activeCategory === 'all' ? 'rgba(167,139,250,0.15)' : 'rgba(8,6,28,0.7)', color: activeCategory === 'all' ? '#a78bfa' : 'rgba(180,160,255,0.5)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>✦ All ({items.length})</button>
-        {CATEGORIES.map(c => {
-          const count = items.filter(i => i.category === c.id).length
-          if (count === 0) return null
-          return (
-            <button key={c.id} onClick={() => setActiveCategory(c.id)} style={{ flexShrink: 0, padding: '0.35rem 0.75rem', borderRadius: '2rem', border: activeCategory === c.id ? `1px solid ${c.color}66` : '1px solid rgba(200,180,255,0.1)', background: activeCategory === c.id ? `${c.color}18` : 'rgba(8,6,28,0.7)', color: activeCategory === c.id ? c.color : 'rgba(180,160,255,0.5)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{c.emoji} {c.label.split(' ')[0]} ({count})</button>
-          )
-        })}
-      </div>
-
-      {/* Items */}
-      {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💫</div>
-          <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.88rem', marginBottom: '1rem' }}>Your vision board is empty. Add your first vision above.</p>
-        </div>
-      ) : view === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-          {filtered.map(item => {
-            const cat = CATEGORIES.find(c => c.id === item.category)
-            return (
-              <div key={item.id} style={{ ...card, padding: '1.25rem', borderColor: item.achieved ? `${cat?.color || '#a78bfa'}44` : 'rgba(200,180,255,0.12)', opacity: item.achieved ? 0.7 : 1, position: 'relative', overflow: 'hidden' }}>
-                {item.achieved && <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '2rem', padding: '0.1rem 0.4rem', fontSize: '0.6rem', color: '#34d399' }}>✓ Done</div>}
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{item.emoji}</div>
-                <p style={{ color: item.achieved ? 'rgba(180,160,255,0.5)' : 'rgba(220,200,255,0.88)', fontSize: '0.85rem', margin: '0 0 0.5rem', lineHeight: 1.4, textDecoration: item.achieved ? 'line-through' : 'none' }}>{item.text}</p>
-                <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.72rem', margin: '0 0 0.75rem', lineHeight: 1.4, fontStyle: 'italic' }}>{item.affirmation}</p>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button onClick={() => toggleAchieved(item.id)} style={{ flex: 1, padding: '0.35rem', borderRadius: '0.5rem', background: item.achieved ? 'rgba(52,211,153,0.1)' : 'rgba(167,139,250,0.1)', border: item.achieved ? '1px solid rgba(52,211,153,0.25)' : '1px solid rgba(167,139,250,0.2)', color: item.achieved ? '#34d399' : '#a78bfa', fontSize: '0.7rem', cursor: 'pointer' }}>{item.achieved ? 'Unmark' : '✓ Done'}</button>
-                  <button onClick={() => deleteItem(item.id)} style={{ padding: '0.35rem 0.5rem', borderRadius: '0.5rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', color: 'rgba(239,68,68,0.5)', fontSize: '0.7rem', cursor: 'pointer' }}>✕</button>
-                </div>
-              </div>
-            )
-          })}
+      {/* Board grid */}
+      {items.length === 0 ? (
+        <div style={{ ...card, padding: '3rem 1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌟</div>
+          <div style={{ color: 'rgba(220,200,255,0.7)', fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Your vision board awaits</div>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.8rem', lineHeight: 1.6 }}>Add intentions, angel numbers, affirmations, and images to manifest your dreams</div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {filtered.map(item => {
-            const cat = CATEGORIES.find(c => c.id === item.category)
-            return (
-              <div key={item.id} style={{ ...card, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem', opacity: item.achieved ? 0.7 : 1 }}>
-                <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{item.emoji}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: 'rgba(220,200,255,0.88)', fontSize: '0.88rem', margin: '0 0 0.2rem', textDecoration: item.achieved ? 'line-through' : 'none' }}>{item.text}</p>
-                  <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.72rem', margin: 0, fontStyle: 'italic' }}>{item.affirmation}</p>
-                </div>
-                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                  <button onClick={() => toggleAchieved(item.id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '0.5rem', background: item.achieved ? 'rgba(52,211,153,0.1)' : 'rgba(167,139,250,0.1)', border: item.achieved ? '1px solid rgba(52,211,153,0.25)' : '1px solid rgba(167,139,250,0.2)', color: item.achieved ? '#34d399' : '#a78bfa', fontSize: '0.7rem', cursor: 'pointer' }}>{item.achieved ? '✓' : 'Done'}</button>
-                  <button onClick={() => deleteItem(item.id)} style={{ padding: '0.35rem 0.5rem', borderRadius: '0.5rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', color: 'rgba(239,68,68,0.5)', fontSize: '0.7rem', cursor: 'pointer' }}>✕</button>
-                </div>
-              </div>
-            )
-          })}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.75rem' }}>
+          {items.map(item => (
+            <div key={item.id} style={{ ...card, padding: '1rem', borderColor: item.color + '25', background: item.color + '08', position: 'relative', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+              <button onClick={() => removeItem(item.id)} style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(244,114,182,0.15)', border: '1px solid rgba(244,114,182,0.2)', borderRadius: '50%', width: '20px', height: '20px', color: '#f472b6', fontSize: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+              {item.type === 'image' ? (
+                <img src={item.content} alt={item.label} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '0.625rem', marginBottom: '0.5rem' }} />
+              ) : item.type === 'number' ? (
+                <div style={{ color: item.color, fontSize: '2rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', textShadow: '0 0 20px ' + item.color + '60', marginBottom: '0.25rem' }}>{item.content}</div>
+              ) : (
+                <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.8rem', lineHeight: 1.5, fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', marginBottom: '0.25rem' }}>{item.content}</div>
+              )}
+              <div style={{ color: item.color, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}>{item.label}</div>
+            </div>
+          ))}
         </div>
+      )}
+
+      {items.length > 0 && (
+        <div style={{ textAlign: 'center', marginTop: '1.25rem', color: 'rgba(180,160,255,0.3)', fontSize: '0.72rem' }}>{items.length} intention{items.length !== 1 ? 's' : ''} on your board</div>
       )}
     </div>
   )

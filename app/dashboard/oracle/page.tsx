@@ -1,208 +1,156 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const READINGS_KEY = 'synchrosoul_oracle_readings'
+interface OracleCard {
+  number: string
+  title: string
+  message: string
+  guidance: string
+  affirmation: string
+  emoji: string
+  color: string
+  element: string
+}
 
-const CARDS = [
-  { id: 1, name: 'The Awakening', emoji: '🌟', element: 'Spirit', message: 'A profound shift in consciousness is underway. You are remembering who you truly are beyond the physical.', guidance: 'Meditate on your higher self. Journal what arises in the quiet moments.', number: 1 },
-  { id: 2, name: 'The Mirror', emoji: '🌊', element: 'Water', message: 'What you see in others reflects something within yourself. The universe is showing you your own depths.', guidance: 'Look inward before judging outward. Your reflection holds wisdom.', number: 2 },
-  { id: 3, name: 'The Bloom', emoji: '🌸', element: 'Earth', message: 'Creative energy is bursting through you. This is a time of joyful expression and abundant growth.', guidance: 'Create something today. Let your inner child lead the way.', number: 3 },
-  { id: 4, name: 'The Foundation', emoji: '🗻', element: 'Earth', message: 'Stability and security are being built beneath your feet. Trust the slow and steady process.', guidance: 'Focus on one thing at a time. Build with intention and patience.', number: 4 },
-  { id: 5, name: 'The Wind', emoji: '🌬️', element: 'Air', message: 'Change is the only constant. A liberating shift is coming — embrace it rather than resist.', guidance: 'Release your grip on how things should be. Freedom awaits.', number: 5 },
-  { id: 6, name: 'The Heart', emoji: '💞', element: 'Water', message: 'Love in all its forms is your greatest teacher right now. Open your heart wider than feels comfortable.', guidance: 'Practice unconditional love — starting with yourself.', number: 6 },
-  { id: 7, name: 'The Veil', emoji: '🌙', element: 'Spirit', message: 'The mystical realms are close. Your intuition is your most powerful tool — trust what you cannot explain.', guidance: 'Spend time in silence. The answers you seek live within.', number: 7 },
-  { id: 8, name: 'The Infinity', emoji: '♾️', element: 'Fire', message: 'Infinite abundance is your birthright. The universe is conspiring to bring you everything you need.', guidance: 'Act as if you already have what you desire. Embody abundance now.', number: 8 },
-  { id: 9, name: 'The Release', emoji: '🍂', element: 'Air', message: 'A beautiful completion is at hand. Honor what has been and release it with gratitude and grace.', guidance: 'Write a letter of release. Burn it or bury it ceremonially.', number: 9 },
-  { id: 10, name: 'The Portal', emoji: '🚪', element: 'Spirit', message: 'You stand at a threshold between who you were and who you are becoming. Step through with courage.', guidance: 'Take one bold step toward your highest vision today.', number: 10 },
-  { id: 11, name: 'The Messenger', emoji: '🪁', element: 'Air', message: 'Divine messages are flowing to you through signs, synchronicities, and angel numbers. Pay attention.', guidance: 'Keep a synchronicity journal. Note every meaningful coincidence.', number: 11 },
-  { id: 12, name: 'The Surrender', emoji: '🕊️', element: 'Spirit', message: 'True power comes from letting go. Surrender your need to control and watch miracles unfold.', guidance: 'Say: I release this to the universe and trust the divine plan.', number: 12 },
-  { id: 13, name: 'The Phoenix', emoji: '🔥', element: 'Fire', message: 'From the ashes of what no longer serves you, something magnificent is rising. Transformation is complete.', guidance: 'Celebrate how far you have come. You are reborn.', number: 13 },
-  { id: 14, name: 'The Alchemist', emoji: '⚗️', element: 'Fire', message: 'You have the power to transform any situation. Your perspective is the philosopher stone.', guidance: 'Find the gift in your current challenge. Transmute it into gold.', number: 14 },
-  { id: 15, name: 'The Anchor', emoji: '⚓', element: 'Earth', message: 'Ground yourself in the present moment. Your roots give you the stability to reach great heights.', guidance: 'Walk barefoot on earth. Breathe deeply. You are safe.', number: 15 },
-  { id: 16, name: 'The Lightning', emoji: '⚡', element: 'Fire', message: 'A sudden revelation or breakthrough is imminent. What seemed solid may shift — this is liberation.', guidance: 'Welcome the unexpected. Lightning clears the air for new growth.', number: 16 },
-  { id: 17, name: 'The Star', emoji: '🌟', element: 'Air', message: 'Hope, healing, and divine inspiration flow to you now. You are guided and deeply loved by the cosmos.', guidance: 'Wish upon a star tonight. Your dreams are valid and possible.', number: 17 },
-  { id: 18, name: 'The Deep', emoji: '🌌', element: 'Water', message: 'Dive into your subconscious. Dreams, emotions, and hidden truths are surfacing for healing.', guidance: 'Honor your emotions without judgment. Feel to heal.', number: 18 },
-  { id: 19, name: 'The Sun', emoji: '☀️', element: 'Fire', message: 'Joy, vitality, and radiant success are yours. Step into the light and let your authentic self shine.', guidance: 'Do something that brings you pure joy today. Shine unapologetically.', number: 19 },
-  { id: 20, name: 'The Calling', emoji: '📣', element: 'Spirit', message: 'Your soul is being called to a higher purpose. Listen to the whispers of your deepest knowing.', guidance: 'Ask: What would I do if I knew I could not fail? Then do that.', number: 20 },
-  { id: 21, name: 'The Completion', emoji: '🌍', element: 'Spirit', message: 'You have arrived. A cycle of mastery is complete. Celebrate your wholeness and prepare for new horizons.', guidance: 'Acknowledge your journey. You are exactly where you are meant to be.', number: 21 },
-  { id: 22, name: 'The Builder', emoji: '🏛️', element: 'Earth', message: 'Master builder energy surrounds you. Your dreams are not too big — they are your blueprint.', guidance: 'Take one concrete step toward your grandest vision today.', number: 22 },
+const ORACLE_CARDS: OracleCard[] = [
+  { number: '111', title: 'The Awakening Gate', message: 'A portal of new beginnings opens before you. Your thoughts are seeds — plant only what you wish to grow.', guidance: 'This is a powerful manifestation window. Write down your deepest desire and speak it aloud three times at sunrise.', affirmation: 'I am a conscious creator. My thoughts shape my reality.', emoji: '🌟', color: '#fbbf24', element: 'Fire' },
+  { number: '222', title: 'The Balance Point', message: 'Divine timing is at work. Trust the process even when you cannot see the full picture. Partnership and harmony are near.', guidance: 'Seek balance in all areas. Where have you been giving too much or too little? Restore equilibrium today.', affirmation: 'I trust divine timing. Everything unfolds perfectly for my highest good.', emoji: '⚖️', color: '#60a5fa', element: 'Air' },
+  { number: '333', title: 'The Ascended Council', message: 'The masters of light surround you. Your creative gifts are needed in the world. Express yourself without fear.', guidance: 'Create something today — write, paint, sing, dance. The ascended masters amplify your creative energy now.', affirmation: 'I express my divine gifts freely. My creativity heals and inspires.', emoji: '🔺', color: '#a78bfa', element: 'Ether' },
+  { number: '444', title: 'The Angel Shield', message: 'You are completely surrounded by angelic protection. The foundation you are building is blessed and solid.', guidance: 'Take the practical step you have been avoiding. Angels are holding the space for your success right now.', affirmation: 'I am divinely protected and guided. My foundation is strong and blessed.', emoji: '🏛️', color: '#34d399', element: 'Earth' },
+  { number: '555', title: 'The Great Shift', message: 'Massive transformation is underway. Release what no longer serves you — the universe is clearing space for miracles.', guidance: 'Identify one thing to release today. Write it on paper and burn it, flush it, or bury it as a ritual of letting go.', affirmation: 'I embrace change with grace. Every ending births a magnificent new beginning.', emoji: '🌀', color: '#fb923c', element: 'Fire' },
+  { number: '666', title: 'The Rebalancing', message: "Return to your spiritual center. Material concerns have pulled your focus — reconnect with your soul's true purpose.", guidance: 'Spend 20 minutes in nature today. Touch the earth, breathe deeply, and remember what truly matters to you.', affirmation: "I am more than my circumstances. My soul's wisdom guides every decision.", emoji: '🌿', color: '#86efac', element: 'Earth' },
+  { number: '777', title: 'The Mystic Path', message: 'You are on the right path. Spiritual luck and divine synchronicity are flowing through your life in extraordinary ways.', guidance: 'Pay attention to every coincidence today — they are messages. Keep a synchronicity journal for the next 7 days.', affirmation: 'I am aligned with divine flow. Magic and miracles are my natural state.', emoji: '🔮', color: '#818cf8', element: 'Ether' },
+  { number: '888', title: 'The Abundance Flow', message: 'Infinite abundance is your birthright. Financial and material blessings are flowing toward you now.', guidance: 'Open yourself to receiving. Say yes to an opportunity you would normally decline. Abundance requires open hands.', affirmation: 'I am a magnet for abundance. Prosperity flows to me from expected and unexpected sources.', emoji: '♾️', color: '#c9a84c', element: 'Earth' },
+  { number: '999', title: 'The Sacred Completion', message: 'A major cycle in your life is completing. Honor what has been, release with gratitude, and prepare for rebirth.', guidance: 'Write a letter of gratitude and farewell to what is ending. This ritual seals the cycle and opens the next.', affirmation: 'I complete this cycle with grace and gratitude. I am ready for my magnificent new beginning.', emoji: '🌙', color: '#f472b6', element: 'Water' },
+  { number: '1010', title: 'The Divine Reset', message: 'God/Source is speaking directly to you. A divine reset is occurring — your soul is being upgraded for its next mission.', guidance: 'Meditate for 10 minutes in complete silence. Listen for the still small voice within. It has important guidance for you.', affirmation: 'I am in direct communication with the divine. My soul receives its perfect upgrade now.', emoji: '✦', color: '#e0e7ff', element: 'Ether' },
+  { number: '1111', title: 'The Manifestation Portal', message: 'The most powerful manifestation portal is open. What you focus on now will materialize with extraordinary speed.', guidance: 'Write your top 3 desires as if already fulfilled. Read them at 11:11 AM and 11:11 PM for 11 days straight.', affirmation: 'I am a master manifestor. My desires align with divine will and materialize now.', emoji: '🌟', color: '#fde68a', element: 'Fire' },
+  { number: '1212', title: 'The Twin Flame Mirror', message: "Your twin flame or soul mirror is near. A profound soul connection is either arriving or deepening in your life.", guidance: "Open your heart fully today. Release any walls you have built around love. Your soul's mirror is seeking you.", affirmation: "I am open to profound soul connection. Love in its highest form flows to me now.", emoji: '💫', color: '#f9a8d4', element: 'Water' },
 ]
 
 const SPREADS = [
-  { id: 'single', name: 'Single Card', description: 'Daily guidance', count: 1 },
-  { id: 'three', name: 'Past · Present · Future', description: 'Timeline reading', count: 3 },
-  { id: 'five', name: 'Soul Cross', description: 'Deep spiritual insight', count: 5 },
+  { id: 'single', name: 'Single Card', desc: 'One message for now', count: 1, emoji: '✦' },
+  { id: 'three', name: 'Past · Present · Future', desc: 'Your timeline reading', count: 3, emoji: '◈' },
+  { id: 'cross', name: 'Soul Cross', desc: 'Challenge & guidance', count: 4, emoji: '✚' },
 ]
 
-const ELEMENT_COLORS: Record<string, string> = {
-  Fire: '#fb923c', Water: '#60a5fa', Earth: '#34d399', Air: '#e879f9', Spirit: '#c9a84c'
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
 }
 
-function drawCards(count: number): typeof CARDS {
-  const shuffled = [...CARDS].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, count)
-}
+function OracleCardDisplay({ card, label, delay = 0 }: { card: OracleCard; label?: string; delay?: number }) {
+  const [flipped, setFlipped] = useState(false)
+  const [visible, setVisible] = useState(false)
 
-interface Reading {
-  id: number
-  spread: string
-  cards: typeof CARDS
-  question: string
-  createdAt: string
+  useEffect(() => {
+    const t1 = setTimeout(() => setVisible(true), delay)
+    const t2 = setTimeout(() => setFlipped(true), delay + 400)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [delay])
+
+  return (
+    <div style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.4s ease', marginBottom: '1rem' }}>
+      {label && <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', marginBottom: '0.5rem' }}>{label}</div>}
+      <div style={{ background: 'rgba(8,6,28,0.92)', border: '1px solid ' + card.color + '40', borderRadius: '1.25rem', backdropFilter: 'blur(12px)', padding: '1.5rem', transition: 'all 0.6s ease', transform: flipped ? 'rotateY(0deg)' : 'rotateY(90deg)', boxShadow: '0 0 30px ' + card.color + '15' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1rem' }}>
+          <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: card.color + '18', border: '1px solid ' + card.color + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', flexShrink: 0, boxShadow: '0 0 20px ' + card.color + '25' }}>{card.emoji}</div>
+          <div>
+            <div style={{ color: card.color, fontSize: '1.4rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{card.number}</div>
+            <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', marginTop: '0.2rem', fontFamily: 'Cormorant Garamond, serif' }}>{card.title}</div>
+            <div style={{ color: card.color + 'aa', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.15rem' }}>{card.element} · Oracle</div>
+          </div>
+        </div>
+        <p style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.88rem', lineHeight: 1.7, margin: '0 0 1rem', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic' }}>{card.message}</p>
+        <div style={{ background: card.color + '0c', border: '1px solid ' + card.color + '20', borderRadius: '0.75rem', padding: '0.875rem', marginBottom: '0.75rem' }}>
+          <div style={{ color: card.color, fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>✦ Guidance</div>
+          <p style={{ color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', lineHeight: 1.6, margin: 0 }}>{card.guidance}</p>
+        </div>
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(200,180,255,0.08)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+          <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.35rem' }}>Affirmation</div>
+          <p style={{ color: 'rgba(220,200,255,0.65)', fontSize: '0.8rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>&ldquo;{card.affirmation}&rdquo;</p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function OraclePage() {
-  const [readings, setReadings] = useState<Reading[]>([])
-  const [activeSpread, setActiveSpread] = useState('single')
-  const [question, setQuestion] = useState('')
-  const [currentReading, setCurrentReading] = useState<Reading | null>(null)
-  const [isRevealing, setIsRevealing] = useState(false)
-  const [revealedCards, setRevealedCards] = useState<number[]>([])
-  const [showHistory, setShowHistory] = useState(false)
+  const [spread, setSpread] = useState(SPREADS[0])
+  const [drawn, setDrawn] = useState<OracleCard[]>([])
+  const [drawing, setDrawing] = useState(false)
+  const [history, setHistory] = useState<{ date: string; spread: string; numbers: string[] }[]>([])
 
   useEffect(() => {
-    const s = localStorage.getItem(READINGS_KEY)
-    if (s) setReadings(JSON.parse(s))
+    const saved = localStorage.getItem('synchrosoul_oracle_history')
+    if (saved) setHistory(JSON.parse(saved))
   }, [])
 
-  function saveReading(r: Reading) {
-    const next = [r, ...readings].slice(0, 20)
-    setReadings(next)
-    localStorage.setItem(READINGS_KEY, JSON.stringify(next))
+  function drawCards() {
+    setDrawing(true)
+    setDrawn([])
+    setTimeout(() => {
+      const cards = shuffle(ORACLE_CARDS).slice(0, spread.count)
+      setDrawn(cards)
+      const entry = { date: new Date().toLocaleDateString(), spread: spread.name, numbers: cards.map(c => c.number) }
+      const updated = [entry, ...history].slice(0, 10)
+      setHistory(updated)
+      localStorage.setItem('synchrosoul_oracle_history', JSON.stringify(updated))
+      setDrawing(false)
+    }, 800)
   }
 
-  async function drawReading() {
-    const spread = SPREADS.find(s => s.id === activeSpread)!
-    const cards = drawCards(spread.count)
-    const reading: Reading = { id: Date.now(), spread: activeSpread, cards, question, createdAt: new Date().toISOString() }
-    setCurrentReading(reading)
-    setRevealedCards([])
-    setIsRevealing(true)
-    saveReading(reading)
-    // Reveal cards one by one
-    for (let i = 0; i < cards.length; i++) {
-      await new Promise(r => setTimeout(r, 600))
-      setRevealedCards(prev => [...prev, i])
-    }
-    setIsRevealing(false)
-  }
-
-  const SPREAD_LABELS: Record<string, string[]> = {
-    single: ['Your Guidance'],
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
+  const LABELS: Record<string, string[]> = {
+    single: ['Your Message'],
     three: ['Past', 'Present', 'Future'],
-    five: ['Foundation', 'Challenge', 'Higher Self', 'Advice', 'Outcome'],
+    cross: ['Foundation', 'Challenge', 'Guidance', 'Outcome'],
   }
-
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-        <div>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Angel Oracle</h1>
-          <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>{readings.length} readings in your history</p>
-        </div>
-        <button onClick={() => setShowHistory(h => !h)} style={{ padding: '0.4rem 0.875rem', borderRadius: '0.75rem', background: showHistory ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.04)', border: showHistory ? '1px solid rgba(167,139,250,0.3)' : '1px solid rgba(200,180,255,0.12)', color: showHistory ? '#a78bfa' : 'rgba(180,160,255,0.5)', fontSize: '0.75rem', cursor: 'pointer' }}>History</button>
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Angel Oracle</h1>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Draw sacred number cards for divine guidance</p>
       </div>
 
-      {!showHistory ? (
-        <>
-          {/* Spread selector */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-            {SPREADS.map(s => (
-              <button key={s.id} onClick={() => { setActiveSpread(s.id); setCurrentReading(null) }} style={{ flex: 1, padding: '0.75rem 0.5rem', borderRadius: '0.875rem', border: activeSpread === s.id ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(200,180,255,0.1)', background: activeSpread === s.id ? 'rgba(167,139,250,0.12)' : 'rgba(8,6,28,0.7)', cursor: 'pointer', textAlign: 'center' }}>
-                <div style={{ color: activeSpread === s.id ? '#a78bfa' : 'rgba(180,160,255,0.5)', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.2rem' }}>{s.name}</div>
-                <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.65rem' }}>{s.description}</div>
-              </button>
-            ))}
-          </div>
+      {/* Spread selector */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        {SPREADS.map(s => (
+          <button key={s.id} onClick={() => { setSpread(s); setDrawn([]) }} style={{ ...card, padding: '0.875rem 0.5rem', border: spread.id===s.id ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(200,180,255,0.1)', background: spread.id===s.id ? 'rgba(201,168,76,0.12)' : 'rgba(8,6,28,0.7)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>{s.emoji}</span>
+            <span style={{ color: spread.id===s.id ? '#c9a84c' : 'rgba(220,200,255,0.6)', fontSize: '0.72rem', fontWeight: 600, textAlign: 'center', lineHeight: 1.3 }}>{s.name}</span>
+            <span style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.62rem', textAlign: 'center' }}>{s.desc}</span>
+          </button>
+        ))}
+      </div>
 
-          {/* Question input */}
-          <div style={{ ...card, padding: '1.25rem', marginBottom: '1.25rem' }}>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Hold a question in your heart (optional)</div>
-            <input value={question} onChange={e => setQuestion(e.target.value)} placeholder="What guidance do I need right now?" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.65rem 0.875rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.88rem', outline: 'none', boxSizing: 'border-box', marginBottom: '0.875rem' }} />
-            <button onClick={drawReading} disabled={isRevealing} style={{ width: '100%', padding: '0.875rem', borderRadius: '0.875rem', background: isRevealing ? 'rgba(167,139,250,0.2)' : 'linear-gradient(135deg, #4c1d95, #7c3aed, #a78bfa)', border: 'none', color: 'white', fontSize: '0.9rem', cursor: isRevealing ? 'default' : 'pointer', fontWeight: 600, letterSpacing: '0.05em', fontFamily: 'Cormorant Garamond, serif' }}>
-              {isRevealing ? '✨ Revealing...' : '✦ Draw Cards'}
-            </button>
-          </div>
+      {/* Draw button */}
+      <button onClick={drawCards} disabled={drawing} style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(201,168,76,0.4)', background: drawing ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.15)', color: '#c9a84c', fontSize: '1rem', cursor: drawing ? 'not-allowed' : 'pointer', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.08em', marginBottom: '1.5rem', transition: 'all 0.3s' }}>
+        {drawing ? '✦ The cards are speaking...' : drawn.length ? '✦ Draw Again' : '✦ Draw Your Cards'}
+      </button>
 
-          {/* Current reading */}
-          {currentReading && (
-            <div>
-              {currentReading.question && (
-                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                  <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.82rem', fontStyle: 'italic' }}>&ldquo;{currentReading.question}&rdquo;</p>
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: currentReading.cards.length === 1 ? '1fr' : currentReading.cards.length === 3 ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                {currentReading.cards.map((c, i) => {
-                  const revealed = revealedCards.includes(i)
-                  const label = SPREAD_LABELS[currentReading.spread]?.[i] || ''
-                  const elColor = ELEMENT_COLORS[c.element]
-                  return (
-                    <div key={c.id} style={{ ...card, padding: '1.25rem 1rem', textAlign: 'center', borderColor: revealed ? `${elColor}33` : 'rgba(200,180,255,0.08)', transition: 'all 0.5s ease', opacity: revealed ? 1 : 0.3, transform: revealed ? 'translateY(0)' : 'translateY(8px)', gridColumn: currentReading.cards.length === 5 && i >= 3 ? 'span 1' : 'span 1' }}>
-                      {label && <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>{label}</div>}
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{revealed ? c.emoji : '✦'}</div>
-                      <div style={{ color: revealed ? 'rgba(220,200,255,0.9)' : 'rgba(180,160,255,0.3)', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.25rem', fontFamily: 'Cormorant Garamond, serif' }}>{revealed ? c.name : '???'}</div>
-                      {revealed && <div style={{ background: `${elColor}18`, border: `1px solid ${elColor}33`, borderRadius: '2rem', padding: '0.1rem 0.4rem', fontSize: '0.6rem', color: elColor, display: 'inline-block', marginBottom: '0.5rem' }}>{c.element}</div>}
-                    </div>
-                  )
-                })}
+      {/* Cards */}
+      {drawn.map((c, i) => (
+        <OracleCardDisplay key={c.number + i} card={c} label={LABELS[spread.id]?.[i]} delay={i * 300} />
+      ))}
+
+      {/* History */}
+      {history.length > 0 && drawn.length === 0 && (
+        <div style={{ ...card, padding: '1.25rem' }}>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.875rem' }}>Recent Readings</div>
+          {history.slice(0, 5).map((h, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: i < 4 ? '1px solid rgba(200,180,255,0.06)' : 'none' }}>
+              <div>
+                <span style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.8rem' }}>{h.spread}</span>
+                <span style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.72rem', marginLeft: '0.5rem' }}>{h.numbers.join(' · ')}</span>
               </div>
-
-              {/* Full card messages */}
-              {revealedCards.length === currentReading.cards.length && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {currentReading.cards.map((c, i) => {
-                    const label = SPREAD_LABELS[currentReading.spread]?.[i] || ''
-                    const elColor = ELEMENT_COLORS[c.element]
-                    return (
-                      <div key={c.id} style={{ ...card, padding: '1.25rem', borderColor: `${elColor}22` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                          <span style={{ fontSize: '1.5rem' }}>{c.emoji}</span>
-                          <div>
-                            {label && <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>{label}</div>}
-                            <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.95rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif' }}>{c.name}</div>
-                          </div>
-                        </div>
-                        <p style={{ color: 'rgba(200,180,255,0.75)', fontSize: '0.85rem', margin: '0 0 0.625rem', lineHeight: 1.6 }}>{c.message}</p>
-                        <div style={{ background: `${elColor}0d`, border: `1px solid ${elColor}22`, borderRadius: '0.75rem', padding: '0.625rem 0.875rem' }}>
-                          <span style={{ color: elColor, fontSize: '0.72rem', fontWeight: 600 }}>Guidance: </span>
-                          <span style={{ color: 'rgba(200,180,255,0.65)', fontSize: '0.78rem' }}>{c.guidance}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+              <span style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.7rem' }}>{h.date}</span>
             </div>
-          )}
-        </>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {readings.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🃏</div>
-              <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.88rem' }}>No readings yet. Draw your first cards above.</p>
-            </div>
-          )}
-          {readings.map(r => {
-            const spread = SPREADS.find(s => s.id === r.spread)
-            return (
-              <div key={r.id} style={{ ...card, padding: '1rem 1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                  <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', fontWeight: 600 }}>{spread?.name}</div>
-                  <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.7rem' }}>{new Date(r.createdAt).toLocaleDateString()}</div>
-                </div>
-                {r.question && <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.78rem', margin: '0 0 0.5rem', fontStyle: 'italic' }}>&ldquo;{r.question}&rdquo;</p>}
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {r.cards.map(c => (
-                    <span key={c.id} style={{ padding: '0.2rem 0.5rem', borderRadius: '2rem', background: `${ELEMENT_COLORS[c.element]}12`, border: `1px solid ${ELEMENT_COLORS[c.element]}25`, color: ELEMENT_COLORS[c.element], fontSize: '0.7rem' }}>{c.emoji} {c.name}</span>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
+          ))}
         </div>
       )}
     </div>

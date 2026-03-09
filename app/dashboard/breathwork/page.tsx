@@ -1,230 +1,162 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-const EXERCISES = [
-  {
-    id: 'box', name: 'Box Breathing', emoji: '□',
-    description: 'Used by Navy SEALs to calm the nervous system instantly.',
-    color: '#6366f1', rounds: 4,
-    phases: [
-      { label: 'Inhale', duration: 4, instruction: 'Breathe in slowly through your nose' },
-      { label: 'Hold', duration: 4, instruction: 'Hold gently at the top' },
-      { label: 'Exhale', duration: 4, instruction: 'Release slowly through your mouth' },
-      { label: 'Hold', duration: 4, instruction: 'Rest at the bottom' },
-    ],
-    angelNumber: '444',
-    benefit: 'Reduces stress, improves focus, balances nervous system',
-  },
-  {
-    id: '478', name: '4-7-8 Breathing', emoji: '🌙',
-    description: 'Dr. Weil’s relaxation technique. Fall asleep in minutes.',
-    color: '#8b5cf6', rounds: 4,
-    phases: [
-      { label: 'Inhale', duration: 4, instruction: 'Breathe in quietly through your nose' },
-      { label: 'Hold', duration: 7, instruction: 'Hold your breath completely' },
-      { label: 'Exhale', duration: 8, instruction: 'Exhale completely through your mouth' },
-    ],
-    angelNumber: '478',
-    benefit: 'Promotes sleep, reduces anxiety, lowers heart rate',
-  },
-  {
-    id: 'coherent', name: 'Coherent Breathing', emoji: '❤',
-    description: 'Synchronize heart and breath for deep coherence.',
-    color: '#f472b6', rounds: 6,
-    phases: [
-      { label: 'Inhale', duration: 5, instruction: 'Breathe in smoothly and evenly' },
-      { label: 'Exhale', duration: 5, instruction: 'Breathe out smoothly and evenly' },
-    ],
-    angelNumber: '555',
-    benefit: 'Heart coherence, emotional balance, intuition',
-  },
-  {
-    id: 'energize', name: 'Energizing Breath', emoji: '⚡',
-    description: 'Kundalini-inspired breath of fire to raise your vibration.',
-    color: '#fb923c', rounds: 3,
-    phases: [
-      { label: 'Inhale', duration: 2, instruction: 'Quick sharp inhale through nose' },
-      { label: 'Exhale', duration: 2, instruction: 'Forceful exhale through nose' },
-    ],
-    angelNumber: '333',
-    benefit: 'Increases energy, clears mind, raises vibration',
-  },
-  {
-    id: 'angel', name: 'Angel Number Breath', emoji: '✦',
-    description: 'Breathe in cycles of 1-1-1-1 to align with divine frequency.',
-    color: '#c9a84c', rounds: 11,
-    phases: [
-      { label: 'Inhale', duration: 3, instruction: 'Breathe in divine light' },
-      { label: 'Hold', duration: 3, instruction: 'Receive the message' },
-      { label: 'Exhale', duration: 3, instruction: 'Release what no longer serves' },
-      { label: 'Rest', duration: 3, instruction: 'Rest in the void' },
-    ],
-    angelNumber: '1111',
-    benefit: 'Spiritual alignment, intuition, angelic connection',
-  },
+const PATTERNS = [
+  { id: 'box', name: 'Box Breathing', desc: '4-4-4-4 — Calm & focus', color: '#60a5fa', number: '444', phases: [{label:'Inhale',dur:4},{label:'Hold',dur:4},{label:'Exhale',dur:4},{label:'Hold',dur:4}], rounds: 8, benefit: 'Reduces stress, improves focus, used by Navy SEALs' },
+  { id: '478', name: '4-7-8 Breath', desc: '4-7-8 — Deep relaxation', color: '#a78bfa', number: '777', phases: [{label:'Inhale',dur:4},{label:'Hold',dur:7},{label:'Exhale',dur:8}], rounds: 4, benefit: 'Activates parasympathetic nervous system, aids sleep' },
+  { id: 'angel', name: 'Angel Breath', desc: '5-5-5 — Spiritual alignment', color: '#fbbf24', number: '555', phases: [{label:'Inhale',dur:5},{label:'Hold',dur:5},{label:'Exhale',dur:5}], rounds: 9, benefit: 'Aligns chakras, opens intuition, connects to angelic realm' },
+  { id: 'fire', name: 'Breath of Fire', desc: '1-0-1 — Energize & activate', color: '#fb923c', number: '111', phases: [{label:'Inhale',dur:1},{label:'Exhale',dur:1}], rounds: 30, benefit: 'Energizes the body, clears stagnant energy, activates solar plexus' },
+  { id: 'coherent', name: 'Coherent Breath', desc: '5-5 — Heart coherence', color: '#34d399', number: '222', phases: [{label:'Inhale',dur:5},{label:'Exhale',dur:5}], rounds: 12, benefit: 'Creates heart-brain coherence, reduces anxiety, balances nervous system' },
+  { id: 'abundance', name: 'Abundance Breath', desc: '8-8-8 — Prosperity activation', color: '#c9a84c', number: '888', phases: [{label:'Inhale',dur:8},{label:'Hold',dur:8},{label:'Exhale',dur:8}], rounds: 8, benefit: 'Opens abundance channels, activates solar plexus and heart chakras' },
 ]
 
 export default function BreathworkPage() {
-  const [selected, setSelected] = useState<typeof EXERCISES[0] | null>(null)
+  const [selected, setSelected] = useState<typeof PATTERNS[0] | null>(null)
   const [running, setRunning] = useState(false)
   const [phaseIdx, setPhaseIdx] = useState(0)
-  const [round, setRound] = useState(1)
-  const [timeLeft, setTimeLeft] = useState(0)
+  const [countdown, setCountdown] = useState(0)
+  const [round, setRound] = useState(0)
   const [done, setDone] = useState(false)
-  const [totalSessions, setTotalSessions] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [progress, setProgress] = useState(0)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
 
-  useEffect(() => {
-    const s = parseInt(localStorage.getItem('synchrosoul_breathwork_sessions') || '0')
-    setTotalSessions(s)
-  }, [])
-
-  const stopSession = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setRunning(false)
-  }, [])
-
-  useEffect(() => {
-    if (!running || !selected) return
-    const phase = selected.phases[phaseIdx]
-    setTimeLeft(phase.duration)
-    intervalRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          clearInterval(intervalRef.current!)
-          // Move to next phase
-          const nextPhase = phaseIdx + 1
-          if (nextPhase >= selected.phases.length) {
-            const nextRound = round + 1
-            if (nextRound > selected.rounds) {
-              setRunning(false)
-              setDone(true)
-              const s = parseInt(localStorage.getItem('synchrosoul_breathwork_sessions') || '0') + 1
-              localStorage.setItem('synchrosoul_breathwork_sessions', String(s))
-              setTotalSessions(s)
-              return 0
-            }
-            setRound(nextRound)
-            setPhaseIdx(0)
-          } else {
-            setPhaseIdx(nextPhase)
-          }
-          return 0
-        }
-        return t - 1
-      })
-    }, 1000)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [running, phaseIdx, round, selected])
-
-  function startSession(ex: typeof EXERCISES[0]) {
-    setSelected(ex)
+  function startSession(p: typeof PATTERNS[0]) {
+    setSelected(p)
     setPhaseIdx(0)
+    setCountdown(p.phases[0].dur)
     setRound(1)
     setDone(false)
     setRunning(true)
-    setTimeLeft(ex.phases[0].duration)
+    setProgress(0)
   }
 
-  function reset() {
-    stopSession()
-    setPhaseIdx(0)
-    setRound(1)
-    setDone(false)
-    setTimeLeft(0)
+  function stopSession() {
+    setRunning(false)
+    if (timerRef.current) clearInterval(timerRef.current)
   }
 
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
+  useEffect(() => {
+    if (!running || !selected) return
+    timerRef.current = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) {
+          // advance phase
+          setPhaseIdx(pi => {
+            const nextPi = (pi + 1) % selected.phases.length
+            if (nextPi === 0) {
+              setRound(r => {
+                if (r >= selected.rounds) {
+                  setRunning(false)
+                  setDone(true)
+                  return r
+                }
+                return r + 1
+              })
+            }
+            setCountdown(selected.phases[nextPi].dur)
+            return nextPi
+          })
+          return selected.phases[0].dur
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [running, selected])
 
-  // Active session view
-  if (selected && (running || done)) {
-    const phase = selected.phases[phaseIdx]
-    const totalDuration = phase?.duration || 1
-    const progress = done ? 1 : (totalDuration - timeLeft) / totalDuration
-    const circumference = 2 * Math.PI * 70
+  useEffect(() => {
+    if (!selected || !running) return
+    const totalSecs = selected.phases.reduce((a, p) => a + p.dur, 0) * selected.rounds
+    const elapsed = (round - 1) * selected.phases.reduce((a, p) => a + p.dur, 0) +
+      selected.phases.slice(0, phaseIdx).reduce((a, p) => a + p.dur, 0) +
+      (selected.phases[phaseIdx]?.dur - countdown)
+    setProgress(Math.min(100, (elapsed / totalSecs) * 100))
+  }, [countdown, phaseIdx, round, running, selected])
 
-    return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', padding: '1.5rem 1rem 2rem', textAlign: 'center' }}>
-        <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', marginBottom: '1.5rem', fontFamily: 'inherit' }}>← Back</button>
+  const phase = selected?.phases[phaseIdx]
+  const phaseColors: Record<string, string> = { Inhale: '#34d399', Hold: '#fbbf24', Exhale: '#60a5fa' }
+  const phaseColor = phase ? (phaseColors[phase.label] || '#a78bfa') : '#a78bfa'
+  const circleSize = phase?.label === 'Inhale' ? 160 : phase?.label === 'Exhale' ? 100 : 130
 
-        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: 'rgba(220,200,255,0.9)', margin: '0 0 0.25rem', fontWeight: 400 }}>{selected.name}</h2>
-        <div style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.75rem', marginBottom: '2rem' }}>Round {Math.min(round, selected.rounds)} of {selected.rounds}</div>
+  if (selected && (running || done)) return (
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <button onClick={() => { stopSession(); setSelected(null); setDone(false) }} style={{ background: 'none', border: 'none', color: 'rgba(180,160,255,0.5)', cursor: 'pointer', fontSize: '0.8rem', marginBottom: '1.5rem', padding: 0 }}>← Back</button>
 
-        {done ? (
-          <div style={{ ...card, padding: '2.5rem', border: `1px solid ${selected.color}44` }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✨</div>
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: selected.color, marginBottom: '0.5rem' }}>Session Complete</div>
-            <div style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.82rem', marginBottom: '1.5rem' }}>{selected.rounds} rounds • {selected.benefit}</div>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', marginBottom: '1.5rem' }}>Angel number activated: <span style={{ color: selected.color, fontWeight: 700 }}>{selected.angelNumber}</span></div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => startSession(selected)} style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', cursor: 'pointer', background: `${selected.color}18`, border: `1px solid ${selected.color}44`, color: selected.color, fontSize: '0.85rem', fontFamily: 'inherit', fontWeight: 600 }}>Repeat</button>
-              <button onClick={reset} style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.1)', color: 'rgba(180,160,255,0.6)', fontSize: '0.85rem', fontFamily: 'inherit' }}>Choose Another</button>
+      {done ? (
+        <div style={{ ...card, padding: '2.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✨</div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.5rem', fontWeight: 400 }}>Session Complete</h2>
+          <p style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.85rem', lineHeight: 1.6, margin: '0 0 1.5rem' }}>{selected.rounds} rounds of {selected.name} complete. Take a moment to feel the shift in your energy.</p>
+          <button onClick={() => startSession(selected)} style={{ padding: '0.75rem 2rem', borderRadius: '2rem', border: '1px solid rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.15)', color: '#c9a84c', fontSize: '0.85rem', cursor: 'pointer', marginRight: '0.75rem' }}>Repeat</button>
+          <button onClick={() => { setSelected(null); setDone(false) }} style={{ padding: '0.75rem 2rem', borderRadius: '2rem', border: '1px solid rgba(200,180,255,0.15)', background: 'transparent', color: 'rgba(180,160,255,0.5)', fontSize: '0.85rem', cursor: 'pointer' }}>Done</button>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.5rem' }}>{selected.name}</div>
+          <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.75rem', marginBottom: '2rem' }}>Round {round} of {selected.rounds}</div>
+
+          {/* Animated circle */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+            <div style={{
+              width: circleSize + 'px', height: circleSize + 'px',
+              borderRadius: '50%',
+              background: phaseColor + '15',
+              border: '2px solid ' + phaseColor + '60',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 40px ' + phaseColor + '30, 0 0 80px ' + phaseColor + '15',
+              transition: 'all 1s ease',
+            }}>
+              <div style={{ color: phaseColor, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1 }}>{countdown}</div>
+              <div style={{ color: phaseColor + 'cc', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: '0.25rem' }}>{phase?.label}</div>
             </div>
           </div>
-        ) : (
-          <div>
-            {/* Breathing circle */}
-            <div style={{ position: 'relative', width: '180px', height: '180px', margin: '0 auto 2rem' }}>
-              <svg width="180" height="180" style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                <circle cx="90" cy="90" r="70" fill="none" stroke={selected.color} strokeWidth="6"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={circumference * (1 - progress)}
-                  strokeLinecap="round"
-                  style={{ transition: 'stroke-dashoffset 0.9s linear', filter: `drop-shadow(0 0 8px ${selected.color}88)` }}
-                />
-              </svg>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ color: selected.color, fontSize: '2.5rem', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, lineHeight: 1 }}>{timeLeft}</div>
-                <div style={{ color: 'rgba(220,200,255,0.7)', fontSize: '0.75rem', marginTop: '0.25rem' }}>seconds</div>
-              </div>
-            </div>
 
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: selected.color, marginBottom: '0.5rem', fontWeight: 400 }}>{phase?.label}</div>
-            <div style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.85rem', marginBottom: '2rem' }}>{phase?.instruction}</div>
-
-            <button onClick={stopSession} style={{ padding: '0.65rem 2rem', borderRadius: '2rem', cursor: 'pointer', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: '0.82rem', fontFamily: 'inherit' }}>Stop</button>
+          {/* Progress bar */}
+          <div style={{ background: 'rgba(200,180,255,0.08)', borderRadius: '4px', height: '4px', marginBottom: '1.5rem', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: progress + '%', background: selected.color, borderRadius: '4px', transition: 'width 1s linear' }} />
           </div>
-        )}
-      </div>
-    )
-  }
+
+          {/* Phase indicators */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+            {selected.phases.map((p, i) => (
+              <div key={i} style={{ padding: '0.3rem 0.75rem', borderRadius: '2rem', background: i === phaseIdx ? phaseColors[p.label] + '20' : 'rgba(200,180,255,0.05)', border: '1px solid ' + (i === phaseIdx ? phaseColors[p.label] + '50' : 'rgba(200,180,255,0.1)'), color: i === phaseIdx ? phaseColors[p.label] : 'rgba(180,160,255,0.3)', fontSize: '0.7rem', transition: 'all 0.3s' }}>{p.label} {p.dur}s</div>
+            ))}
+          </div>
+
+          <button onClick={stopSession} style={{ padding: '0.75rem 2rem', borderRadius: '2rem', border: '1px solid rgba(244,114,182,0.3)', background: 'rgba(244,114,182,0.08)', color: '#f472b6', fontSize: '0.82rem', cursor: 'pointer' }}>Stop Session</button>
+        </div>
+      )}
+    </div>
+  )
 
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Breathwork</h1>
-          <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Breathe with intention. Align with the divine.</p>
-        </div>
-        {totalSessions > 0 && (
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ color: '#a78bfa', fontSize: '1.2rem', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>{totalSessions}</div>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sessions</div>
-          </div>
-        )}
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Breathwork</h1>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Sacred breathing patterns aligned with angel numbers</p>
       </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {EXERCISES.map(ex => (
-          <button
-            key={ex.id}
-            onClick={() => startSession(ex)}
-            style={{ ...card, padding: '1.25rem', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', border: `1px solid ${ex.color}22`, transition: 'all 0.2s', display: 'block', width: '100%' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `${ex.color}18`, border: `1px solid ${ex.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>{ex.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                  <span style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.92rem', fontWeight: 600 }}>{ex.name}</span>
-                  <span style={{ color: ex.color, fontSize: '0.68rem', padding: '0.1rem 0.45rem', borderRadius: '2rem', background: `${ex.color}15`, border: `1px solid ${ex.color}33` }}>{ex.angelNumber}</span>
-                </div>
-                <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', marginBottom: '0.3rem' }}>{ex.description}</div>
-                <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.68rem' }}>{ex.rounds} rounds • {ex.phases.map(p => p.duration).join('-')} pattern</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        {PATTERNS.map(p => (
+          <div key={p.id} style={{ ...card, padding: '1.25rem', borderColor: p.color + '20' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.625rem' }}>
+              <div>
+                <div style={{ color: p.color, fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.2rem' }}>{p.number}</div>
+                <div style={{ color: 'rgba(220,200,255,0.9)', fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400 }}>{p.name}</div>
+                <div style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.75rem', marginTop: '0.15rem' }}>{p.desc}</div>
               </div>
-              <span style={{ color: ex.color, fontSize: '1.2rem', flexShrink: 0 }}>▶</span>
+              <div style={{ display: 'flex', gap: '0.3rem' }}>
+                {p.phases.map((ph, i) => (
+                  <div key={i} style={{ width: '28px', height: '28px', borderRadius: '50%', background: (phaseColors[ph.label] || '#a78bfa') + '15', border: '1px solid ' + (phaseColors[ph.label] || '#a78bfa') + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', color: phaseColors[ph.label] || '#a78bfa', fontSize: '0.6rem', fontWeight: 700 }}>{ph.dur}</div>
+                ))}
+              </div>
             </div>
-          </button>
+            <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', lineHeight: 1.5, margin: '0 0 0.875rem', fontStyle: 'italic' }}>{p.benefit}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.7rem' }}>{p.rounds} rounds · ~{Math.ceil(p.phases.reduce((a,ph)=>a+ph.dur,0)*p.rounds/60)} min</span>
+              <button onClick={() => startSession(p)} style={{ padding: '0.45rem 1.25rem', borderRadius: '2rem', border: '1px solid ' + p.color + '40', background: p.color + '12', color: p.color, fontSize: '0.78rem', cursor: 'pointer' }}>Begin ▶</button>
+            </div>
+          </div>
         ))}
       </div>
     </div>
