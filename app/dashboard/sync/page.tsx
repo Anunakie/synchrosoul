@@ -61,7 +61,7 @@ function MatchCard({ profile, onConnect }: { profile: SyncProfile, onConnect: (p
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 600, color: '#f0e6ff', fontSize: '0.95rem' }}>{profile.displayName}</span>
-            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{getTimeAgo(profile.lastSeen)}</span>
+            <span style={{ fontSize: '0.7rem', color: 'rgba(220,200,255,0.68)' }}>{getTimeAgo(profile.lastSeen)}</span>
           </div>
           {profile.bio && (
             <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', margin: '0.15rem 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -85,15 +85,15 @@ function MatchCard({ profile, onConnect }: { profile: SyncProfile, onConnect: (p
         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.5rem' }}>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.2rem' }}>NUMBERS</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.68)', marginBottom: '0.2rem' }}>NUMBERS</div>
               <div style={{ fontSize: '0.8rem', color: '#f0e6ff' }}>{profile.numbers.join(', ')}</div>
             </div>
             <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.5rem' }}>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.2rem' }}>LIFE PATH</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.68)', marginBottom: '0.2rem' }}>LIFE PATH</div>
               <div style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c' }}>{profile.lifePathNumber}</div>
             </div>
             <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.5rem' }}>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.2rem' }}>NUMEROLOGY</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.68)', marginBottom: '0.2rem' }}>NUMEROLOGY</div>
               <div style={{ fontSize: '0.8rem', color: '#9b59b6' }}>{profile.numerologyMatch}% match</div>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function SyncPage() {
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, background: 'linear-gradient(135deg, #c9a84c, #9b59b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
             Live Sync
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
+          <p style={{ color: 'rgba(220,200,255,0.72)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
             People seeing your numbers right now
           </p>
         </div>
@@ -170,7 +170,7 @@ export default function SyncPage() {
         {/* Your numbers */}
         {userNumbers.length > 0 && (
           <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '1rem', padding: '0.75rem 1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em' }}>YOUR NUMBERS</span>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(220,200,255,0.68)', letterSpacing: '0.1em' }}>YOUR NUMBERS</span>
             <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.4rem' }}>
               {userNumbers.slice(0, 8).map(n => (
                 <span key={n} style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem', borderRadius: '999px', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontWeight: 600 }}>{n}</span>
@@ -194,14 +194,14 @@ export default function SyncPage() {
               }}
             >{f}</button>
           ))}
-          <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)', alignSelf: 'center' }}>
+          <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'rgba(220,200,255,0.58)', alignSelf: 'center' }}>
             {filtered.length} soul{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.58)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem', animation: 'pulse 1.5s infinite' }}>*</div>
             <p style={{ fontSize: '0.85rem' }}>Scanning the cosmic field...</p>
           </div>
@@ -209,7 +209,7 @@ export default function SyncPage() {
 
         {/* No matches */}
         {!loading && filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.58)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>*</div>
             <p style={{ fontSize: '0.9rem' }}>No syncs found for this filter</p>
             <p style={{ fontSize: '0.78rem', marginTop: '0.5rem' }}>Log more angel numbers to attract matches</p>
@@ -237,7 +237,7 @@ export default function SyncPage() {
 
         {/* Demo notice */}
         <div style={{ marginTop: '2rem', padding: '0.75rem 1rem', background: 'rgba(155,89,182,0.08)', border: '1px solid rgba(155,89,182,0.2)', borderRadius: '0.75rem', textAlign: 'center' }}>
-          <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+          <p style={{ fontSize: '0.72rem', color: 'rgba(220,200,255,0.62)', margin: 0 }}>
             Demo mode — connect Supabase to see real-time matches
           </p>
         </div>

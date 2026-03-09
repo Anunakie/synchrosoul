@@ -42,8 +42,10 @@ function PostCard({
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.03)',
-      border: editing ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.08)',
+      background: 'rgba(8,6,28,0.88)',
+      border: editing ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(200,180,255,0.18)',
+      backdropFilter: 'blur(12px)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
       borderRadius: '1rem',
       padding: '1rem',
       marginBottom: '0.75rem',
@@ -53,12 +55,16 @@ function PostCard({
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
         <div style={{
           width: 40, height: 40, borderRadius: '50%',
-          background: post.authorColor + '33',
+          background: post.authorColor + '44',
           border: '2px solid ' + post.authorColor,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.8rem', fontWeight: 700, color: post.authorColor, flexShrink: 0
+          fontSize: '0.8rem', fontWeight: 700, color: post.authorColor,
+          flexShrink: 0, overflow: 'hidden',
         }}>
-          {post.authorAvatar}
+          {(post as any).authorImage
+            ? <img src={(post as any).authorImage} alt={post.authorName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            : post.authorAvatar
+          }
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -70,7 +76,7 @@ function PostCard({
               <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '999px', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c' }}>you</span>
             )}
           </div>
-          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>{getTimeAgo(post.createdAt)}</span>
+          <span style={{ fontSize: '0.7rem', color: 'rgba(220,200,255,0.55)' }}>{getTimeAgo(post.createdAt)}</span>
         </div>
         {!editing && post.angelNumber && (
           <div style={{
@@ -133,14 +139,14 @@ function PostCard({
                 padding: '0.4rem 0.75rem', borderRadius: '999px',
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.45)', fontSize: '0.78rem',
+                color: 'rgba(220,200,255,0.72)', fontSize: '0.78rem',
                 cursor: 'pointer'
               }}
             >Cancel</button>
           </div>
         </div>
       ) : (
-        <p style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.82)', lineHeight: '1.6' }}>
+        <p style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', color: 'rgba(240,230,255,0.93)', lineHeight: '1.65' }}>
           {post.content}
         </p>
       )}
@@ -154,7 +160,7 @@ function PostCard({
             padding: '0.3rem 0.75rem', borderRadius: '999px',
             background: resonated ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)',
             border: resonated ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)',
-            color: resonated ? '#c9a84c' : 'rgba(255,255,255,0.4)',
+            color: resonated ? '#c9a84c' : 'rgba(220,200,255,0.68)',
             fontSize: '0.78rem', fontWeight: resonated ? 600 : 400,
             cursor: 'pointer', transition: 'all 0.2s'
           }}
@@ -173,7 +179,7 @@ function PostCard({
                 padding: '0.3rem 0.75rem', borderRadius: '999px',
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.45)',
+                color: 'rgba(220,200,255,0.72)',
                 fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
@@ -262,7 +268,7 @@ export default function FeedPage() {
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, background: 'linear-gradient(135deg, #c9a84c, #9b59b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
             Cosmic Feed
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
+          <p style={{ color: 'rgba(220,200,255,0.7)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
             Souls seeing your numbers
           </p>
         </div>
@@ -278,14 +284,14 @@ export default function FeedPage() {
                 cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap', flexShrink: 0,
                 background: filter === f ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)',
                 border: filter === f ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                color: filter === f ? '#c9a84c' : 'rgba(255,255,255,0.45)',
+                color: filter === f ? '#e0c060' : 'rgba(220,200,255,0.7)',
               }}
             >{f}</button>
           ))}
         </div>
 
         {loading && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.5)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✦</div>
             <p style={{ fontSize: '0.85rem' }}>Tuning into the cosmic frequency...</p>
           </div>
@@ -302,7 +308,7 @@ export default function FeedPage() {
         ))}
 
         {!loading && filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.25)' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.5)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✦</div>
             <p style={{ fontSize: '0.85rem' }}>No posts for this filter yet</p>
             <p style={{ fontSize: '0.75rem', marginTop: '0.4rem' }}>Log more numbers to see synced posts</p>
@@ -311,7 +317,7 @@ export default function FeedPage() {
 
         {!loading && (
           <div style={{ marginTop: '1.5rem', padding: '0.75rem 1rem', background: 'rgba(155,89,182,0.06)', border: '1px solid rgba(155,89,182,0.15)', borderRadius: '0.75rem', textAlign: 'center' }}>
-            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+            <p style={{ fontSize: '0.7rem', color: 'rgba(220,200,255,0.5)', margin: 0 }}>
               Demo feed — connect Supabase for real-time posts from matched souls
             </p>
           </div>

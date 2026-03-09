@@ -6,6 +6,7 @@ export interface SocialPost {
   authorId: string
   authorName: string
   authorAvatar: string
+  authorImage?: string
   authorColor: string
   content: string
   angelNumber?: string
@@ -52,6 +53,7 @@ export function savePost(content: string, angelNumber?: string, lifePathNumber?:
     authorId: USER_ID,
     authorName: profile.displayName,
     authorAvatar: profile.displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+    authorImage: profile.avatarImage,
     authorColor: profile.avatarColor,
     content,
     angelNumber,

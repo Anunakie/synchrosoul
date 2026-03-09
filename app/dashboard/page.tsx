@@ -28,7 +28,7 @@ function NumerologyBadges({ profile }: { profile: NumerologyProfile }) {
             <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 0%, ${b.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: `${b.color}70`, marginBottom: '0.3rem' }}>{b.label}</div>
             <div style={{ fontSize: '2rem', fontWeight: 300, color: b.color, lineHeight: 1, textShadow: `0 0 16px ${b.color}50` }}>{b.number}</div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', fontStyle: 'italic' }}>{b.keyword}</div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)', marginTop: '0.3rem', fontStyle: 'italic' }}>{b.keyword}</div>
           </div>
         ))}
       </div>
@@ -45,13 +45,13 @@ function DailyGuidanceCard({ guidance, streak }: { guidance: DailyGuidance; stre
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
           <div>
             <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: `${guidance.themeColor}80`, textTransform: 'uppercase', marginBottom: '0.2rem' }}>Daily Guidance</div>
-            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>{guidance.date}</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(220,200,255,0.68)' }}>{guidance.date}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem' }}>
             <div style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', background: `${guidance.themeColor}20`, border: `1px solid ${guidance.themeColor}40`, fontSize: '0.7rem', color: guidance.themeColor, fontWeight: 600 }}>
               {guidance.theme}
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{guidance.moonPhase}</div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)' }}>{guidance.moonPhase}</div>
           </div>
         </div>
 
@@ -59,7 +59,7 @@ function DailyGuidanceCard({ guidance, streak }: { guidance: DailyGuidance; stre
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.875rem', marginBottom: '1rem' }}>
           <div style={{ textAlign: 'center', flexShrink: 0 }}>
             <div style={{ fontSize: '1.6rem', fontWeight: 700, color: guidance.themeColor, letterSpacing: '0.05em', lineHeight: 1 }}>{guidance.angelNumberOfDay}</div>
-            <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.2rem', letterSpacing: '0.1em' }}>TODAY</div>
+            <div style={{ fontSize: '0.55rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem', letterSpacing: '0.1em' }}>TODAY</div>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, fontStyle: 'italic' }}>{guidance.angelNumberMeaning}</div>
@@ -75,7 +75,7 @@ function DailyGuidanceCard({ guidance, streak }: { guidance: DailyGuidance; stre
       {/* Expandable section */}
       <button
         onClick={() => setExpanded(!expanded)}
-        style={{ width: '100%', padding: '0.6rem 1.25rem', background: 'rgba(0,0,0,0.15)', border: 'none', borderTop: `1px solid ${guidance.themeColor}15`, color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+        style={{ width: '100%', padding: '0.6rem 1.25rem', background: 'rgba(0,0,0,0.15)', border: 'none', borderTop: `1px solid ${guidance.themeColor}15`, color: 'rgba(220,200,255,0.62)', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
       >
         {expanded ? 'Less' : 'Full reading'} {expanded ? '▲' : '▼'}
       </button>
@@ -161,15 +161,15 @@ export default function DashboardPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#c9a84c' }}>{stats.total}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.2rem' }}>LOGGED</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem' }}>LOGGED</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#9b59b6' }}>{streak}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.2rem' }}>DAY STREAK</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem' }}>DAY STREAK</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3498db' }}>{stats.withProof}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.2rem' }}>VERIFIED</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem' }}>VERIFIED</div>
             </div>
           </div>
         )}
@@ -178,14 +178,14 @@ export default function DashboardPage() {
         {recentLogs.length > 0 && (
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
-              <span style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>Recent Sightings</span>
+              <span style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: 'rgba(220,200,255,0.58)', textTransform: 'uppercase' }}>Recent Sightings</span>
               <Link href="/dashboard/journal" style={{ fontSize: '0.72rem', color: 'rgba(201,168,76,0.6)', textDecoration: 'none' }}>View all</Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {recentLogs.map((log: AngelLog) => (
                 <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.875rem' }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#c9a84c', minWidth: 48 }}>{log.number}</span>
-                  <span style={{ flex: 1, fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ flex: 1, fontSize: '0.78rem', color: 'rgba(220,200,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {log.thought || 'No thought recorded'}
                   </span>
                   {log.screenshotUrl && <span style={{ fontSize: '0.65rem', color: '#2ecc71' }}>Verified</span>}
@@ -206,7 +206,7 @@ export default function DashboardPage() {
             <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
               <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', border: `1px solid ${item.color}20`, borderRadius: '1rem', cursor: 'pointer', transition: 'border-color 0.2s' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 600, color: item.color, marginBottom: '0.2rem' }}>{item.label}</div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>{item.desc}</div>
+                <div style={{ fontSize: '0.72rem', color: 'rgba(220,200,255,0.62)' }}>{item.desc}</div>
               </div>
             </Link>
           ))}

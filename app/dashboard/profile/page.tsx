@@ -111,7 +111,7 @@ export default function ProfilePage() {
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '2rem 1rem 6rem' }}>
 
         {/* Profile Card */}
-        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1.25rem', padding: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(200,180,255,0.18)', borderRadius: '1.25rem', padding: '1.5rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
 
             {/* Avatar */}
@@ -214,11 +214,11 @@ export default function ProfilePage() {
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#f0e6ff' }}>{profile.displayName}</h2>
-                    <button onClick={() => setEditing(true)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.1rem 0.4rem' }}>Edit</button>
+                    <button onClick={() => setEditing(true)} style={{ background: 'none', border: 'none', color: 'rgba(220,200,255,0.58)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.1rem 0.4rem' }}>Edit</button>
                   </div>
                   {profile.bio
                     ? <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>{profile.bio}</p>
-                    : <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>Add a spiritual bio...</p>
+                    : <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'rgba(220,200,255,0.5)', fontStyle: 'italic' }}>Add a spiritual bio...</p>
                   }
                 </>
               )}
@@ -228,7 +228,7 @@ export default function ProfilePage() {
           {/* Numerology badges */}
           {numerology && (
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>COSMIC BLUEPRINT</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>COSMIC BLUEPRINT</div>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {numerology.lifePath && (
                   <div style={{ padding: '0.3rem 0.75rem', borderRadius: '999px', background: (lpData?.color || '#c9a84c') + '20', border: '1px solid ' + (lpData?.color || '#c9a84c') + '50', fontSize: '0.75rem', color: lpData?.color || '#c9a84c', fontWeight: 600 }}>Life Path {numerology.lifePath}</div>
@@ -245,17 +245,17 @@ export default function ProfilePage() {
 
           {/* Stats */}
           <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem' }}>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(8,6,28,0.75)', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#c9a84c' }}>{posts.length}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>POSTS</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>POSTS</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem' }}>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(8,6,28,0.75)', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#9b59b6' }}>{userNumbers.length}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>NUMBERS</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>NUMBERS</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem' }}>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(8,6,28,0.75)', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3498db' }}>{posts.reduce((s, p) => s + p.resonates, 0)}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>RESONATES</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>RESONATES</div>
             </div>
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function ProfilePage() {
         )}
 
         {composing && (
-          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '1rem', padding: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '1rem', padding: '1rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)' }}>
             <textarea value={postText} onChange={e => setPostText(e.target.value)}
               placeholder="What are the numbers showing you today?"
               rows={3} autoFocus
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                 style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', color: '#c9a84c', fontSize: '0.8rem', outline: 'none' }}
               />
               <button onClick={() => { setComposing(false); setPostText(''); setPostNumber('') }}
-                style={{ padding: '0.35rem 0.75rem', background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
+                style={{ padding: '0.35rem 0.75rem', background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: 'rgba(220,200,255,0.68)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
               <button onClick={handlePost} disabled={!postText.trim() || posting}
                 style={{ padding: '0.35rem 0.9rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.5rem', color: '#c9a84c', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                 {posting ? '...' : 'Post'}
@@ -292,14 +292,14 @@ export default function ProfilePage() {
 
         {/* Posts */}
         {posts.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.25)' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.5)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>*</div>
             <p style={{ fontSize: '0.85rem' }}>Your cosmic moments will appear here</p>
           </div>
         )}
 
         {posts.map(post => (
-          <div key={post.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '1rem', padding: '1rem', marginBottom: '0.75rem' }}>
+          <div key={post.id} style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.18)', borderRadius: '1rem', padding: '1rem', marginBottom: '0.75rem', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarImage ? 'transparent' : post.authorColor + '33', border: '2px solid ' + post.authorColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: post.authorColor, flexShrink: 0, overflow: 'hidden' }}>
                 {avatarImage
@@ -309,7 +309,7 @@ export default function ProfilePage() {
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#f0e6ff' }}>{post.authorName}</span>
-                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginLeft: '0.5rem' }}>{getTimeAgo(post.createdAt)}</span>
+                <span style={{ fontSize: '0.72rem', color: 'rgba(220,200,255,0.62)', marginLeft: '0.5rem' }}>{getTimeAgo(post.createdAt)}</span>
               </div>
               {post.angelNumber && (
                 <span style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontWeight: 600 }}>{post.angelNumber}</span>
@@ -318,7 +318,7 @@ export default function ProfilePage() {
             <p style={{ margin: '0 0 0.75rem', fontSize: '0.88rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>{post.content}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <button onClick={() => handleResonate(post.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: post.resonatedBy.includes('local_user') ? 'rgba(201,168,76,0.15)' : 'none', border: post.resonatedBy.includes('local_user') ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.25rem 0.6rem', color: post.resonatedBy.includes('local_user') ? '#c9a84c' : 'rgba(255,255,255,0.4)', fontSize: '0.75rem', cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: post.resonatedBy.includes('local_user') ? 'rgba(201,168,76,0.15)' : 'none', border: post.resonatedBy.includes('local_user') ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.25rem 0.6rem', color: post.resonatedBy.includes('local_user') ? '#c9a84c' : 'rgba(220,200,255,0.68)', fontSize: '0.75rem', cursor: 'pointer' }}>
                 * {post.resonates}
               </button>
               <button onClick={() => handleDelete(post.id)}
