@@ -2,232 +2,191 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-interface SearchResult {
-  type: string;
-  title: string;
-  subtitle: string;
-  href: string;
-  emoji: string;
-  color: string;
-  match: string;
+interface AngelLog {
+  id: string;
+  number: string;
+  thought?: string;
+  createdAt: string;
+  verified?: boolean;
 }
 
-const STATIC_PAGES = [
-  { title: 'Angel Number Logger', subtitle: 'Log angel numbers you see', href: '/dashboard', emoji: '✦', color: '#c9a84c', tags: ['log', 'number', 'angel', 'logger'] },
-  { title: 'Thought Anchor Journal', subtitle: 'Your private angel number journal', href: '/dashboard/journal', emoji: '📖', color: '#a78bfa', tags: ['journal', 'thoughts', 'write', 'diary'] },
-  { title: 'Dream Journal', subtitle: 'Record and decode your dreams', href: '/dashboard/dreams', emoji: '🌙', color: '#60a5fa', tags: ['dreams', 'sleep', 'visions', 'decode'] },
-  { title: 'Angel Oracle', subtitle: 'Ask your guides a question', href: '/dashboard/oracle', emoji: '◈', color: '#c9a84c', tags: ['oracle', 'guidance', 'ask', 'reading', 'guides'] },
-  { title: 'Cosmic Tarot', subtitle: 'Major Arcana readings', href: '/dashboard/tarot', emoji: '🃏', color: '#f472b6', tags: ['tarot', 'cards', 'reading', 'arcana'] },
-  { title: 'Deep Numerology', subtitle: 'Your complete soul blueprint', href: '/dashboard/numerology-deep', emoji: '🧮', color: '#a78bfa', tags: ['numerology', 'life path', 'soul urge', 'destiny', 'numbers'] },
-  { title: 'Compatibility', subtitle: 'Numerology match score', href: '/dashboard/compatibility', emoji: '💞', color: '#f472b6', tags: ['compatibility', 'match', 'partner', 'relationship'] },
-  { title: 'Soul Connections', subtitle: 'Track your soul bonds', href: '/dashboard/relationships', emoji: '💞', color: '#f472b6', tags: ['relationships', 'connections', 'soul', 'bonds', 'partner'] },
-  { title: 'Live Sync Matching', subtitle: 'Find souls on your frequency', href: '/dashboard/sync', emoji: '⟳', color: '#60a5fa', tags: ['sync', 'match', 'connect', 'frequency', 'live'] },
-  { title: 'Soul Twin Radar', subtitle: 'Find your number matches', href: '/dashboard/soul-twin', emoji: '🧬', color: '#f472b6', tags: ['soul twin', 'twin flame', 'match', 'radar'] },
-  { title: 'Cosmic Weather', subtitle: 'Daily energetic forecast', href: '/dashboard/cosmic-weather', emoji: '🌌', color: '#60a5fa', tags: ['weather', 'forecast', 'energy', 'daily', 'moon'] },
-  { title: 'Moon Phases', subtitle: 'Lunar calendar and rituals', href: '/dashboard/moon', emoji: '🌙', color: '#94a3b8', tags: ['moon', 'lunar', 'phases', 'calendar'] },
-  { title: 'Cosmic Calendar', subtitle: 'Numerology calendar view', href: '/dashboard/calendar', emoji: '🗓️', color: '#60a5fa', tags: ['calendar', 'dates', 'numerology', 'schedule'] },
-  { title: 'Chakra Alignment', subtitle: 'Balance your energy centers', href: '/dashboard/chakras', emoji: '🌈', color: '#f97316', tags: ['chakra', 'energy', 'balance', 'healing'] },
-  { title: 'Crystal Guide', subtitle: 'Crystals for your frequency', href: '/dashboard/crystals', emoji: '💎', color: '#818cf8', tags: ['crystals', 'gems', 'healing', 'stones'] },
-  { title: 'Solfeggio Frequencies', subtitle: '396Hz to 963Hz healing tones', href: '/dashboard/solfeggio', emoji: '🎵', color: '#c9a84c', tags: ['solfeggio', 'frequency', 'sound', 'healing', 'hz'] },
-  { title: 'Sacred Breathwork', subtitle: 'Breathing exercises for the soul', href: '/dashboard/breathwork', emoji: '💨', color: '#67e8f9', tags: ['breathwork', 'breathing', 'meditation', 'calm'] },
-  { title: 'Guided Meditations', subtitle: 'Angel number activations', href: '/dashboard/meditations', emoji: '🧘', color: '#a78bfa', tags: ['meditation', 'guided', 'mindfulness', 'calm'] },
-  { title: 'Sacred Rituals', subtitle: 'Moon and number ceremonies', href: '/dashboard/rituals', emoji: '🕯️', color: '#c9a84c', tags: ['rituals', 'ceremony', 'practice', 'sacred'] },
-  { title: 'Affirmations', subtitle: 'Numerology-aligned affirmations', href: '/dashboard/affirmations', emoji: '💫', color: '#60a5fa', tags: ['affirmations', 'positive', 'mindset', 'daily'] },
-  { title: 'Gratitude Practice', subtitle: 'Daily gratitude journal', href: '/dashboard/gratitude', emoji: '🙏', color: '#4ade80', tags: ['gratitude', 'thankful', 'journal', 'daily'] },
-  { title: 'Vision Board', subtitle: 'Your cosmic dream board', href: '/dashboard/vision-board', emoji: '🖼️', color: '#818cf8', tags: ['vision board', 'dreams', 'goals', 'manifest'] },
-  { title: 'Manifestations', subtitle: 'Track what you are calling in', href: '/dashboard/manifestations', emoji: '🌱', color: '#4ade80', tags: ['manifestations', 'goals', 'law of attraction', 'calling in'] },
-  { title: 'Karmic Debt', subtitle: 'Understand your soul lessons', href: '/dashboard/karmic-debt', emoji: '⚖️', color: '#f97316', tags: ['karmic', 'karma', 'debt', 'lessons', 'soul'] },
-  { title: 'Personal Year', subtitle: 'Your 9-year cycle forecast', href: '/dashboard/personal-year', emoji: '📅', color: '#34d399', tags: ['personal year', 'cycle', 'forecast', 'numerology'] },
-  { title: 'Cosmic Soul Report', subtitle: 'Your complete numerology blueprint', href: '/dashboard/cosmic-report', emoji: '📜', color: '#c9a84c', tags: ['report', 'blueprint', 'numerology', 'soul', 'complete'] },
-  { title: 'Healing Hub', subtitle: 'All healing tools in one place', href: '/dashboard/healing-hub', emoji: '🌿', color: '#4ade80', tags: ['healing', 'hub', 'tools', 'wellness'] },
-  { title: 'Insights & Analytics', subtitle: 'Your number pattern analysis', href: '/dashboard/insights', emoji: '📊', color: '#60a5fa', tags: ['insights', 'analytics', 'patterns', 'stats'] },
-  { title: 'Streak Tracker', subtitle: 'Your logging streak', href: '/dashboard/streak', emoji: '🔥', color: '#f97316', tags: ['streak', 'consistency', 'daily', 'tracker'] },
-  { title: 'Badges & Achievements', subtitle: 'Your spiritual milestones', href: '/dashboard/badges', emoji: '🏅', color: '#c9a84c', tags: ['badges', 'achievements', 'milestones', 'rewards'] },
-  { title: 'Angel Circles', subtitle: 'Community groups', href: '/dashboard/circles', emoji: '⭕', color: '#f97316', tags: ['circles', 'community', 'groups', 'social'] },
-  { title: 'Cosmic Feed', subtitle: 'Posts from matched souls', href: '/dashboard/feed', emoji: '✧', color: '#a78bfa', tags: ['feed', 'social', 'posts', 'community'] },
-  { title: 'Profile Card', subtitle: 'Your shareable cosmic card', href: '/dashboard/profile-card', emoji: '🪪', color: '#60a5fa', tags: ['profile card', 'share', 'card', 'cosmic'] },
-  { title: 'Upgrade to Premium', subtitle: 'Unlock all cosmic features', href: '/dashboard/upgrade', emoji: '⭐', color: '#c9a84c', tags: ['upgrade', 'premium', 'unlock', 'features'] },
-  { title: 'Settings', subtitle: 'App preferences and account', href: '/dashboard/settings', emoji: '⚙️', color: '#818cf8', tags: ['settings', 'preferences', 'account', 'profile'] },
-  { title: 'Number Dictionary', subtitle: '000-9999 angel sequences decoded', href: '/dashboard/dictionary', emoji: '📚', color: '#a78bfa', tags: ['dictionary', 'meanings', 'numbers', 'decode', 'reference'] },
-  { title: 'Weekly Synthesis', subtitle: 'Your weekly pattern report', href: '/dashboard/synthesis', emoji: '✺', color: '#c9a84c', tags: ['synthesis', 'weekly', 'report', 'patterns'] },
+interface DreamEntry {
+  id: string;
+  title: string;
+  content: string;
+  numbers: string[];
+  createdAt: string;
+}
+
+const ALL_PAGES = [
+  { href: '/dashboard', label: 'Home', emoji: '✦', desc: 'Dashboard overview and daily guidance' },
+  { href: '/dashboard/journal', label: 'Journal', emoji: '📖', desc: 'Log angel numbers and thoughts' },
+  { href: '/dashboard/timeline', label: 'Timeline', emoji: '⏳', desc: 'Chronological view of all sightings' },
+  { href: '/dashboard/calendar', label: 'Calendar', emoji: '🗓️', desc: 'Monthly calendar of angel number sightings' },
+  { href: '/dashboard/dreams', label: 'Dreams', emoji: '🌙', desc: 'Dream journal with angel number tracking' },
+  { href: '/dashboard/insights', label: 'Insights', emoji: '📊', desc: 'AI pattern analysis of your numbers' },
+  { href: '/dashboard/stats', label: 'Statistics', emoji: '📈', desc: 'Detailed statistics and charts' },
+  { href: '/dashboard/streak', label: 'Streak', emoji: '🔥', desc: 'Daily logging streak and milestones' },
+  { href: '/dashboard/numerology-deep', label: 'Deep Numerology', emoji: '🧮', desc: 'Advanced numerology calculations' },
+  { href: '/dashboard/compatibility', label: 'Compatibility', emoji: '💞', desc: 'Numerology compatibility calculator' },
+  { href: '/dashboard/personal-year', label: 'Personal Year', emoji: '📅', desc: 'Your personal year number and forecast' },
+  { href: '/dashboard/karmic-debt', label: 'Karmic Debt', emoji: '⚖️', desc: 'Karmic debt numbers and lessons' },
+  { href: '/dashboard/oracle', label: 'Oracle', emoji: '✦', desc: 'Angel number oracle card readings' },
+  { href: '/dashboard/tarot', label: 'Tarot', emoji: '🃏', desc: 'Angel-aligned tarot card readings' },
+  { href: '/dashboard/dictionary', label: 'Dictionary', emoji: '📚', desc: 'Complete angel number meanings' },
+  { href: '/dashboard/moon', label: 'Moon Phases', emoji: '🌙', desc: 'Lunar phases and angel number rituals' },
+  { href: '/dashboard/cosmic-weather', label: 'Cosmic Weather', emoji: '🌌', desc: 'Planetary energies and forecasts' },
+  { href: '/dashboard/meditations', label: 'Meditations', emoji: '🧘', desc: 'Guided angel number meditations' },
+  { href: '/dashboard/breathwork', label: 'Breathwork', emoji: '💨', desc: 'Sacred breathing techniques' },
+  { href: '/dashboard/solfeggio', label: 'Solfeggio', emoji: '🎵', desc: 'Healing frequencies aligned with angel numbers' },
+  { href: '/dashboard/chakras', label: 'Chakras', emoji: '🌈', desc: 'Chakra system and angel number alignment' },
+  { href: '/dashboard/crystals', label: 'Crystals', emoji: '💎', desc: 'Crystal healing guide' },
+  { href: '/dashboard/affirmations', label: 'Affirmations', emoji: '💫', desc: 'Daily affirmations by category' },
+  { href: '/dashboard/rituals', label: 'Rituals', emoji: '🕯️', desc: 'Sacred rituals for angel numbers' },
+  { href: '/dashboard/healing-hub', label: 'Healing Hub', emoji: '🌿', desc: 'Complete healing resource center' },
+  { href: '/dashboard/gratitude', label: 'Gratitude', emoji: '🙏', desc: 'Daily gratitude practice' },
+  { href: '/dashboard/manifestations', label: 'Manifestations', emoji: '🌱', desc: 'Track your manifestations' },
+  { href: '/dashboard/vision-board', label: 'Vision Board', emoji: '🖼️', desc: 'Sacred intentions vision board' },
+  { href: '/dashboard/synthesis', label: 'Synthesis', emoji: '✺', desc: 'Weekly cosmic synthesis report' },
+  { href: '/dashboard/badges', label: 'Badges', emoji: '🏅', desc: 'Spiritual achievement badges' },
+  { href: '/dashboard/sync', label: 'Live Sync', emoji: '⟳', desc: 'Match with souls seeing the same numbers' },
+  { href: '/dashboard/soul-twin', label: 'Soul Twin', emoji: '👥', desc: 'Find your soul twin connection' },
+  { href: '/dashboard/circles', label: 'Circles', emoji: '⭕', desc: 'Angel number community circles' },
+  { href: '/dashboard/relationships', label: 'Soul Connections', emoji: '💞', desc: 'Map your sacred soul connections' },
+  { href: '/dashboard/feed', label: 'Feed', emoji: '✧', desc: 'Social feed from matched souls' },
+  { href: '/dashboard/profile', label: 'Profile', emoji: '◎', desc: 'Your spiritual profile' },
+  { href: '/dashboard/profile-card', label: 'Profile Card', emoji: '🪪', desc: 'Shareable numerology profile card' },
+  { href: '/dashboard/settings', label: 'Settings', emoji: '⚙️', desc: 'App settings and preferences' },
+  { href: '/dashboard/upgrade', label: 'Upgrade', emoji: '⭐', desc: 'Premium features and plans' },
 ];
+
+const ANGEL_COLORS: Record<string, string> = {
+  '111': '#f59e0b', '1111': '#f59e0b', '222': '#22c55e', '333': '#f97316',
+  '444': '#22c55e', '555': '#8b5cf6', '777': '#c9a84c', '888': '#c9a84c',
+  '999': '#6366f1', '1212': '#60a5fa',
+};
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [journalResults, setJournalResults] = useState<any[]>([]);
-  const [dreamResults, setDreamResults] = useState<any[]>([]);
-  const [logResults, setLogResults] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AngelLog[]>([]);
+  const [dreams, setDreams] = useState<DreamEntry[]>([]);
 
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([]); setJournalResults([]); setDreamResults([]); setLogResults([]);
-      return;
-    }
-    const q = query.toLowerCase();
-
-    // Search static pages
-    const pageResults: SearchResult[] = STATIC_PAGES
-      .filter(p => p.title.toLowerCase().includes(q) || p.subtitle.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)))
-      .map(p => ({ type: 'page', title: p.title, subtitle: p.subtitle, href: p.href, emoji: p.emoji, color: p.color, match: 'Feature' }));
-    setResults(pageResults);
-
-    // Search journal entries
     try {
-      const logs = JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]');
-      const jResults = logs.filter((l: any) =>
-        l.number?.includes(q) || l.thought?.toLowerCase().includes(q)
-      ).slice(0, 5);
-      setLogResults(jResults);
+      setLogs(JSON.parse(localStorage.getItem('angel_logs') || '[]'));
+      setDreams(JSON.parse(localStorage.getItem('synchrosoul_dreams') || '[]'));
     } catch {}
+  }, []);
 
-    // Search dreams
-    try {
-      const dreams = JSON.parse(localStorage.getItem('synchrosoul_dreams') || '[]');
-      const dResults = dreams.filter((d: any) =>
-        d.title?.toLowerCase().includes(q) || d.content?.toLowerCase().includes(q) || d.numbers?.some((n: string) => n.includes(q))
-      ).slice(0, 3);
-      setDreamResults(dResults);
-    } catch {}
-  }, [query]);
+  const q = query.toLowerCase().trim();
 
-  const totalResults = results.length + logResults.length + dreamResults.length;
+  const matchedPages = q ? ALL_PAGES.filter(p =>
+    p.label.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
+  ) : [];
+
+  const matchedLogs = q ? logs.filter(l =>
+    l.number.includes(q) || (l.thought || '').toLowerCase().includes(q)
+  ).slice(0, 5) : [];
+
+  const matchedDreams = q ? dreams.filter(d =>
+    d.title.toLowerCase().includes(q) || d.content.toLowerCase().includes(q) ||
+    d.numbers.some(n => n.includes(q))
+  ).slice(0, 3) : [];
+
+  const hasResults = matchedPages.length > 0 || matchedLogs.length > 0 || matchedDreams.length > 0;
 
   return (
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', fontFamily: 'Cormorant Garamond, serif' }}>Search</h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Find features, journal entries, and more</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#a78bfa', fontFamily: 'Cormorant Garamond, serif' }}>Search</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Find anything in your cosmic journey</p>
       </div>
 
-      {/* Search Input */}
-      <div style={{
-        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
-        border: '1px solid rgba(255,255,255,0.12)', padding: '0.25rem 0.25rem 0.25rem 1.25rem',
-        backdropFilter: 'blur(12px)', marginBottom: '1.5rem',
-        display: 'flex', alignItems: 'center', gap: '0.75rem'
-      }}>
-        <span style={{ fontSize: '1.1rem', opacity: 0.5 }}>🔍</span>
+      <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+        <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', fontSize: '1rem' }}>🔍</span>
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search features, numbers, journal entries..."
+          placeholder="Search pages, numbers, journal entries..."
           autoFocus
-          style={{
-            flex: 1, background: 'transparent', border: 'none', outline: 'none',
-            color: '#fff', fontSize: '1rem', padding: '0.75rem 0'
-          }}
+          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '999px', padding: '0.875rem 1.25rem 0.875rem 2.75rem', color: '#fff', fontSize: '1rem', outline: 'none' }}
         />
-        {query && (
-          <button onClick={() => setQuery('')} style={{
-            background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '999px',
-            width: '2rem', height: '2rem', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem'
-          }}>✕</button>
-        )}
       </div>
 
-      {/* No query - show quick links */}
-      {!query && (
-        <div>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Quick Access</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem' }}>
-            {STATIC_PAGES.slice(0, 9).map(p => (
-              <Link key={p.href} href={p.href} style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '1rem', padding: '0.875rem 0.5rem', textDecoration: 'none',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem'
-              }}>
-                <span style={{ fontSize: '1.4rem' }}>{p.emoji}</span>
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.72rem', textAlign: 'center', lineHeight: 1.3 }}>{p.title}</span>
+      {!q && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+          {ALL_PAGES.slice(0, 8).map(p => (
+            <Link key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
+              <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.07)', padding: '0.875rem', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>{p.emoji}</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 600 }}>{p.label}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {q && !hasResults && (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🔍</div>
+          <p>No results for &ldquo;{query}&rdquo;</p>
+        </div>
+      )}
+
+      {matchedPages.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Pages</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {matchedPages.map(p => (
+              <Link key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.07)', padding: '0.875rem 1rem', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '1.2rem' }}>{p.emoji}</span>
+                  <div>
+                    <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{p.label}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{p.desc}</p>
+                  </div>
+                </div>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* Results */}
-      {query && (
+      {matchedLogs.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Journal Entries</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {matchedLogs.map(l => {
+              const color = ANGEL_COLORS[l.number] || '#a78bfa';
+              return (
+                <Link key={l.id} href="/dashboard/journal" style={{ textDecoration: 'none' }}>
+                  <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.07)', padding: '0.875rem 1rem', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ color, fontWeight: 800, fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', minWidth: '40px' }}>{l.number}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>{l.thought || 'No thought recorded'}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', marginTop: '0.15rem' }}>{new Date(l.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {matchedDreams.length > 0 && (
         <div>
-          {totalResults === 0 && (
-            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔍</div>
-              <p>No results for &ldquo;{query}&rdquo;</p>
-              <p style={{ fontSize: '0.82rem', marginTop: '0.4rem' }}>Try searching for a feature name or number</p>
-            </div>
-          )}
-
-          {results.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Features ({results.length})</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {results.map(r => (
-                  <Link key={r.href} href={r.href} style={{
-                    background: 'rgba(8,6,28,0.88)', borderRadius: '1rem',
-                    border: `1px solid ${r.color}20`, padding: '0.875rem 1rem',
-                    textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.875rem'
-                  }}>
-                    <span style={{
-                      width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
-                      background: `${r.color}15`, border: `1px solid ${r.color}25`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem'
-                    }}>{r.emoji}</span>
-                    <div>
-                      <p style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{r.title}</p>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{r.subtitle}</p>
-                    </div>
-                    <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.2)' }}>›</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {logResults.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Journal Entries ({logResults.length})</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {logResults.map((l: any, i: number) => (
-                  <Link key={i} href="/dashboard/journal" style={{
-                    background: 'rgba(8,6,28,0.88)', borderRadius: '1rem',
-                    border: '1px solid rgba(201,168,76,0.2)', padding: '0.875rem 1rem',
-                    textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.875rem'
-                  }}>
-                    <span style={{
-                      width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#c9a84c', fontWeight: 800, fontSize: '0.85rem', fontFamily: 'Cormorant Garamond, serif'
-                    }}>{l.number}</span>
-                    <div>
-                      <p style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>Angel Number {l.number}</p>
-                      {l.thought && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{l.thought.substring(0, 60)}...</p>}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {dreamResults.length > 0 && (
-            <div>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Dreams ({dreamResults.length})</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {dreamResults.map((d: any, i: number) => (
-                  <Link key={i} href="/dashboard/dreams" style={{
-                    background: 'rgba(8,6,28,0.88)', borderRadius: '1rem',
-                    border: '1px solid rgba(96,165,250,0.2)', padding: '0.875rem 1rem',
-                    textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.875rem'
-                  }}>
-                    <span style={{ fontSize: '1.5rem' }}>🌙</span>
-                    <div>
-                      <p style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{d.title || 'Dream Entry'}</p>
-                      {d.content && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{d.content.substring(0, 60)}...</p>}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Dream Journal</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {matchedDreams.map(d => (
+              <Link key={d.id} href="/dashboard/dreams" style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.07)', padding: '0.875rem 1rem', backdropFilter: 'blur(12px)' }}>
+                  <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.2rem' }}>{d.title}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{d.content.slice(0, 80)}...</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -1,228 +1,172 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-function reduce(n: number): number {
-  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-    n = String(n).split('').reduce((a, d) => a + parseInt(d), 0);
-  }
-  return n;
-}
-
-function getUniversalDay(d: Date) { return reduce(d.getDate() + d.getMonth() + 1 + d.getFullYear()); }
-function getUniversalMonth(d: Date) { return reduce(d.getMonth() + 1 + d.getFullYear()); }
-function getUniversalYear(d: Date) { return reduce(d.getFullYear()); }
-
-const DAY_DATA: Record<number, { theme: string; energy: string; color: string; emoji: string; advice: string; avoid: string; powerHour: string }> = {
-  1: { theme: 'New Beginnings', energy: 'Pioneering', color: '#ef4444', emoji: '🔴', advice: 'Start something new. Take bold action. Lead.', avoid: 'Waiting for permission or perfect timing', powerHour: '1am, 10am, 1pm' },
-  2: { theme: 'Harmony & Partnership', energy: 'Receptive', color: '#3b82f6', emoji: '🔵', advice: 'Collaborate, listen deeply, nurture bonds.', avoid: 'Forcing outcomes or rushing decisions', powerHour: '2am, 11am, 2pm' },
-  3: { theme: 'Creative Expression', energy: 'Expansive', color: '#f97316', emoji: '🟠', advice: 'Create, communicate, share your gifts.', avoid: 'Self-criticism or holding back your voice', powerHour: '3am, 12pm, 3pm' },
-  4: { theme: 'Foundation & Order', energy: 'Grounding', color: '#22c55e', emoji: '🟢', advice: 'Organize, plan, build solid structures.', avoid: 'Shortcuts or ignoring details', powerHour: '4am, 1pm, 4pm' },
-  5: { theme: 'Change & Freedom', energy: 'Dynamic', color: '#8b5cf6', emoji: '🟣', advice: 'Embrace change, try something different.', avoid: 'Clinging to the familiar out of fear', powerHour: '5am, 2pm, 5pm' },
-  6: { theme: 'Love & Healing', energy: 'Nurturing', color: '#ec4899', emoji: '🩷', advice: 'Tend to relationships, home, and self-care.', avoid: 'Perfectionism or taking on others burdens', powerHour: '6am, 3pm, 6pm' },
-  7: { theme: 'Spiritual Insight', energy: 'Introspective', color: '#6366f1', emoji: '🔮', advice: 'Meditate, study, seek inner wisdom.', avoid: 'Overthinking or isolating too long', powerHour: '7am, 4pm, 7pm' },
-  8: { theme: 'Abundance & Power', energy: 'Magnetic', color: '#f59e0b', emoji: '🟡', advice: 'Take charge, make power moves, manifest.', avoid: 'Fear of success or playing small', powerHour: '8am, 5pm, 8pm' },
-  9: { theme: 'Completion & Release', energy: 'Transcendent', color: '#f87171', emoji: '❤️', advice: 'Let go, forgive, complete unfinished cycles.', avoid: 'Holding onto what no longer serves you', powerHour: '9am, 6pm, 9pm' },
-  11: { theme: 'Illumination', energy: 'Visionary', color: '#e0e7ff', emoji: '⚪', advice: 'Trust your intuition. You are a channel today.', avoid: 'Dismissing your inner knowing', powerHour: '11am, 11pm' },
-  22: { theme: 'Master Building', energy: 'Architectural', color: '#fde68a', emoji: '🌟', advice: 'Think big. Build something that lasts.', avoid: 'Overwhelm — break it into steps', powerHour: '10am, 10pm' },
-};
-
-const MOON_PHASES = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
-const MOON_NAMES = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
-const MOON_ENERGIES = [
-  'Plant seeds of intention. New beginnings are blessed.',
-  'Take inspired action. Energy is building.',
-  'Push through challenges. Momentum is yours.',
-  'Refine and adjust. The peak approaches.',
-  'Manifest and celebrate. Energy is at its peak.',
-  'Share your gifts. Gratitude amplifies abundance.',
-  'Release and reflect. Let go of what blocks you.',
-  'Rest and restore. Prepare for the new cycle.',
+const PLANETS = [
+  { name: 'Sun', symbol: '☉', color: '#f59e0b', currentSign: 'Pisces', energy: 'Spiritual dissolution, compassion, surrender to the divine flow.' },
+  { name: 'Moon', symbol: '☽', color: '#e2e8f0', currentSign: 'Scorpio', energy: 'Deep emotional transformation. Hidden truths surface. Trust your instincts.' },
+  { name: 'Mercury', symbol: '☿', color: '#60a5fa', currentSign: 'Aquarius', energy: 'Innovative thinking, unconventional ideas, digital communication favored.' },
+  { name: 'Venus', symbol: '♀', color: '#ec4899', currentSign: 'Aries', energy: 'Bold love, passionate pursuits, new romantic beginnings.' },
+  { name: 'Mars', symbol: '♂', color: '#ef4444', currentSign: 'Gemini', energy: 'Scattered energy, multiple projects, quick decisive action needed.' },
+  { name: 'Jupiter', symbol: '♃', color: '#c9a84c', currentSign: 'Gemini', energy: 'Expansion through learning, lucky communication, teaching and writing.' },
+  { name: 'Saturn', symbol: '♄', color: '#94a3b8', currentSign: 'Pisces', energy: 'Spiritual discipline, karmic completion, boundaries with compassion.' },
+  { name: 'Uranus', symbol: '♅', color: '#22d3ee', currentSign: 'Taurus', energy: 'Revolutionary changes in finances and values. Expect the unexpected.' },
+  { name: 'Neptune', symbol: '♆', color: '#818cf8', currentSign: 'Pisces', energy: 'Heightened intuition, psychic sensitivity, spiritual visions.' },
+  { name: 'Pluto', symbol: '♇', color: '#a78bfa', currentSign: 'Aquarius', energy: 'Collective transformation, power structures dissolving, rebirth of society.' },
 ];
 
-function getMoonPhase(date: Date): number {
-  const known = new Date(2000, 0, 6);
-  const diff = (date.getTime() - known.getTime()) / (1000 * 60 * 60 * 24);
-  const cycle = 29.53059;
-  return Math.floor(((diff % cycle + cycle) % cycle) / cycle * 8) % 8;
-}
+const MOON_PHASES = [
+  { name: 'New Moon', emoji: '🌑', energy: 'Set intentions, plant seeds, begin new cycles', power: 'Manifestation' },
+  { name: 'Waxing Crescent', emoji: '🌒', energy: 'Take first steps, build momentum, stay committed', power: 'Action' },
+  { name: 'First Quarter', emoji: '🌓', energy: 'Overcome obstacles, make decisions, push forward', power: 'Determination' },
+  { name: 'Waxing Gibbous', emoji: '🌔', energy: 'Refine, adjust, prepare for culmination', power: 'Refinement' },
+  { name: 'Full Moon', emoji: '🌕', energy: 'Release, celebrate, illuminate, heightened emotions', power: 'Release' },
+  { name: 'Waning Gibbous', emoji: '🌖', energy: 'Share wisdom, express gratitude, give back', power: 'Gratitude' },
+  { name: 'Last Quarter', emoji: '🌗', energy: 'Let go, forgive, clear space for new', power: 'Release' },
+  { name: 'Waning Crescent', emoji: '🌘', energy: 'Rest, reflect, surrender, prepare for rebirth', power: 'Surrender' },
+];
 
-const ANGEL_FORECAST: Record<number, string[]> = {
-  1: ['111 energy is strong — your thoughts manifest quickly today', '444 supports new beginnings with angelic protection'],
-  2: ['222 brings divine timing — trust the process', '1212 signals alignment in partnerships'],
-  3: ['333 activates your creative channel today', '1111 opens a manifestation portal'],
-  4: ['444 is your anchor today — you are divinely supported', '888 brings abundance through disciplined action'],
-  5: ['555 heralds transformation — embrace the shift', '1010 signals a spiritual upgrade'],
-  6: ['666 (rebalanced) calls you to love yourself first', '999 completes a healing cycle'],
-  7: ['777 is your lucky spiritual number today', '1111 opens the veil for divine downloads'],
-  8: ['888 activates infinite abundance loops', '444 grounds your manifestations in reality'],
-  9: ['999 signals completion — release with grace', '333 guides you through the transition'],
-  11: ['1111 is amplified — you are a portal today', '111 thoughts become reality instantly'],
-  22: ['2222 master builder energy — your vision is supported', '444 provides the foundation for your dreams'],
+const ANGEL_WEATHER: Record<string, { forecast: string; numbers: string[]; color: string }> = {
+  'New Moon': { forecast: 'Powerful manifestation window. The universe is listening. Log your intentions with angel numbers today.', numbers: ['111', '1111', '1212'], color: '#a78bfa' },
+  'Full Moon': { forecast: 'Release what no longer serves you. Angel numbers 999 and 9999 are especially potent tonight.', numbers: ['999', '9999', '333'], color: '#f59e0b' },
+  'Waxing Crescent': { forecast: 'Your angels are cheering you forward. Action-oriented numbers are appearing to guide your steps.', numbers: ['111', '444', '555'], color: '#22c55e' },
+  'Waning Crescent': { forecast: 'Rest and receive. Your angels are sending comfort and reassurance through gentle number sequences.', numbers: ['222', '444', '888'], color: '#60a5fa' },
 };
 
+const getCurrentMoonPhase = () => {
+  const known = new Date('2024-01-11');
+  const now = new Date();
+  const diff = (now.getTime() - known.getTime()) / (1000 * 60 * 60 * 24);
+  const cycle = diff % 29.53;
+  const idx = Math.floor((cycle / 29.53) * 8);
+  return MOON_PHASES[Math.min(idx, 7)];
+};
+
+const COSMIC_EVENTS = [
+  { date: '2026-03-14', event: 'Full Moon in Virgo', type: 'moon', impact: 'Release perfectionism. Healing through service and daily rituals.' },
+  { date: '2026-03-20', event: 'Spring Equinox — Sun enters Aries', type: 'solar', impact: 'New astrological year begins. Powerful new beginnings energy.' },
+  { date: '2026-03-29', event: 'New Moon in Aries', type: 'moon', impact: 'Most powerful new beginning of the year. Set bold intentions.' },
+  { date: '2026-04-07', event: 'Venus conjunct Neptune', type: 'planetary', impact: 'Dreamy, romantic, spiritual love energy. Soulmate connections heightened.' },
+  { date: '2026-04-12', event: 'Jupiter sextile Pluto', type: 'planetary', impact: 'Massive transformation and growth opportunities. Seize them.' },
+  { date: '2026-04-13', event: 'Full Moon in Libra', type: 'moon', impact: 'Balance relationships. Release codependency. Harmony restored.' },
+];
+
 export default function CosmicWeatherPage() {
-  const [now] = useState(new Date());
-  const [profile, setProfile] = useState<any>(null);
+  const [tab, setTab] = useState<'today' | 'planets' | 'events'>('today');
+  const moonPhase = getCurrentMoonPhase();
+  const angelWeather = ANGEL_WEATHER[moonPhase.name] || ANGEL_WEATHER['Waxing Crescent'];
 
-  useEffect(() => {
-    try { setProfile(JSON.parse(localStorage.getItem('synchrosoul_numerology_profile') || 'null')); } catch {}
-  }, []);
-
-  const universalDay = getUniversalDay(now);
-  const universalMonth = getUniversalMonth(now);
-  const universalYear = getUniversalYear(now);
-  const moonPhase = getMoonPhase(now);
-  const dayData = DAY_DATA[universalDay] || DAY_DATA[1];
-  const forecast = ANGEL_FORECAST[universalDay] || ANGEL_FORECAST[1];
-
-  const personalDay = profile?.birthdate ? (() => {
-    const [,m,d] = profile.birthdate.split('-').map(Number);
-    return reduce(d + m + now.getFullYear());
-  })() : null;
-  const personalDayData = personalDay ? (DAY_DATA[personalDay] || DAY_DATA[1]) : null;
-
-  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-  const energyBars = [
-    { label: 'Manifestation', value: [7,5,8,6,9,7,8,9,5,8,10,9][universalDay-1] || 7, color: '#c9a84c' },
-    { label: 'Intuition', value: [6,8,7,5,7,8,10,6,9,10,8,7][universalDay-1] || 7, color: '#8b5cf6' },
-    { label: 'Love', value: [7,9,8,6,7,10,7,8,8,7,9,8][universalDay-1] || 7, color: '#f472b6' },
-    { label: 'Abundance', value: [8,6,7,9,6,7,6,10,7,8,7,10][universalDay-1] || 7, color: '#22c55e' },
-  ];
+  const today = new Date();
+  const upcomingEvents = COSMIC_EVENTS.filter(e => new Date(e.date) >= today).slice(0, 4);
 
   return (
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{dateStr}</p>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#60a5fa', fontFamily: 'Cormorant Garamond, serif' }}>Cosmic Weather</h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Today’s energetic forecast for your soul</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#818cf8', fontFamily: 'Cormorant Garamond, serif' }}>Cosmic Weather</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Planetary energies shaping your angel number messages</p>
       </div>
 
-      {/* Universal Day - Hero Card */}
-      <div style={{
-        background: `linear-gradient(135deg, ${dayData.color}20, rgba(8,6,28,0.9))`,
-        borderRadius: '1.5rem', border: `1px solid ${dayData.color}40`,
-        padding: '1.75rem', backdropFilter: 'blur(12px)', marginBottom: '1.25rem',
-        boxShadow: `0 0 40px ${dayData.color}15`
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.25rem' }}>Universal Day Number</p>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '3.5rem', fontWeight: 800, color: dayData.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{universalDay}</span>
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.1rem', fontFamily: 'Cormorant Garamond, serif' }}>{dayData.theme}</span>
-            </div>
-          </div>
-          <span style={{ fontSize: '2.5rem' }}>{dayData.emoji}</span>
-        </div>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>{dayData.energy} energy surrounds today. {dayData.advice}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.875rem', padding: '0.75rem' }}>
-            <p style={{ color: '#4ade80', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>✓ Do Today</p>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', lineHeight: 1.4 }}>{dayData.advice}</p>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.875rem', padding: '0.75rem' }}>
-            <p style={{ color: '#f87171', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>✕ Avoid</p>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', lineHeight: 1.4 }}>{dayData.avoid}</p>
-          </div>
-        </div>
-        <div style={{ marginTop: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.6rem 0.875rem' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Power Hours: <span style={{ color: dayData.color }}>{dayData.powerHour}</span></p>
-        </div>
-      </div>
-
-      {/* Energy Bars */}
-      <div style={{
-        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
-        border: '1px solid rgba(255,255,255,0.08)', padding: '1.5rem',
-        backdropFilter: 'blur(12px)', marginBottom: '1.25rem'
-      }}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem' }}>Today’s Energy Levels</p>
-        {energyBars.map(bar => (
-          <div key={bar.label} style={{ marginBottom: '0.875rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>{bar.label}</span>
-              <span style={{ color: bar.color, fontSize: '0.82rem', fontWeight: 700 }}>{bar.value}/10</span>
-            </div>
-            <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '999px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${bar.value * 10}%`, background: bar.color, borderRadius: '999px', transition: 'width 1s ease' }} />
-            </div>
-          </div>
+      {/* Tab nav */}
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '999px', padding: '0.25rem' }}>
+        {(['today', 'planets', 'events'] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            flex: 1, padding: '0.5rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
+            background: tab === t ? 'rgba(129,140,248,0.2)' : 'transparent',
+            border: tab === t ? '1px solid rgba(129,140,248,0.3)' : '1px solid transparent',
+            color: tab === t ? '#818cf8' : 'rgba(255,255,255,0.4)',
+            textTransform: 'capitalize'
+          }}>{t === 'today' ? "Today's Sky" : t === 'planets' ? 'Planets' : 'Upcoming'}</button>
         ))}
       </div>
 
-      {/* Moon Phase */}
-      <div style={{
-        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
-        border: '1px solid rgba(148,163,184,0.2)', padding: '1.5rem',
-        backdropFilter: 'blur(12px)', marginBottom: '1.25rem',
-        display: 'flex', alignItems: 'center', gap: '1.25rem'
-      }}>
-        <div style={{ fontSize: '3.5rem', lineHeight: 1, flexShrink: 0 }}>{MOON_PHASES[moonPhase]}</div>
-        <div>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.25rem' }}>Moon Phase</p>
-          <p style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.35rem' }}>{MOON_NAMES[moonPhase]}</p>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', lineHeight: 1.5 }}>{MOON_ENERGIES[moonPhase]}</p>
-        </div>
-      </div>
-
-      {/* Angel Number Forecast */}
-      <div style={{
-        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
-        border: '1px solid rgba(201,168,76,0.2)', padding: '1.5rem',
-        backdropFilter: 'blur(12px)', marginBottom: '1.25rem'
-      }}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem' }}>Angel Number Forecast</p>
-        {forecast.map((f, i) => (
-          <div key={i} style={{
-            display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-            marginBottom: i < forecast.length - 1 ? '0.75rem' : 0
-          }}>
-            <span style={{ color: '#c9a84c', fontSize: '1rem', flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', lineHeight: 1.5 }}>{f}</p>
+      {tab === 'today' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* Moon phase card */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(129,140,248,0.15), rgba(8,6,28,0.95))', borderRadius: '1.5rem', border: '1px solid rgba(129,140,248,0.2)', padding: '1.5rem', backdropFilter: 'blur(12px)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '3rem' }}>{moonPhase.emoji}</span>
+              <div>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Current Moon Phase</p>
+                <h2 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{moonPhase.name}</h2>
+                <p style={{ color: '#818cf8', fontSize: '0.8rem' }}>Power: {moonPhase.power}</p>
+              </div>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '1rem' }}>{moonPhase.energy}</p>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.875rem', borderLeft: '3px solid #818cf8' }}>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>Angel Number Forecast</p>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '0.5rem' }}>{angelWeather.forecast}</p>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                {angelWeather.numbers.map(n => (
+                  <span key={n} style={{ background: `${angelWeather.color}15`, border: `1px solid ${angelWeather.color}25`, borderRadius: '999px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', color: angelWeather.color, fontWeight: 700 }}>{n}</span>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Personal Day (if profile exists) */}
-      {personalDayData && personalDay && (
-        <div style={{
-          background: `${personalDayData.color}12`, borderRadius: '1.5rem',
-          border: `1px solid ${personalDayData.color}30`, padding: '1.5rem',
-          backdropFilter: 'blur(12px)', marginBottom: '1.25rem'
-        }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.5rem' }}>Your Personal Day Number</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-            <span style={{ fontSize: '2.5rem', fontWeight: 800, color: personalDayData.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{personalDay}</span>
-            <div>
-              <p style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>{personalDayData.theme}</p>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>{personalDayData.advice}</p>
+          {/* Daily cosmic tip */}
+          <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.08)', padding: '1.25rem', backdropFilter: 'blur(12px)' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Today's Cosmic Tip</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', lineHeight: 1.7, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>
+              &ldquo;The planets are not causing your experiences — they are reflecting them. When you see an angel number today, pause and ask: what planetary energy is amplifying this message?&rdquo;
+            </p>
+          </div>
+
+          {/* Quick planet snapshot */}
+          <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.08)', padding: '1.25rem', backdropFilter: 'blur(12px)' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.875rem' }}>Planet Snapshot</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {PLANETS.slice(0, 5).map(p => (
+                <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <span style={{ color: p.color, fontSize: '1.1rem', width: '1.5rem', textAlign: 'center' }}>{p.symbol}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', minWidth: '60px' }}>{p.name}</span>
+                  <span style={{ color: p.color, fontSize: '0.78rem', fontWeight: 600 }}>in {p.currentSign}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Numerology Snapshot */}
-      <div style={{
-        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
-        border: '1px solid rgba(255,255,255,0.06)', padding: '1.5rem',
-        backdropFilter: 'blur(12px)'
-      }}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem' }}>Cosmic Snapshot</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem' }}>
-          {[
-            { label: 'Universal Day', value: universalDay, color: dayData.color },
-            { label: 'Universal Month', value: universalMonth, color: '#a78bfa' },
-            { label: 'Universal Year', value: universalYear, color: '#60a5fa' },
-          ].map(n => (
-            <div key={n.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.875rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: n.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{n.value}</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.3rem' }}>{n.label}</div>
+      {tab === 'planets' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {PLANETS.map(p => (
+            <div key={p.name} style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.25rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1rem 1.25rem', backdropFilter: 'blur(12px)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '0.5rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: `${p.color}15`, border: `1px solid ${p.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>{p.symbol}</div>
+                <div>
+                  <p style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>{p.name}</p>
+                  <p style={{ color: p.color, fontSize: '0.75rem' }}>in {p.currentSign}</p>
+                </div>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', lineHeight: 1.6 }}>{p.energy}</p>
             </div>
           ))}
         </div>
-      </div>
+      )}
+
+      {tab === 'events' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {upcomingEvents.map(e => {
+            const typeColors: Record<string, string> = { moon: '#818cf8', solar: '#f59e0b', planetary: '#22c55e' };
+            const color = typeColors[e.type] || '#a78bfa';
+            const daysUntil = Math.ceil((new Date(e.date).getTime() - Date.now()) / 86400000);
+            return (
+              <div key={e.date} style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.25rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem', backdropFilter: 'blur(12px)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <div>
+                    <p style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.2rem' }}>{e.event}</p>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem' }}>{new Date(e.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '0.75rem' }}>
+                    <p style={{ color: color, fontWeight: 700, fontSize: '1rem', fontFamily: 'Cormorant Garamond, serif' }}>{daysUntil}d</p>
+                    <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.62rem' }}>away</p>
+                  </div>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', lineHeight: 1.5 }}>{e.impact}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
