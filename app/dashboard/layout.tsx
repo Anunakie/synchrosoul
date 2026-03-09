@@ -22,10 +22,19 @@ const MORE_SECTIONS = [
   {
     title: 'Discover',
     items: [
-      { href: '/dashboard/dictionary', label: 'Number Dictionary', emoji: '📚' },
+      { href: '/dashboard/dictionary', label: 'Dictionary', emoji: '📚' },
       { href: '/dashboard/compatibility', label: 'Compatibility', emoji: '💞' },
-      { href: '/dashboard/oracle', label: 'Angel Oracle', emoji: '🔮' },
-      { href: '/dashboard/calendar', label: 'Cosmic Calendar', emoji: '🗓' },
+      { href: '/dashboard/oracle', label: 'Oracle', emoji: '🔮' },
+      { href: '/dashboard/calendar', label: 'Calendar', emoji: '🗓' },
+    ]
+  },
+  {
+    title: 'Connect',
+    items: [
+      { href: '/dashboard/soul-twin', label: 'Soul Twin', emoji: '🔥' },
+      { href: '/dashboard/affirmations', label: 'Affirmations', emoji: '💫' },
+      { href: '/dashboard/profile-card', label: 'Profile Card', emoji: '🪪' },
+      { href: '/dashboard/onboarding', label: 'Setup', emoji: '✦' },
     ]
   },
   {
@@ -40,9 +49,9 @@ const MORE_SECTIONS = [
   {
     title: 'Insights',
     items: [
-      { href: '/dashboard/synthesis', label: 'Weekly Synthesis', emoji: '✺' },
-      { href: '/dashboard/insights', label: 'My Insights', emoji: '📊' },
-      { href: '/dashboard/timeline', label: 'Vision Timeline', emoji: '🌈' },
+      { href: '/dashboard/synthesis', label: 'Synthesis', emoji: '✺' },
+      { href: '/dashboard/insights', label: 'Insights', emoji: '📊' },
+      { href: '/dashboard/timeline', label: 'Timeline', emoji: '🌈' },
       { href: '/dashboard/badges', label: 'Badges', emoji: '🏅' },
     ]
   },
