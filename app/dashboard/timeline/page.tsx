@@ -1,132 +1,159 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const angelMeanings: Record<string, { title: string; color: string; emoji: string }> = {
-  '111': { title: 'Manifestation Portal', color: '#ffd700', emoji: '🌟' },
-  '222': { title: 'Divine Balance', color: '#48bb78', emoji: '☯️' },
-  '333': { title: 'Ascended Masters', color: '#ed8936', emoji: '🔺' },
-  '444': { title: 'Angelic Protection', color: '#4299e1', emoji: '🛡️' },
-  '555': { title: 'Major Change', color: '#9b59b6', emoji: '🌀' },
-  '666': { title: 'Rebalance', color: '#e53e3e', emoji: '⚖️' },
-  '777': { title: 'Divine Magic', color: '#c9a84c', emoji: '✨' },
-  '888': { title: 'Infinite Abundance', color: '#f6ad55', emoji: '♾️' },
-  '999': { title: 'Completion', color: '#fc8181', emoji: '🔄' },
-  '1111': { title: 'Master Portal', color: '#ffd700', emoji: '🌠' },
-  '000': { title: 'Divine Wholeness', color: '#b794f4', emoji: '⭕' },
-  '1212': { title: 'Cosmic Alignment', color: '#76e4f7', emoji: '🎯' },
+interface AngelLog {
+  id: string;
+  number: string;
+  thought?: string;
+  screenshotUrl?: string;
+  verified?: boolean;
+  createdAt: string;
+}
+
+const ANGEL_COLORS: Record<string, string> = {
+  '111': '#f59e0b', '1111': '#f59e0b', '222': '#22c55e', '2222': '#22c55e',
+  '333': '#f97316', '3333': '#f97316', '444': '#22c55e', '4444': '#22c55e',
+  '555': '#8b5cf6', '5555': '#8b5cf6', '666': '#ef4444', '777': '#c9a84c',
+  '7777': '#c9a84c', '888': '#c9a84c', '8888': '#c9a84c', '999': '#6366f1',
+  '9999': '#6366f1', '1212': '#60a5fa', '1234': '#10b981',
 };
 
-function getMeaning(num: string) {
-  return angelMeanings[num] || { title: 'Sacred Message', color: '#c9a84c', emoji: '🔢' };
-}
+const MEANINGS: Record<string, string> = {
+  '111': 'New beginnings, manifestation portal open',
+  '1111': 'Powerful manifestation gateway, alignment',
+  '222': 'Balance, trust, divine timing',
+  '333': 'Ascended Masters present, creativity',
+  '444': 'Angelic protection, you are not alone',
+  '555': 'Major change incoming, transformation',
+  '777': 'Divine luck, spiritual awakening',
+  '888': 'Infinite abundance, financial flow',
+  '999': 'Completion, release, new cycle beginning',
+  '1212': 'Soul mission alignment, stay positive',
+};
 
-function groupByMonth(logs: any[]) {
-  const groups: Record<string, any[]> = {};
-  logs.forEach(log => {
-    const d = new Date(log.createdAt || log.timestamp);
-    const key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(log);
-  });
-  return groups;
-}
+const getColor = (num: string) => ANGEL_COLORS[num] || '#a78bfa';
+const getMeaning = (num: string) => MEANINGS[num] || 'A sacred message from the universe';
 
 export default function TimelinePage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [dreams, setDreams] = useState<any[]>([]);
-  const [manifests, setManifests] = useState<any[]>([]);
-  const [filter, setFilter] = useState<'all'|'numbers'|'dreams'|'manifestations'>('all');
+  const [logs, setLogs] = useState<AngelLog[]>([]);
+  const [filter, setFilter] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    const l = localStorage.getItem('synchrosoul_logs');
-    const d = localStorage.getItem('synchrosoul_dreams');
-    const m = localStorage.getItem('synchrosoul_manifestations');
-    if (l) setLogs(JSON.parse(l));
-    if (d) setDreams(JSON.parse(d));
-    if (m) setManifests(JSON.parse(m));
+    try {
+      const saved = JSON.parse(localStorage.getItem('angel_logs') || '[]');
+      setLogs(saved.sort((a: AngelLog, b: AngelLog) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    } catch {}
   }, []);
 
-  const allEvents = [
-    ...logs.map(l => ({ ...l, _type: 'number', _date: new Date(l.createdAt || l.timestamp) })),
-    ...dreams.map(d => ({ ...d, _type: 'dream', _date: new Date(d.createdAt || d.timestamp) })),
-    ...manifests.map(m => ({ ...m, _type: 'manifestation', _date: new Date(m.createdAt || m.updatedAt) })),
-  ].sort((a, b) => b._date.getTime() - a._date.getTime());
+  const filtered = filter ? logs.filter(l => l.number.includes(filter)) : logs;
 
-  const filtered = filter === 'all' ? allEvents : allEvents.filter(e => {
-    if (filter === 'numbers') return e._type === 'number';
-    if (filter === 'dreams') return e._type === 'dream';
-    if (filter === 'manifestations') return e._type === 'manifestation';
-    return true;
+  // Group by date
+  const grouped: Record<string, AngelLog[]> = {};
+  filtered.forEach(l => {
+    const d = new Date(l.createdAt);
+    const key = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(l);
   });
 
-  const grouped = groupByMonth(filtered.map(e => ({ ...e, createdAt: e._date.toISOString() })));
-
-  const typeIcon = { number: '🔢', dream: '🌙', manifestation: '🌱' };
-  const typeColor = { number: '#c9a84c', dream: '#9b59b6', manifestation: '#48bb78' };
+  const relativeTime = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return new Date(iso).toLocaleDateString();
+  };
 
   return (
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>📅 Soul Timeline</h1>
-      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Your complete spiritual journey in one view</p>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#a78bfa', fontFamily: 'Cormorant Garamond, serif' }}>Sacred Timeline</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Your complete angel number journey</p>
+      </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '2rem', flexWrap: 'wrap' }}>
-        {(['all','numbers','dreams','manifestations'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.4rem 1rem', borderRadius: '999px', background: filter === f ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: filter === f ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)', color: filter === f ? '#c9a84c' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.82rem', textTransform: 'capitalize' }}>
-            {f === 'numbers' ? '🔢' : f === 'dreams' ? '🌙' : f === 'manifestations' ? '🌱' : '✨'} {f}
-          </button>
+      {/* Stats bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        {[
+          { label: 'Total Sightings', value: logs.length },
+          { label: 'Unique Numbers', value: new Set(logs.map(l => l.number)).size },
+          { label: 'Verified', value: logs.filter(l => l.verified).length },
+        ].map(s => (
+          <div key={s.label} style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.07)', padding: '0.875rem', textAlign: 'center', backdropFilter: 'blur(12px)' }}>
+            <p style={{ color: '#a78bfa', fontSize: '1.5rem', fontWeight: 800, fontFamily: 'Cormorant Garamond, serif' }}>{s.value}</p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.2rem' }}>{s.label}</p>
+          </div>
         ))}
       </div>
 
-      {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '4rem 2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌌</div>
-          <p>Your timeline is empty. Start logging angel numbers, dreams, and manifestations to see your journey unfold.</p>
+      {/* Filter */}
+      <input value={filter} onChange={e => setFilter(e.target.value)}
+        placeholder="Filter by number (e.g. 1111)..."
+        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', padding: '0.75rem 1.25rem', color: '#fff', fontSize: '0.9rem', outline: 'none', marginBottom: '1.5rem' }} />
+
+      {logs.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem' }}>Your timeline is empty</p>
+          <p style={{ fontSize: '0.82rem', marginTop: '0.5rem' }}>Start logging angel numbers to build your sacred timeline</p>
         </div>
       ) : (
-        Object.entries(grouped).map(([month, events]) => (
-          <div key={month} style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{ height: '1px', flex: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{month}</span>
-              <div style={{ height: '1px', flex: 1, background: 'rgba(255,255,255,0.08)' }} />
+        Object.entries(grouped).map(([date, dayLogs]) => (
+          <div key={date} style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ height: '1px', flex: 1, background: 'rgba(255,255,255,0.06)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{date}</span>
+              <div style={{ height: '1px', flex: 1, background: 'rgba(255,255,255,0.06)' }} />
             </div>
-            <div style={{ position: 'relative', paddingLeft: '2rem' }}>
-              <div style={{ position: 'absolute', left: '0.6rem', top: 0, bottom: 0, width: '2px', background: 'linear-gradient(to bottom, rgba(201,168,76,0.4), rgba(201,168,76,0.05))' }} />
-              {events.map((event: any, i: number) => {
-                const id = event.id || i;
-                const isOpen = expanded === String(id);
-                const m = event._type === 'number' ? getMeaning(event.number) : null;
-                const color = typeColor[event._type as keyof typeof typeColor];
-                return (
-                  <div key={i} style={{ position: 'relative', marginBottom: '0.75rem' }}>
-                    <div style={{ position: 'absolute', left: '-1.65rem', top: '0.9rem', width: '10px', height: '10px', borderRadius: '50%', background: color, boxShadow: '0 0 8px ' + color + '88' }} />
-                    <div onClick={() => setExpanded(isOpen ? null : String(id))} style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '0.9rem', padding: '0.9rem 1rem', cursor: 'pointer', backdropFilter: 'blur(8px)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ fontSize: '1.2rem' }}>{event._type === 'number' ? (m?.emoji || '🔢') : event._type === 'dream' ? '🌙' : '🌱'}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ color: color, fontWeight: 600, fontSize: '0.9rem' }}>
-                            {event._type === 'number' ? event.number + ' — ' + (m?.title || 'Angel Number') : event._type === 'dream' ? (event.title || 'Dream Entry') : (event.title || 'Manifestation')}
+
+            <div style={{ position: 'relative', paddingLeft: '1.5rem' }}>
+              {/* Timeline line */}
+              <div style={{ position: 'absolute', left: '7px', top: 0, bottom: 0, width: '1px', background: 'rgba(255,255,255,0.06)' }} />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {dayLogs.map(log => {
+                  const color = getColor(log.number);
+                  const isExp = expanded === log.id;
+                  return (
+                    <div key={log.id} style={{ position: 'relative' }}>
+                      {/* Timeline dot */}
+                      <div style={{ position: 'absolute', left: '-1.5rem', top: '1rem', width: '10px', height: '10px', borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}60`, border: `2px solid ${color}40` }} />
+
+                      <div onClick={() => setExpanded(isExp ? null : log.id)} style={{
+                        background: isExp ? `${color}10` : 'rgba(8,6,28,0.88)',
+                        borderRadius: '1.25rem',
+                        border: isExp ? `1px solid ${color}25` : '1px solid rgba(255,255,255,0.07)',
+                        padding: '0.875rem 1rem', cursor: 'pointer', backdropFilter: 'blur(12px)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ background: `${color}15`, border: `1px solid ${color}25`, borderRadius: '0.5rem', padding: '0.25rem 0.6rem', fontWeight: 800, color, fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', flexShrink: 0 }}>{log.number}</div>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', lineHeight: 1.4 }}>{log.thought || getMeaning(log.number)}</p>
                           </div>
-                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{event._date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                            {log.verified && <span style={{ fontSize: '0.7rem' }}>✅</span>}
+                            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem' }}>{relativeTime(log.createdAt)}</span>
+                          </div>
                         </div>
-                        {event.screenshotUrl && <span style={{ fontSize: '0.7rem', background: 'rgba(72,187,120,0.2)', color: '#48bb78', padding: '0.15rem 0.5rem', borderRadius: '999px', border: '1px solid rgba(72,187,120,0.3)' }}>✓ Verified</span>}
-                        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>{isOpen ? '▲' : '▼'}</span>
+
+                        {isExp && (
+                          <div style={{ marginTop: '0.875rem', paddingTop: '0.875rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', lineHeight: 1.6, fontStyle: 'italic', marginBottom: '0.5rem' }}>{getMeaning(log.number)}</p>
+                            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem' }}>{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+                            {log.screenshotUrl && (
+                              <img src={log.screenshotUrl} alt="proof" style={{ marginTop: '0.75rem', borderRadius: '0.75rem', maxWidth: '100%', maxHeight: '200px', objectFit: 'cover' }} />
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {isOpen && event.thought && (
-                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.6rem', borderLeft: '2px solid ' + color }}>
-                          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>“{event.thought}”</p>
-                        </div>
-                      )}
-                      {isOpen && event.description && (
-                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.6rem' }}>
-                          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>{event.description}</p>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         ))
