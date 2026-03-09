@@ -269,22 +269,28 @@ export default function ProfilePage() {
         )}
 
         {composing && (
-          <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '1rem', padding: '1rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)' }}>
-            <textarea value={postText} onChange={e => setPostText(e.target.value)}
+          <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '1rem', padding: '1rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)', boxSizing: 'border-box' }}>
+            <textarea
+              value={postText}
+              onChange={e => setPostText(e.target.value)}
+              onInput={e => setPostText((e.target as HTMLTextAreaElement).value)}
               placeholder="What are the numbers showing you today?"
-              rows={3} autoFocus
-              style={{ width: '100%', background: 'transparent', border: 'none', color: '#f0e6ff', fontSize: '0.9rem', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+              rows={4}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '0.75rem', padding: '0.75rem', color: '#f0e6ff', fontSize: '1rem', outline: 'none', resize: 'none', fontFamily: 'inherit', display: 'block', marginBottom: '0.75rem', WebkitAppearance: 'none' }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <input value={postNumber} onChange={e => setPostNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="Tag a number (e.g. 1111)" maxLength={6}
-                style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', color: '#c9a84c', fontSize: '0.8rem', outline: 'none' }}
-              />
+            <input value={postNumber} onChange={e => setPostNumber(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="Tag an angel number (e.g. 1111)" maxLength={6}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.5rem', padding: '0.6rem 0.75rem', color: '#c9a84c', fontSize: '0.9rem', outline: 'none', display: 'block', marginBottom: '0.75rem', fontFamily: 'inherit' }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={() => { setComposing(false); setPostText(''); setPostNumber('') }}
-                style={{ padding: '0.35rem 0.75rem', background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: 'rgba(220,200,255,0.68)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handlePost} disabled={!postText.trim() || posting}
-                style={{ padding: '0.35rem 0.9rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.5rem', color: '#c9a84c', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                {posting ? '...' : 'Post'}
+                style={{ flex: 1, padding: '0.65rem', background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.7)', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button
+                onClick={handlePost}
+                onTouchEnd={e => { e.preventDefault(); handlePost() }}
+                disabled={posting}
+                style={{ flex: 2, padding: '0.65rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(155,89,182,0.25))', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.75rem', color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: posting ? 0.5 : 1 }}>
+                {posting ? 'Posting...' : '✦ Post'}
               </button>
             </div>
           </div>
