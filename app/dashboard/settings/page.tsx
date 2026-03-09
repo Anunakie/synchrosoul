@@ -1,203 +1,168 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { getLogs } from '@/lib/storage'
 import Link from 'next/link'
+import { useTheme, THEMES, AppTheme } from '@/lib/theme-context'
 
-const SETTINGS_KEY = 'synchrosoul_settings'
-
-interface Settings {
-  dailyReminder: boolean
-  reminderTime: string
-  matchNotifications: boolean
-  soundEffects: boolean
-  hapticFeedback: boolean
-  privateMode: boolean
-  showStreak: boolean
-  theme: string
-}
-
-const DEFAULTS: Settings = {
-  dailyReminder: true,
-  reminderTime: '09:00',
-  matchNotifications: true,
-  soundEffects: false,
-  hapticFeedback: true,
-  privateMode: false,
-  showStreak: true,
-  theme: 'starfield',
-}
+const KEY_PROFILE = 'synchrosoul_numerology_profile'
+const KEY_LOGS = 'synchrosoul_logs'
+const KEY_DREAMS = 'synchrosoul_dreams'
+const KEY_JOURNAL = 'synchrosoul_journal'
+const KEY_GRATITUDE = 'synchrosoul_gratitude'
+const KEY_MANIFEST = 'synchrosoul_manifestations'
+const KEY_VISION = 'synchrosoul_vision_board'
+const KEY_SOCIAL = 'synchrosoul_social_profile'
+const KEY_POSTS = 'synchrosoul_posts'
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Settings>(DEFAULTS)
+  const { theme, setTheme } = useTheme()
+  const [name, setName] = useState('')
   const [saved, setSaved] = useState(false)
-  const [exportDone, setExportDone] = useState(false)
-  const [clearConfirm, setClearConfirm] = useState(false)
+  const [cleared, setCleared] = useState<string>('')
+  const [dataSize, setDataSize] = useState<Record<string,number>>({})
 
   useEffect(() => {
-    const s = localStorage.getItem(SETTINGS_KEY)
-    if (s) setSettings({ ...DEFAULTS, ...JSON.parse(s) })
+    try {
+      const p = JSON.parse(localStorage.getItem(KEY_PROFILE) || '{}')
+      setName(p.name || '')
+      const sizes: Record<string,number> = {}
+      const keys = [KEY_LOGS, KEY_DREAMS, KEY_JOURNAL, KEY_GRATITUDE, KEY_MANIFEST, KEY_VISION, KEY_POSTS]
+      keys.forEach(k => {
+        try { sizes[k] = JSON.parse(localStorage.getItem(k) || '[]').length } catch { sizes[k] = 0 }
+      })
+      setDataSize(sizes)
+    } catch {}
   }, [])
 
-  function update(key: keyof Settings, value: any) {
-    const next = { ...settings, [key]: value }
-    setSettings(next)
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1500)
+  function saveName() {
+    try {
+      const p = JSON.parse(localStorage.getItem(KEY_PROFILE) || '{}')
+      localStorage.setItem(KEY_PROFILE, JSON.stringify({ ...p, name }))
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {}
+  }
+
+  function clearData(key: string, label: string) {
+    if (confirm('Clear all ' + label + '? This cannot be undone.')) {
+      localStorage.removeItem(key)
+      setCleared(label)
+      setTimeout(() => setCleared(''), 2000)
+      setDataSize(s => ({ ...s, [key]: 0 }))
+    }
   }
 
   function exportData() {
-    const data = {
-      logs: getLogs(),
-      profile: localStorage.getItem('synchrosoul_profile'),
-      dreams: localStorage.getItem('synchrosoul_dreams'),
-      journal: localStorage.getItem('synchrosoul_logs'),
-      affirmationFavs: localStorage.getItem('synchrosoul_affirmation_favs'),
-      customAffirmations: localStorage.getItem('synchrosoul_custom_affirmations'),
-      manifestations: localStorage.getItem('synchrosoul_manifestations'),
-      gratitude: localStorage.getItem('synchrosoul_gratitude'),
-      exportedAt: new Date().toISOString(),
-    }
+    const data: Record<string,any> = {}
+    const keys = [KEY_PROFILE, KEY_LOGS, KEY_DREAMS, KEY_JOURNAL, KEY_GRATITUDE, KEY_MANIFEST, KEY_VISION, KEY_SOCIAL, KEY_POSTS]
+    keys.forEach(k => { try { data[k] = JSON.parse(localStorage.getItem(k) || 'null') } catch {} })
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
-    a.download = `synchrosoul-export-${new Date().toISOString().slice(0,10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    setExportDone(true)
-    setTimeout(() => setExportDone(false), 2000)
+    a.href = url; a.download = 'synchrosoul-backup-' + new Date().toISOString().split('T')[0] + '.json'
+    a.click(); URL.revokeObjectURL(url)
   }
 
-  function clearAllData() {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('synchrosoul'))
-    keys.forEach(k => localStorage.removeItem(k))
-    setClearConfirm(false)
-    window.location.reload()
+  function importData(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string)
+        Object.entries(data).forEach(([k, v]) => { if (v) localStorage.setItem(k, JSON.stringify(v)) })
+        alert('Data imported successfully! Refresh to see changes.')
+      } catch { alert('Invalid backup file.') }
+    }
+    reader.readAsText(file)
   }
 
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
-
-  function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-    return (
-      <div onClick={() => onChange(!value)} style={{ width: '2.75rem', height: '1.5rem', borderRadius: '1rem', background: value ? '#a78bfa' : 'rgba(255,255,255,0.1)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-        <div style={{ position: 'absolute', top: '2px', left: value ? '1.35rem' : '2px', width: '1.1rem', height: '1.1rem', borderRadius: '50%', background: 'white', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }} />
-      </div>
-    )
-  }
-
-  function Row({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.875rem 0', borderBottom: '1px solid rgba(200,180,255,0.06)' }}>
-        <div style={{ flex: 1, paddingRight: '1rem' }}>
-          <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.88rem' }}>{label}</div>
-          {desc && <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.72rem', marginTop: '0.15rem' }}>{desc}</div>}
-        </div>
-        {children}
-      </div>
-    )
-  }
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)', padding: '1.25rem', marginBottom: '0.875rem' }
+  const label: React.CSSProperties = { color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '0.75rem', display: 'block' }
 
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Settings</h1>
-          <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Customize your cosmic experience</p>
+    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Settings</h1>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Customize your SynchroSoul experience</p>
+      </div>
+
+      {/* Profile */}
+      <div style={card}>
+        <span style={label}>Profile</span>
+        <div style={{ display: 'flex', gap: '0.625rem' }}>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder='Your name...' style={{ flex: 1, padding: '0.75rem', background: 'rgba(8,6,28,0.8)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.88rem', outline: 'none' }} />
+          <button onClick={saveName} style={{ padding: '0.75rem 1.25rem', borderRadius: '0.75rem', border: '1px solid rgba(167,139,250,0.3)', background: saved ? 'rgba(74,222,128,0.1)' : 'rgba(167,139,250,0.1)', color: saved ? '#4ade80' : '#a78bfa', fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{saved ? '✓ Saved' : 'Save'}</button>
         </div>
-        {saved && <span style={{ color: '#34d399', fontSize: '0.78rem', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '2rem', padding: '0.3rem 0.75rem' }}>✓ Saved</span>}
+        <div style={{ marginTop: '0.75rem' }}>
+          <Link href='/dashboard/onboarding' style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.78rem', textDecoration: 'none' }}>↺ Redo onboarding setup</Link>
+        </div>
       </div>
 
-      {/* Notifications */}
-      <div style={{ ...card, padding: '0.25rem 1.25rem', marginBottom: '1rem' }}>
-        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0.875rem 0 0.25rem' }}>Notifications</div>
-        <Row label="Daily Reminder" desc="Get a gentle nudge to log your numbers">
-          <Toggle value={settings.dailyReminder} onChange={v => update('dailyReminder', v)} />
-        </Row>
-        {settings.dailyReminder && (
-          <Row label="Reminder Time">
-            <input type="time" value={settings.reminderTime} onChange={e => update('reminderTime', e.target.value)}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', outline: 'none' }} />
-          </Row>
-        )}
-        <Row label="Match Notifications" desc="When a new soul syncs with your numbers">
-          <Toggle value={settings.matchNotifications} onChange={v => update('matchNotifications', v)} />
-        </Row>
-      </div>
-
-      {/* Experience */}
-      <div style={{ ...card, padding: '0.25rem 1.25rem', marginBottom: '1rem' }}>
-        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0.875rem 0 0.25rem' }}>Experience</div>
-        <Row label="Sound Effects" desc="Subtle tones when logging numbers">
-          <Toggle value={settings.soundEffects} onChange={v => update('soundEffects', v)} />
-        </Row>
-        <Row label="Haptic Feedback" desc="Vibration on interactions (mobile)">
-          <Toggle value={settings.hapticFeedback} onChange={v => update('hapticFeedback', v)} />
-        </Row>
-        <Row label="Show Streak" desc="Display your daily streak on dashboard">
-          <Toggle value={settings.showStreak} onChange={v => update('showStreak', v)} />
-        </Row>
-      </div>
-
-      {/* Privacy */}
-      <div style={{ ...card, padding: '0.25rem 1.25rem', marginBottom: '1rem' }}>
-        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0.875rem 0 0.25rem' }}>Privacy</div>
-        <Row label="Private Mode" desc="Hide your profile from sync matching">
-          <Toggle value={settings.privateMode} onChange={v => update('privateMode', v)} />
-        </Row>
-      </div>
-
-      {/* Data */}
-      <div style={{ ...card, padding: '0.25rem 1.25rem', marginBottom: '1rem' }}>
-        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0.875rem 0 0.25rem' }}>Your Data</div>
-        <Row label="Export All Data" desc="Download your full spiritual journal as JSON">
-          <button onClick={exportData} style={{ padding: '0.4rem 0.875rem', borderRadius: '0.625rem', background: exportDone ? 'rgba(52,211,153,0.15)' : 'rgba(167,139,250,0.12)', border: exportDone ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(167,139,250,0.25)', color: exportDone ? '#34d399' : '#a78bfa', fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            {exportDone ? '✓ Downloaded' : '↓ Export'}
-          </button>
-        </Row>
-        <Row label="Clear All Data" desc="Permanently delete all local data">
-          {clearConfirm
-            ? <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <button onClick={clearAllData} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer' }}>Confirm</button>
-                <button onClick={() => setClearConfirm(false)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,180,255,0.12)', color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+      {/* Background Theme */}
+      <div style={card}>
+        <span style={label}>Background Theme</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {THEMES.map(t => (
+            <button key={t.id} onClick={() => setTheme(t.id as AppTheme)} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem', borderRadius: '0.875rem', border: theme === t.id ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(200,180,255,0.08)', background: theme === t.id ? 'rgba(167,139,250,0.1)' : 'transparent', cursor: 'pointer', textAlign: 'left' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '0.5rem', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', backgroundImage: t.thumbnail ? 'url(' + t.thumbnail + ')' : undefined, backgroundSize: 'cover', backgroundPosition: 'center', background: t.thumbnail ? undefined : 'radial-gradient(ellipse at 30% 40%, rgba(120,60,200,0.9) 0%, rgba(20,10,60,1) 70%)' }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ color: theme === t.id ? '#a78bfa' : 'rgba(200,180,255,0.75)', fontSize: '0.85rem' }}>{t.emoji} {t.label}</div>
               </div>
-            : <button onClick={() => setClearConfirm(true)} style={{ padding: '0.4rem 0.875rem', borderRadius: '0.625rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: 'rgba(239,68,68,0.7)', fontSize: '0.78rem', cursor: 'pointer' }}>Clear</button>
-          }
-        </Row>
+              {theme === t.id && <span style={{ color: '#a78bfa', fontSize: '0.8rem' }}>✓</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Upgrade CTA */}
-      <Link href="/dashboard/upgrade" style={{ textDecoration: 'none' }}>
-        <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '1.25rem', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '1.8rem' }}>👑</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: '#c9a84c', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.15rem' }}>Unlock Premium</div>
-            <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem' }}>AI guidance, soul twin chat, full oracle readings</div>
-          </div>
-          <span style={{ color: 'rgba(201,168,76,0.5)', fontSize: '1.2rem' }}>›</span>
+      {/* Quick links */}
+      <div style={card}>
+        <span style={label}>Preferences</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {[
+            { href: '/dashboard/notifications', emoji: '🔔', label: 'Notification Settings' },
+            { href: '/dashboard/upgrade', emoji: '⭐', label: 'Upgrade to Premium' },
+            { href: '/dashboard/profile-card', emoji: '🪪', label: 'View Soul Card' },
+          ].map(item => (
+            <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(200,180,255,0.08)', background: 'rgba(8,6,28,0.5)', textDecoration: 'none', color: 'rgba(200,180,255,0.7)', fontSize: '0.85rem' }}>
+              <span>{item.emoji}</span><span>{item.label}</span><span style={{ marginLeft: 'auto', opacity: 0.3 }}>›</span>
+            </Link>
+          ))}
         </div>
-      </Link>
+      </div>
 
-      <p style={{ textAlign: 'center', color: 'rgba(180,160,255,0.25)', fontSize: '0.7rem', marginTop: '1.5rem' }}>SynchroSoul v1.0 ✦ All data stored locally on your device</p>
-    
-      {/* Quick Links */}
-      <div style={{ ...card, overflow: 'hidden', marginBottom: '1.25rem' }}>
-        <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid rgba(200,180,255,0.06)' }}>
-          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Quick Links</div>
+      {/* Data Management */}
+      <div style={card}>
+        <span style={label}>Data Management</span>
+        <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1rem' }}>
+          <button onClick={exportData} style={{ flex: 1, padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.08)', color: '#60a5fa', fontSize: '0.82rem', cursor: 'pointer' }}>📤 Export Backup</button>
+          <label style={{ flex: 1, padding: '0.75rem', borderRadius: '0.875rem', border: '1px solid rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.08)', color: '#4ade80', fontSize: '0.82rem', cursor: 'pointer', textAlign: 'center' as const }}>
+            📥 Import Backup
+            <input type='file' accept='.json' onChange={importData} style={{ display: 'none' }} />
+          </label>
         </div>
-        {[
-          { href: '/dashboard/stats', emoji: '📊', label: 'Your Stats & Heatmap' },
-          { href: '/dashboard/notifications', emoji: '🔔', label: 'Notification Preferences' },
-          { href: '/dashboard/personal-year', emoji: '📅', label: 'Personal Year Calculator' },
-          { href: '/dashboard/karmic-debt', emoji: '⚡', label: 'Karmic Debt Analyzer' },
-          { href: '/dashboard/upgrade', emoji: '✦', label: 'Upgrade to Premium' },
-        ].map((item, i, arr) => (
-          <a key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1.25rem', borderBottom: i < arr.length-1 ? '1px solid rgba(200,180,255,0.06)' : 'none', textDecoration: 'none' }}>
-            <span style={{ fontSize: '1.1rem' }}>{item.emoji}</span>
-            <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.85rem', flex: 1 }}>{item.label}</span>
-            <span style={{ color: 'rgba(180,160,255,0.25)', fontSize: '0.8rem' }}>›</span>
-          </a>
-        ))}
+        {cleared && <div style={{ color: '#4ade80', fontSize: '0.78rem', marginBottom: '0.75rem', textAlign: 'center' }}>✓ {cleared} cleared</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          {[
+            { key: KEY_LOGS, label: 'Angel Number Logs', color: '#a78bfa' },
+            { key: KEY_DREAMS, label: 'Dream Journal', color: '#818cf8' },
+            { key: KEY_GRATITUDE, label: 'Gratitude Entries', color: '#c9a84c' },
+            { key: KEY_MANIFEST, label: 'Manifestations', color: '#4ade80' },
+          ].map(item => (
+            <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0.75rem', borderRadius: '0.75rem', background: 'rgba(8,6,28,0.5)', border: '1px solid rgba(200,180,255,0.06)' }}>
+              <div>
+                <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.82rem' }}>{item.label}</span>
+                <span style={{ color: item.color, fontSize: '0.72rem', marginLeft: '0.5rem' }}>{dataSize[item.key] || 0} entries</span>
+              </div>
+              <button onClick={() => clearData(item.key, item.label)} style={{ padding: '0.25rem 0.625rem', borderRadius: '0.5rem', border: '1px solid rgba(248,113,113,0.2)', background: 'rgba(248,113,113,0.06)', color: 'rgba(248,113,113,0.6)', fontSize: '0.68rem', cursor: 'pointer' }}>Clear</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* App info */}
+      <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+        <div style={{ color: 'rgba(180,160,255,0.25)', fontSize: '0.72rem' }}>SynchroSoul v1.0 · Angel Number Sync Dating App</div>
+        <div style={{ color: 'rgba(180,160,255,0.15)', fontSize: '0.65rem', marginTop: '0.25rem' }}>Built with ✦ and cosmic intention</div>
       </div>
     </div>
   )
