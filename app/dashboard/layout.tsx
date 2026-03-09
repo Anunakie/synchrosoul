@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import StarField from '@/components/StarField'
+import ThemeSwitcher from '@/components/ThemeSwitcher'
+import { ThemeProvider, useTheme, THEMES } from '@/lib/theme-context'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home', emoji: '✦' },
@@ -15,15 +17,48 @@ const NAV_ITEMS = [
   { href: '/dashboard/profile', label: 'Profile', emoji: '◎' },
 ]
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+function DashboardBackground() {
+  const { theme } = useTheme()
+  const themeConfig = THEMES.find(t => t.id === theme) || THEMES[0]
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#050510', paddingBottom: '5rem', position: 'relative' }}>
-      {/* Galaxy background — shared across all dashboard pages */}
+  if (theme === 'starfield') {
+    return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
         <StarField />
       </div>
+    )
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+      {/* Background image */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `url(${themeConfig.thumbnail})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+      {/* Dark overlay for readability */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: themeConfig.overlay,
+      }} />
+      {/* Subtle vignette */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)',
+      }} />
+    </div>
+  )
+}
+
+function DashboardInner({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'transparent', paddingBottom: '5rem', position: 'relative' }}>
+      <DashboardBackground />
 
       {/* Top bar */}
       <header style={{
@@ -52,8 +87,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}>Sign In</Link>
       </header>
 
-      {/* Page content — sits above starfield */}
+      {/* Page content */}
       <main style={{ position: 'relative', zIndex: 1 }}>{children}</main>
+
+      {/* Theme switcher */}
+      <ThemeSwitcher />
 
       {/* Bottom navigation */}
       <nav style={{
@@ -92,5 +130,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
       </nav>
     </div>
+  )
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <DashboardInner>{children}</DashboardInner>
+    </ThemeProvider>
   )
 }
