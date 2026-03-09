@@ -2,154 +2,119 @@
 import { useState } from 'react';
 
 const CRYSTALS = [
-  { name: 'Amethyst', color: '#8b5cf6', chakra: 'Third Eye', numbers: ['777','1111','333'], element: 'Air',
-    properties: ['Intuition','Protection','Spiritual growth','Clarity'],
-    meaning: "The stone of spiritual protection and purification. Amethyst opens the third eye and enhances psychic abilities.",
-    affirmation: "I trust my intuition and am divinely guided.", emoji: '💜', hardness: '7' },
-  { name: 'Rose Quartz', color: '#f9a8d4', chakra: 'Heart', numbers: ['222','444','1212'], element: 'Water',
-    properties: ['Unconditional love','Self-love','Compassion','Healing'],
-    meaning: "The stone of universal love. Rose Quartz opens the heart to all forms of love and promotes deep inner healing.",
-    affirmation: "I am worthy of love and I give love freely.", emoji: '🌸', hardness: '7' },
-  { name: 'Clear Quartz', color: '#e0f2fe', chakra: 'Crown', numbers: ['1111','111','999'], element: 'All',
-    properties: ['Amplification','Clarity','Manifestation','Healing'],
-    meaning: "The master healer. Clear Quartz amplifies energy and intention, connecting you to higher consciousness.",
-    affirmation: "I am clear, focused, and aligned with my highest purpose.", emoji: '🔮', hardness: '7' },
-  { name: 'Black Tourmaline', color: '#374151', chakra: 'Root', numbers: ['444','111','1111'], element: 'Earth',
-    properties: ['Protection','Grounding','Purification','Security'],
-    meaning: "The ultimate protection stone. Black Tourmaline creates a shield against negative energies and grounds your energy.",
-    affirmation: "I am safe, protected, and deeply grounded.", emoji: '🖤', hardness: '7-7.5' },
-  { name: 'Citrine', color: '#fbbf24', chakra: 'Solar Plexus', numbers: ['333','555','888'], element: 'Fire',
-    properties: ['Abundance','Confidence','Creativity','Joy'],
-    meaning: "The merchant stone of abundance. Citrine carries the energy of the sun, bringing warmth, joy, and prosperity.",
-    affirmation: "I attract abundance and radiate golden light.", emoji: '💛', hardness: '7' },
-  { name: 'Lapis Lazuli', color: '#1d4ed8', chakra: 'Throat', numbers: ['555','1155','333'], element: 'Water',
-    properties: ['Truth','Wisdom','Communication','Enlightenment'],
-    meaning: "The stone of truth and enlightenment. Lapis Lazuli stimulates wisdom and good judgment in the practical world.",
-    affirmation: "I speak my truth with wisdom and clarity.", emoji: '💙', hardness: '5-6' },
-  { name: 'Moonstone', color: '#c7d2fe', chakra: 'Crown', numbers: ['222','1222','777'], element: 'Water',
-    properties: ['Intuition','New beginnings','Feminine energy','Cycles'],
-    meaning: "The stone of new beginnings. Moonstone is strongly connected to the moon and to intuition, enhancing psychic abilities.",
-    affirmation: "I flow with the cycles of life and trust new beginnings.", emoji: '🌙', hardness: '6-6.5' },
-  { name: 'Labradorite', color: '#0891b2', chakra: 'Third Eye', numbers: ['1111','777','1212'], element: 'Water',
-    properties: ['Magic','Transformation','Protection','Awakening'],
-    meaning: "The stone of magic and transformation. Labradorite awakens your inner magic and protects your aura.",
-    affirmation: "I embrace transformation and trust the magic within me.", emoji: '✨', hardness: '6-6.5' },
-  { name: 'Selenite', color: '#f8fafc', chakra: 'Crown', numbers: ['999','1111','777'], element: 'Air',
-    properties: ['Cleansing','Peace','Higher consciousness','Clarity'],
-    meaning: "The stone of mental clarity and higher consciousness. Selenite cleanses and charges other crystals.",
-    affirmation: "I am clear, peaceful, and connected to divine light.", emoji: '🤍', hardness: '2' },
-  { name: 'Carnelian', color: '#ea580c', chakra: 'Sacral', numbers: ['222','333','555'], element: 'Fire',
-    properties: ['Courage','Creativity','Motivation','Vitality'],
-    meaning: "The stone of motivation and endurance. Carnelian stimulates creativity and gives courage to take action.",
-    affirmation: "I am bold, creative, and full of vital energy.", emoji: '🔶', hardness: '7' },
-  { name: 'Malachite', color: '#16a34a', chakra: 'Heart', numbers: ['444','1212','888'], element: 'Earth',
-    properties: ['Transformation','Protection','Healing','Growth'],
-    meaning: "The stone of transformation. Malachite absorbs negative energies and pollutants from the body and environment.",
-    affirmation: "I embrace change and grow through every experience.", emoji: '💚', hardness: '3.5-4' },
-  { name: 'Pyrite', color: '#ca8a04', chakra: 'Solar Plexus', numbers: ['888','333','1111'], element: 'Earth',
-    properties: ['Abundance','Confidence','Manifestation','Willpower'],
-    meaning: "Fool's gold with real power. Pyrite is a powerful manifestation stone that attracts wealth and abundance.",
-    affirmation: "I manifest abundance with confidence and willpower.", emoji: '⭐', hardness: '6-6.5' },
+  { name: 'Amethyst', emoji: '💜', color: '#8b5cf6', numbers: ['777', '1111', '333'], chakra: 'Crown', element: 'Air', affirmation: 'I am divinely guided and spiritually awakened.', properties: ['Spiritual protection', 'Intuition amplifier', 'Dream enhancer', 'Anxiety relief', 'Psychic development'], howToUse: 'Place under your pillow to enhance dreams. Hold during meditation when seeing 777. Wear as jewelry for continuous spiritual protection.', angelMessage: 'When you see 777 and hold amethyst, you are creating a direct channel to your higher self. The purple ray of transformation is activating.' },
+  { name: 'Clear Quartz', emoji: '🔮', color: '#e2e8f0', numbers: ['1111', '1212', '111'], chakra: 'All', element: 'All', affirmation: 'I am a clear channel for divine light and truth.', properties: ['Master healer', 'Amplifies intentions', 'Clarity of mind', 'Energy magnifier', 'Manifestation booster'], howToUse: 'Program with your intention by holding it and stating your desire three times. Place on your journal when logging 1111. Use in crystal grids.', angelMessage: 'Clear quartz is the universe\u2019s antenna. When 1111 appears, your quartz is already vibrating at the frequency of your manifestation.' },
+  { name: 'Rose Quartz', emoji: '🌸', color: '#f9a8d4', numbers: ['222', '444', '1212'], chakra: 'Heart', element: 'Water', affirmation: 'I am worthy of infinite love and I give love freely.', properties: ['Unconditional love', 'Self-love healer', 'Relationship harmony', 'Emotional healing', 'Compassion opener'], howToUse: 'Place over your heart during meditation. Keep in your bedroom for relationship harmony. Hold when journaling about love after seeing 222.', angelMessage: 'The angels send 222 when your heart is ready to receive love. Rose quartz opens the door they are knocking on.' },
+  { name: 'Citrine', emoji: '🌟', color: '#f59e0b', numbers: ['888', '555', '111'], chakra: 'Solar Plexus', element: 'Fire', affirmation: 'Abundance flows to me naturally and effortlessly.', properties: ['Abundance magnet', 'Confidence booster', 'Creativity spark', 'Joy amplifier', 'Manifestation crystal'], howToUse: 'Place in the wealth corner of your home (far left from entrance). Carry in your wallet. Hold when you see 888 to amplify financial flow.', angelMessage: 'Citrine never needs cleansing — it only transmits positive energy. When 888 appears, your citrine is already celebrating your incoming abundance.' },
+  { name: 'Black Tourmaline', emoji: '🖤', color: '#374151', numbers: ['444', '999', '1111'], chakra: 'Root', element: 'Earth', affirmation: 'I am protected, grounded, and safe in all dimensions.', properties: ['Psychic protection', 'EMF shield', 'Grounding stone', 'Negative energy absorber', 'Anxiety neutralizer'], howToUse: 'Place at the four corners of your home for protection grid. Carry when in crowded spaces. Cleanse monthly under running water.', angelMessage: 'When 444 appears, your angels are already surrounding you. Black tourmaline makes their protective shield physical and tangible.' },
+  { name: 'Lapis Lazuli', emoji: '🔵', color: '#1d4ed8', numbers: ['333', '777', '1111'], chakra: 'Third Eye', element: 'Water', affirmation: 'I speak my truth and trust my inner wisdom.', properties: ['Truth revealer', 'Wisdom activator', 'Communication enhancer', 'Third eye opener', 'Ancient knowledge'], howToUse: 'Place on your forehead during meditation. Wear as a necklace near your throat. Journal with lapis nearby when receiving 333 messages.', angelMessage: 'Lapis lazuli was the stone of pharaohs and high priests. When 333 appears, the Ascended Masters are activating your ancient wisdom through this stone.' },
+  { name: 'Selenite', emoji: '🤍', color: '#f1f5f9', numbers: ['1111', '222', '777'], chakra: 'Crown', element: 'Spirit', affirmation: 'I am connected to the highest realms of light and love.', properties: ['Angelic connection', 'Space cleanser', 'Aura cleanser', 'Mental clarity', 'Higher self access'], howToUse: 'Never cleanse with water — it dissolves. Wave over your body to cleanse aura. Place on windowsills to purify your space. Use as a wand in rituals.', angelMessage: 'Selenite is named after Selene, goddess of the moon. It holds the frequency of pure angelic light — the same frequency as 1111.' },
+  { name: 'Labradorite', emoji: '🌈', color: '#06b6d4', numbers: ['555', '1212', '333'], chakra: 'Third Eye', element: 'Water', affirmation: 'I embrace transformation and trust the magic of change.', properties: ['Transformation stone', 'Magic amplifier', 'Synchronicity enhancer', 'Intuition booster', 'Aura protector'], howToUse: 'Carry during times of major change. Meditate with it when seeing 555. Its flash of color (labradorescence) activates when your energy aligns.', angelMessage: 'Labradorite shows its true colors only when light hits it at the right angle — just like you. When 555 appears, your transformation is revealing your hidden brilliance.' },
+  { name: 'Moldavite', emoji: '💚', color: '#16a34a', numbers: ['999', '1111', '555'], chakra: 'Heart', element: 'Cosmic', affirmation: 'I welcome rapid spiritual evolution and cosmic transformation.', properties: ['Rapid transformation', 'Cosmic connection', 'Spiritual acceleration', 'Past life access', 'Manifestation amplifier'], howToUse: 'Use with caution — its energy is intense. Start with short sessions. Place on heart chakra. Combine with grounding stones like black tourmaline.', angelMessage: 'Moldavite fell from the sky 15 million years ago. It carries cosmic intelligence. When 999 appears alongside moldavite, a major life chapter is completing.' },
+  { name: 'Moonstone', emoji: '🌙', color: '#c7d2fe', numbers: ['222', '1212', '333'], chakra: 'Sacral', element: 'Water', affirmation: 'I flow with divine timing and trust the cycles of life.', properties: ['Intuition enhancer', 'Divine feminine', 'New beginnings', 'Emotional balance', 'Psychic sensitivity'], howToUse: 'Charge under the full moon monthly. Wear during new moon rituals. Hold when journaling about relationships and divine timing after seeing 222.', angelMessage: 'Moonstone carries the energy of the moon’s cycles. When 222 appears, the universe is reminding you that divine timing is as reliable as the tides.' },
 ];
 
 const CHAKRA_COLORS: Record<string, string> = {
-  'Root': '#ef4444', 'Sacral': '#f97316', 'Solar Plexus': '#eab308',
-  'Heart': '#22c55e', 'Throat': '#3b82f6', 'Third Eye': '#8b5cf6', 'Crown': '#c9a84c'
+  'Crown': '#8b5cf6', 'Third Eye': '#6366f1', 'Throat': '#3b82f6', 'Heart': '#22c55e',
+  'Solar Plexus': '#f59e0b', 'Sacral': '#f97316', 'Root': '#ef4444', 'All': '#e2e8f0', 'Spirit': '#f1f5f9'
 };
 
 export default function CrystalsPage() {
-  const [selected, setSelected] = useState(CRYSTALS[0]);
-  const [filter, setFilter] = useState('All');
-  const chakras = ['All', 'Root', 'Sacral', 'Solar Plexus', 'Heart', 'Throat', 'Third Eye', 'Crown'];
-  const filtered = filter === 'All' ? CRYSTALS : CRYSTALS.filter(c => c.chakra === filter);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+
+  const chakras = ['all', 'Crown', 'Third Eye', 'Heart', 'Solar Plexus', 'Root', 'All'];
+
+  const filtered = CRYSTALS.filter(c => {
+    const matchChakra = filter === 'all' || c.chakra === filter;
+    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.numbers.some(n => n.includes(search));
+    return matchChakra && matchSearch;
+  });
+
+  const selectedCrystal = CRYSTALS.find(c => c.name === selected);
 
   return (
-    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Crystal Guide</h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Discover crystals aligned with your angel numbers</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c7d2fe', fontFamily: 'Cormorant Garamond, serif' }}>Crystal Guide</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Sacred stones aligned with your angel numbers</p>
       </div>
 
-      {/* Filter */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', justifyContent: 'center' }}>
+      {/* Search */}
+      <input value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="Search crystals or angel numbers..."
+        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', padding: '0.75rem 1.25rem', color: '#fff', fontSize: '0.9rem', outline: 'none', marginBottom: '1rem' }} />
+
+      {/* Chakra filter */}
+      <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem' }}>
         {chakras.map(c => (
           <button key={c} onClick={() => setFilter(c)} style={{
-            padding: '0.35rem 0.85rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.8rem',
-            background: filter === c ? (CHAKRA_COLORS[c] || '#c9a84c') : 'rgba(255,255,255,0.08)',
-            color: filter === c ? '#000' : 'rgba(255,255,255,0.7)',
-            border: 'none', fontWeight: 600
-          }}>{c}</button>
+            flexShrink: 0, padding: '0.35rem 0.875rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
+            background: filter === c ? 'rgba(199,210,254,0.15)' : 'rgba(255,255,255,0.04)',
+            border: filter === c ? '1px solid rgba(199,210,254,0.3)' : '1px solid rgba(255,255,255,0.08)',
+            color: filter === c ? '#c7d2fe' : 'rgba(255,255,255,0.4)',
+            textTransform: 'capitalize'
+          }}>{c === 'all' ? 'All Crystals' : c}</button>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-        {/* Crystal Grid */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {filtered.map(c => (
-            <button key={c.name} onClick={() => setSelected(c)} style={{
-              background: selected.name === c.name ? `${c.color}20` : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${selected.name === c.name ? c.color + '80' : 'rgba(255,255,255,0.08)'}`,
-              borderRadius: '1rem', padding: '0.75rem 1rem',
-              display: 'flex', alignItems: 'center', gap: '0.75rem',
-              cursor: 'pointer', textAlign: 'left', width: '100%'
-            }}>
-              <span style={{ fontSize: '1.5rem' }}>{c.emoji}</span>
-              <div>
-                <div style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 600 }}>{c.name}</div>
-                <div style={{ color: CHAKRA_COLORS[c.chakra] || '#c9a84c', fontSize: '0.75rem' }}>{c.chakra}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Detail Panel */}
-        <div style={{
-          background: 'rgba(8,6,28,0.85)', borderRadius: '1.5rem',
-          border: `1px solid ${selected.color}40`, padding: '1.5rem',
-          backdropFilter: 'blur(12px)', position: 'sticky', top: '1rem',
-          alignSelf: 'start'
-        }}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{selected.emoji}</div>
-            <h2 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{selected.name}</h2>
-            <div style={{ color: CHAKRA_COLORS[selected.chakra] || '#c9a84c', fontSize: '0.85rem' }}>{selected.chakra} Chakra · {selected.element}</div>
-          </div>
-
-          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '1rem' }}>{selected.meaning}</p>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.4rem' }}>ANGEL NUMBERS</p>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {selected.numbers.map(n => (
-                <span key={n} style={{
-                  background: `${selected.color}20`, border: `1px solid ${selected.color}60`,
-                  borderRadius: '999px', padding: '0.2rem 0.6rem',
-                  color: selected.color, fontSize: '0.8rem', fontWeight: 700
-                }}>{n}</span>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.4rem' }}>PROPERTIES</p>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {selected.properties.map(p => (
-                <span key={p} style={{
-                  background: 'rgba(255,255,255,0.06)', borderRadius: '999px',
-                  padding: '0.2rem 0.6rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem'
-                }}>{p}</span>
-              ))}
-            </div>
-          </div>
-
-          <div style={{
-            background: `${selected.color}10`, borderRadius: '0.75rem',
-            padding: '0.75rem', borderLeft: `3px solid ${selected.color}`
+      {/* Crystal grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem', marginBottom: '1.5rem' }}>
+        {filtered.map(crystal => (
+          <div key={crystal.name} onClick={() => setSelected(selected === crystal.name ? null : crystal.name)} style={{
+            background: selected === crystal.name ? `${crystal.color}12` : 'rgba(8,6,28,0.88)',
+            borderRadius: '1.25rem', border: selected === crystal.name ? `1px solid ${crystal.color}30` : '1px solid rgba(255,255,255,0.07)',
+            padding: '1rem', cursor: 'pointer', backdropFilter: 'blur(12px)'
           }}>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', fontSize: '0.85rem', fontFamily: 'Cormorant Garamond, serif' }}>“{selected.affirmation}”</p>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{crystal.emoji}</div>
+            <p style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.2rem' }}>{crystal.name}</p>
+            <p style={{ color: CHAKRA_COLORS[crystal.chakra] || '#a78bfa', fontSize: '0.7rem', marginBottom: '0.4rem' }}>{crystal.chakra} Chakra</p>
+            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+              {crystal.numbers.map(n => (
+                <span key={n} style={{ background: `${crystal.color}15`, borderRadius: '999px', padding: '0.1rem 0.4rem', fontSize: '0.62rem', color: crystal.color }}>{n}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Selected crystal detail */}
+      {selectedCrystal && (
+        <div style={{ background: 'rgba(8,6,28,0.95)', borderRadius: '1.5rem', border: `1px solid ${selectedCrystal.color}25`, padding: '1.5rem', backdropFilter: 'blur(12px)', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+            <span style={{ fontSize: '2.5rem' }}>{selectedCrystal.emoji}</span>
+            <div>
+              <h2 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{selectedCrystal.name}</h2>
+              <p style={{ color: selectedCrystal.color, fontSize: '0.8rem' }}>{selectedCrystal.chakra} Chakra · {selectedCrystal.element} Element</p>
+            </div>
+          </div>
+
+          <div style={{ background: `${selectedCrystal.color}08`, borderRadius: '0.875rem', padding: '0.875rem', borderLeft: `3px solid ${selectedCrystal.color}40`, marginBottom: '1rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.35rem' }}>Angel Message</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: 1.6, fontStyle: 'italic' }}>{selectedCrystal.angelMessage}</p>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Properties</p>
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {selectedCrystal.properties.map(p => (
+                <span key={p} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', padding: '0.2rem 0.6rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>{p}</span>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>How To Use</p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.83rem', lineHeight: 1.6 }}>{selectedCrystal.howToUse}</p>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.875rem', padding: '0.875rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.35rem' }}>Daily Affirmation</p>
+            <p style={{ color: selectedCrystal.color, fontSize: '0.88rem', lineHeight: 1.6, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>&ldquo;{selectedCrystal.affirmation}&rdquo;</p>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
