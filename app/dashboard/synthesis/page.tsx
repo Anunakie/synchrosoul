@@ -1,245 +1,160 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { ANGEL_MEANINGS } from '@/lib/angel-meanings'
-import { calcLifePath } from '@/lib/numerology'
+'use client';
+import { useState, useEffect } from 'react';
 
-const KEY_LOGS = 'synchrosoul_logs'
-const KEY_DREAMS = 'synchrosoul_dreams'
-const KEY_GRATITUDE = 'synchrosoul_gratitude'
-const KEY_PROFILE = 'synchrosoul_numerology_profile'
-const KEY_MANIFEST = 'synchrosoul_manifestations'
+const angelMeanings: Record<string, { title: string; color: string; theme: string }> = {
+  '111': { title: 'Manifestation Portal', color: '#ffd700', theme: 'creation and new beginnings' },
+  '222': { title: 'Divine Balance', color: '#48bb78', theme: 'patience and harmony' },
+  '333': { title: 'Ascended Masters', color: '#ed8936', theme: 'creativity and divine guidance' },
+  '444': { title: 'Angelic Protection', color: '#4299e1', theme: 'stability and foundation' },
+  '555': { title: 'Major Change', color: '#9b59b6', theme: 'transformation and freedom' },
+  '777': { title: 'Divine Magic', color: '#c9a84c', theme: 'luck, spirituality and wisdom' },
+  '888': { title: 'Infinite Abundance', color: '#f6ad55', theme: 'abundance and material success' },
+  '999': { title: 'Completion', color: '#fc8181', theme: 'endings, release and service' },
+  '1111': { title: 'Master Portal', color: '#ffd700', theme: 'awakening and soul alignment' },
+  '000': { title: 'Divine Wholeness', color: '#b794f4', theme: 'infinity and pure potential' },
+  '1212': { title: 'Cosmic Alignment', color: '#76e4f7', theme: 'growth and positive manifestation' },
+};
 
-interface Log { number: string; createdAt: string; thought?: string }
-interface Dream { title?: string; content?: string; createdAt: string; numbers?: string[] }
-interface Gratitude { text: string; createdAt: string }
-interface Manifestation { intention: string; status: string; number: string }
-
-function getWeekRange() {
-  const now = new Date()
-  const day = now.getDay()
-  const start = new Date(now)
-  start.setDate(now.getDate() - day)
-  start.setHours(0,0,0,0)
-  const end = new Date(start)
-  end.setDate(start.getDate() + 6)
-  end.setHours(23,59,59,999)
-  return { start, end }
-}
-
-function getPersonalDay(date: Date, lifePath: number): number {
-  const d = date.getDate() + date.getMonth() + 1 + lifePath
-  let n = d
-  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-    n = String(n).split('').reduce((s,c) => s + parseInt(c), 0)
+function generateSynthesis(logs: any[], profile: any) {
+  if (logs.length === 0) return {
+    title: 'Begin Your Journey',
+    body: 'Start logging angel numbers to receive your weekly cosmic synthesis. The universe is waiting to speak to you.',
+    numbers: [] as string[],
+    color: '#c9a84c'
+  };
+  const freq: Record<string, number> = {};
+  logs.forEach((l: any) => { freq[l.number] = (freq[l.number] || 0) + 1; });
+  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  const top3 = sorted.slice(0, 3).map(([n]) => n);
+  const dominant = top3[0];
+  const dominantData = angelMeanings[dominant] || { title: 'Sacred Number', color: '#c9a84c', theme: 'divine guidance' };
+  const totalLogs = logs.length;
+  const lifePath = profile?.lifePathNumber || profile?.lifePath || null;
+  let body = `This week, the universe has been speaking to you through ${totalLogs} sacred sighting${totalLogs !== 1 ? 's' : ''}. `;
+  if (top3.length >= 2) {
+    body += `Your dominant sequence has been ${dominant} (${dominantData.title}), weaving the energy of ${dominantData.theme} through your days. `;
+    const second = angelMeanings[top3[1]];
+    if (second) body += `Alongside this, ${top3[1]} has appeared to reinforce themes of ${second.theme}. `;
+  } else {
+    body += `The number ${dominant} has been your primary messenger, carrying the energy of ${dominantData.theme}. `;
   }
-  return n
+  if (lifePath) body += `As a Life Path ${lifePath}, this energy is particularly significant for your soul's current chapter. `;
+  body += `Trust what is unfolding. The pattern you are living is not random — it is a carefully orchestrated symphony of synchronicity designed specifically for your soul's evolution.`;
+  return { title: dominantData.title + ' Week', body, numbers: top3, color: dominantData.color };
 }
 
 export default function SynthesisPage() {
-  const [logs, setLogs] = useState<Log[]>([])
-  const [dreams, setDreams] = useState<Dream[]>([])
-  const [gratitude, setGratitude] = useState<Gratitude[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [manifests, setManifests] = useState<Manifestation[]>([])
-  const [tab, setTab] = useState<'week'|'month'>('week')
+  const [logs, setLogs] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [period, setPeriod] = useState<'week'|'month'>('week');
+  const [saved, setSaved] = useState<any[]>([]);
 
   useEffect(() => {
-    try {
-      setLogs(JSON.parse(localStorage.getItem(KEY_LOGS) || '[]'))
-      setDreams(JSON.parse(localStorage.getItem(KEY_DREAMS) || '[]'))
-      setGratitude(JSON.parse(localStorage.getItem(KEY_GRATITUDE) || '[]'))
-      setProfile(JSON.parse(localStorage.getItem(KEY_PROFILE) || 'null'))
-      setManifests(JSON.parse(localStorage.getItem(KEY_MANIFEST) || '[]'))
-    } catch {}
-  }, [])
+    const l = localStorage.getItem('synchrosoul_logs'); if (l) setLogs(JSON.parse(l));
+    const p = localStorage.getItem('synchrosoul_profile'); if (p) setProfile(JSON.parse(p));
+    const s = localStorage.getItem('synchrosoul_synthesis_saved'); if (s) setSaved(JSON.parse(s));
+  }, []);
 
-  const { start, end } = getWeekRange()
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0)
+  const now = new Date();
+  const filtered = logs.filter((l: any) => {
+    const d = new Date(l.createdAt || l.timestamp);
+    return now.getTime() - d.getTime() < (period === 'week' ? 7 : 30) * 86400000;
+  });
+  const synthesis = generateSynthesis(filtered, profile);
 
-  const rangeStart = tab === 'week' ? start : monthStart
-  const rangeLabel = tab === 'week' ? 'This Week' : 'This Month'
+  const saveSynthesis = () => {
+    const entry = { ...synthesis, date: new Date().toISOString(), period, logCount: filtered.length };
+    const updated = [entry, ...saved.slice(0, 11)];
+    setSaved(updated);
+    localStorage.setItem('synchrosoul_synthesis_saved', JSON.stringify(updated));
+  };
 
-  const rangeLogs = logs.filter(l => new Date(l.createdAt) >= rangeStart)
-  const rangeDreams = dreams.filter(d => new Date(d.createdAt) >= rangeStart)
-  const rangeGratitude = gratitude.filter(g => new Date(g.createdAt) >= rangeStart)
+  const freq: Record<string, number> = {};
+  filtered.forEach((l: any) => { freq[l.number] = (freq[l.number] || 0) + 1; });
+  const breakdown = Object.entries(freq).sort((a, b) => b[1] - a[1]);
 
-  // Top numbers in range
-  const freq: Record<string,number> = {}
-  rangeLogs.forEach(l => { freq[l.number] = (freq[l.number]||0)+1 })
-  const topNums = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0,3)
-
-  // Thought themes
-  const thoughts = rangeLogs.filter(l => l.thought).map(l => l.thought!)
-  const wordFreq: Record<string,number> = {}
-  const stop = new Set(['i','a','the','and','or','to','in','of','my','me','was','is','it','at','on','for','with','that','this','be','are','have','had','but','not','so','do','did','an','as','by','from','up','about','into','then','than','when','what','how','if','its','we','he','she','they','you','your','their','our','his','her','been','has','will','would','could','should','just','like','get','got','feel','felt','see','saw','know','think','thought','want','need'])
-  thoughts.forEach(t => t.toLowerCase().split(/\s+/).forEach(w => {
-    const c = w.replace(/[^a-z]/g,'')
-    if (c.length > 3 && !stop.has(c)) wordFreq[c] = (wordFreq[c]||0)+1
-  }))
-  const topWords = Object.entries(wordFreq).sort((a,b) => b[1]-a[1]).slice(0,6)
-
-  // Personal day
-  const lifePath = profile?.lifePathNumber || 0
-  const personalDay = lifePath ? getPersonalDay(new Date(), lifePath) : null
-
-  // Active manifestations
-  const activeManifests = manifests.filter(m => m.status !== 'manifested').slice(0,3)
-
-  // Synthesis message
-  const topNum = topNums[0]?.[0]
-  const topMeaning = topNum ? ANGEL_MEANINGS[topNum] : null
-
-  const SYNTHESIS_THEMES = [
-    'Your energy this period carries a strong current of transformation.',
-    'The universe has been sending you clear signals of alignment.',
-    'This has been a period of deep inner knowing and spiritual attunement.',
-    'Your vibration has been elevated — the signs confirm your path.',
-    'A powerful convergence of energies has been building around you.',
-  ]
-  const synthTheme = SYNTHESIS_THEMES[(new Date().getDate() + (lifePath||0)) % SYNTHESIS_THEMES.length]
-
-  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)', padding: '1.25rem', marginBottom: '0.875rem' }
-  const label: React.CSSProperties = { color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '0.875rem', display: 'block' }
+  const dailyMap: Record<string, number> = {};
+  filtered.forEach((l: any) => {
+    const key = new Date(l.createdAt || l.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+    dailyMap[key] = (dailyMap[key] || 0) + 1;
+  });
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dailyData = days.map(d => ({ day: d, count: dailyMap[d] || 0 }));
+  const maxDay = Math.max(...dailyData.map(d => d.count)) || 1;
 
   return (
-    <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Cosmic Synthesis</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Your spiritual journey, woven together</p>
-      </div>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>🌟 Cosmic Synthesis</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Your personalized spiritual report</p>
 
-      {/* Tab */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-        {(['week','month'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{ padding: '0.4rem 1.25rem', borderRadius: '9999px', border: tab === t ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.1)', background: tab === t ? 'rgba(167,139,250,0.15)' : 'transparent', color: tab === t ? '#a78bfa' : 'rgba(180,160,255,0.4)', fontSize: '0.78rem', cursor: 'pointer', textTransform: 'capitalize' }}>{t}</button>
+      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        {(['week','month'] as const).map(p => (
+          <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.4rem 1.25rem', borderRadius: '999px', background: period === p ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)', color: period === p ? '#c9a84c' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.82rem' }}>This {p}</button>
         ))}
       </div>
 
-      {/* Summary stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-        {[
-          { label: 'Signs', value: rangeLogs.length, emoji: '✦', color: '#a78bfa' },
-          { label: 'Dreams', value: rangeDreams.length, emoji: '🌙', color: '#818cf8' },
-          { label: 'Gratitude', value: rangeGratitude.length, emoji: '💛', color: '#c9a84c' },
-          { label: 'Intentions', value: activeManifests.length, emoji: '🌱', color: '#4ade80' },
-        ].map(s => (
-          <div key={s.label} style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.08)', borderRadius: '0.875rem', padding: '0.75rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.1rem' }}>{s.emoji}</div>
-            <div style={{ color: s.color, fontSize: '1.2rem', fontWeight: 700 }}>{s.value}</div>
-            <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.55rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
-          </div>
-        ))}
+      <div style={{ background: 'rgba(8,6,28,0.92)', border: '1px solid ' + synthesis.color + '44', borderRadius: '1.5rem', padding: '2rem', backdropFilter: 'blur(14px)', marginBottom: '1.25rem', boxShadow: '0 0 50px ' + synthesis.color + '18' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          {synthesis.numbers.map(n => {
+            const m = angelMeanings[n];
+            return <span key={n} style={{ padding: '0.25rem 0.75rem', background: (m?.color || '#c9a84c') + '22', border: '1px solid ' + (m?.color || '#c9a84c') + '44', borderRadius: '999px', color: m?.color || '#c9a84c', fontSize: '0.82rem', fontWeight: 700 }}>{n}</span>;
+          })}
+        </div>
+        <h2 style={{ color: synthesis.color, fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem' }}>✨ {synthesis.title}</h2>
+        <p style={{ color: 'rgba(255,255,255,0.8)', lineHeight: 1.9, fontSize: '0.95rem', fontStyle: 'italic', margin: 0 }}>{synthesis.body}</p>
+        <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>Based on {filtered.length} sighting{filtered.length !== 1 ? 's' : ''}</span>
+          <button onClick={saveSynthesis} style={{ marginLeft: 'auto', padding: '0.4rem 1rem', borderRadius: '0.6rem', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', cursor: 'pointer', fontSize: '0.8rem' }}>💾 Save Report</button>
+        </div>
       </div>
 
-      {/* Synthesis message */}
-      <div style={{ ...card, borderColor: 'rgba(201,168,76,0.2)', background: 'rgba(8,6,28,0.95)' }}>
-        <span style={label}>✦ {rangeLabel} Reading</span>
-        <p style={{ color: 'rgba(220,200,255,0.8)', lineHeight: 1.8, margin: '0 0 0.875rem', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '1.05rem' }}>
-          {synthTheme}
-          {topMeaning && <> The dominant energy of <span style={{ color: topMeaning.color }}>{topNum} ({topMeaning.title})</span> has been guiding your awareness.</>}
-          {personalDay && <> Today is a Personal Day {personalDay} — a time for {personalDay <= 3 ? 'new beginnings and action' : personalDay <= 6 ? 'reflection and nurturing' : 'completion and wisdom'}.</>}
-        </p>
-        {topMeaning && (
-          <div style={{ background: topMeaning.color + '08', border: '1px solid ' + topMeaning.color + '20', borderRadius: '0.875rem', padding: '0.875rem' }}>
-            <div style={{ color: topMeaning.color, fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.3rem' }}>{topNum} · {topMeaning.title}</div>
-            <div style={{ color: 'rgba(200,180,255,0.6)', fontSize: '0.8rem', lineHeight: 1.6 }}>{topMeaning.message.slice(0,150)}...</div>
-          </div>
-        )}
+      {breakdown.length > 0 && (
+        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)', marginBottom: '1rem' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>🔢 Number Breakdown</h3>
+          {breakdown.map(([num, count]) => {
+            const m = angelMeanings[num];
+            const pct = Math.round((count / filtered.length) * 100);
+            return (
+              <div key={num} style={{ marginBottom: '0.65rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <span style={{ color: m?.color || '#c9a84c', fontSize: '0.85rem', fontWeight: 600 }}>{num}{m ? ' — ' + m.title : ''}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{count}x · {pct}%</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '999px', height: '5px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: pct + '%', background: m?.color || '#c9a84c', borderRadius: '999px', opacity: 0.7 }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)', marginBottom: '1rem' }}>
+        <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>📅 Daily Rhythm</h3>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', height: '70px' }}>
+          {dailyData.map((d, i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
+              <div style={{ width: '100%', background: d.count > 0 ? 'linear-gradient(to top, #9b59b6, #9b59b688)' : 'rgba(255,255,255,0.05)', borderRadius: '3px 3px 0 0', height: Math.max(3, (d.count / maxDay) * 50) + 'px', border: d.count > 0 ? '1px solid rgba(155,89,182,0.3)' : '1px solid rgba(255,255,255,0.05)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.62rem' }}>{d.day}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Top numbers */}
-      {topNums.length > 0 && (
-        <div style={card}>
-          <span style={label}>Dominant Numbers {rangeLabel}</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {topNums.map(([num, count], i) => {
-              const m = ANGEL_MEANINGS[num]
-              return (
-                <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                  <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.625rem', background: (m?.color || '#a78bfa') + '15', border: '1px solid ' + (m?.color || '#a78bfa') + '25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ color: m?.color || '#a78bfa', fontSize: '0.82rem', fontWeight: 700 }}>{num}</span>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: 'rgba(220,200,255,0.8)', fontSize: '0.85rem' }}>{m?.title || num}</div>
-                    <div style={{ height: '3px', background: 'rgba(200,180,255,0.06)', borderRadius: '9999px', marginTop: '0.3rem', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: (count/topNums[0][1]*100)+'%', background: m?.color || '#a78bfa', opacity: 0.5, borderRadius: '9999px' }} />
-                    </div>
-                  </div>
-                  <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', minWidth: '2rem', textAlign: 'right' }}>{count}×</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Thought themes */}
-      {topWords.length > 0 && (
-        <div style={card}>
-          <span style={label}>Recurring Themes in Your Thoughts</span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-            {topWords.map(([word, count]) => (
-              <span key={word} style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.18)', borderRadius: '9999px', padding: '0.25rem 0.75rem', color: '#60a5fa', fontSize: '0.78rem' }}>
-                {word} <span style={{ opacity: 0.45, fontSize: '0.65rem' }}>×{count}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Active manifestations */}
-      {activeManifests.length > 0 && (
-        <div style={card}>
-          <span style={label}>Active Intentions</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {activeManifests.map((m, i) => (
-              <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.625rem', background: 'rgba(8,6,28,0.5)', borderRadius: '0.75rem', border: '1px solid rgba(200,180,255,0.06)' }}>
-                <span style={{ fontSize: '1rem', flexShrink: 0 }}>{m.status === 'planting' ? '🌱' : m.status === 'growing' ? '🌿' : '🌸'}</span>
-                <div>
-                  <div style={{ color: 'rgba(200,180,255,0.75)', fontSize: '0.82rem', lineHeight: 1.5 }}>{m.intention.slice(0,80)}{m.intention.length > 80 ? '...' : ''}</div>
-                  <div style={{ color: 'rgba(201,168,76,0.4)', fontSize: '0.65rem', marginTop: '0.2rem' }}>✦ {m.number}</div>
-                </div>
+      {saved.length > 0 && (
+        <div style={{ background: 'rgba(8,6,28,0.75)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>📚 Saved Reports</h3>
+          {saved.slice(0, 4).map((s, i) => (
+            <div key={i} style={{ padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.03)', marginBottom: '0.5rem', borderLeft: '2px solid ' + (s.color || '#c9a84c') + '66' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <span style={{ color: s.color || '#c9a84c', fontSize: '0.85rem', fontWeight: 600 }}>{s.title}</span>
+                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem' }}>{new Date(s.date).toLocaleDateString()}</span>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Personal day */}
-      {personalDay && (
-        <div style={{ ...card, borderColor: 'rgba(167,139,250,0.2)' }}>
-          <span style={label}>Personal Day Energy</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ color: '#a78bfa', fontSize: '1.5rem', fontWeight: 700 }}>{personalDay}</span>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', margin: 0, lineHeight: 1.5 }}>{s.body.slice(0, 100)}...</p>
             </div>
-            <div>
-              <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Personal Day {personalDay}</div>
-              <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', lineHeight: 1.5 }}>
-                {personalDay === 1 && 'New beginnings, take initiative, plant seeds'}
-                {personalDay === 2 && 'Cooperation, patience, nurture relationships'}
-                {personalDay === 3 && 'Creativity, expression, joy and socializing'}
-                {personalDay === 4 && 'Work, discipline, build solid foundations'}
-                {personalDay === 5 && 'Change, freedom, embrace the unexpected'}
-                {personalDay === 6 && 'Love, family, service and responsibility'}
-                {personalDay === 7 && 'Reflection, solitude, spiritual insight'}
-                {personalDay === 8 && 'Power, ambition, material manifestation'}
-                {personalDay === 9 && 'Completion, release, compassion for all'}
-                {personalDay === 11 && 'Illumination, inspiration, spiritual mastery'}
-                {personalDay === 22 && 'Master building, grand visions made real'}
-                {personalDay === 33 && 'Master teaching, unconditional love flows'}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {rangeLogs.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.875rem' }}>🌌</div>
-          <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.85rem' }}>Log angel numbers this {tab} to generate your cosmic synthesis.</p>
+          ))}
         </div>
       )}
     </div>
-  )
+  );
 }

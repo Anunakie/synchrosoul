@@ -1,141 +1,85 @@
-'use client'
-import { useState, useEffect, useRef } from 'react'
+'use client';
+import { useState, useEffect, useRef } from 'react';
 
-const FREQUENCIES = [
-  { hz: 174, name: 'Foundation', emoji: '🟤', color: '#92400e', desc: 'Reduces pain and stress. Gives organs a sense of security and love.', chakra: 'Root', benefit: 'Pain relief, security, grounding' },
-  { hz: 285, name: 'Quantum Cognition', emoji: '🟠', color: '#c2410c', desc: 'Influences energy fields, rejuvenates and heals tissues and organs.', chakra: 'Sacral', benefit: 'Tissue healing, energy field repair' },
-  { hz: 396, name: 'Liberation', emoji: '🔴', color: '#dc2626', desc: 'Liberates guilt and fear. Turns grief into joy and fear into courage.', chakra: 'Root', benefit: 'Release guilt, overcome fear' },
-  { hz: 417, name: 'Transmutation', emoji: '🟡', color: '#d97706', desc: 'Undoes situations and facilitates change. Breaks up crystallized patterns.', chakra: 'Sacral', benefit: 'Facilitate change, clear trauma' },
-  { hz: 432, name: 'Universal Harmony', emoji: '💛', color: '#ca8a04', desc: 'Tuned to the heartbeat of the Earth. Promotes clarity and peace.', chakra: 'Heart', benefit: 'Natural harmony, deep peace' },
-  { hz: 528, name: 'Miracle Tone', emoji: '💚', color: '#16a34a', desc: 'The love frequency. DNA repair, transformation and miracles.', chakra: 'Solar Plexus', benefit: 'DNA repair, love, miracles' },
-  { hz: 639, name: 'Connection', emoji: '🩵', color: '#0891b2', desc: 'Enhances communication, understanding, tolerance and love.', chakra: 'Heart', benefit: 'Relationships, harmony, love' },
-  { hz: 741, name: 'Awakening', emoji: '🔵', color: '#2563eb', desc: 'Awakens intuition. Cleans cells from toxins. Problem solving.', chakra: 'Throat', benefit: 'Intuition, detox, expression' },
-  { hz: 852, name: 'Spiritual Order', emoji: '🟣', color: '#7c3aed', desc: 'Returns to spiritual order. Awakens inner strength and self-realization.', chakra: 'Third Eye', benefit: 'Spiritual awakening, inner strength' },
-  { hz: 963, name: 'Divine Consciousness', emoji: '⚪', color: '#c9a84c', desc: 'Connects to higher self and divine consciousness. Pure miracle tone.', chakra: 'Crown', benefit: 'Divine connection, enlightenment' },
-]
-
-const TIMER_OPTIONS = [5, 10, 15, 20, 30, 60]
+const frequencies = [
+  { hz: 174, name: 'Foundation', color: '#8B4513', desc: 'Reduces pain and stress. Gives organs a sense of security and love.', chakra: 'Root', angelNumber: '111', benefit: 'Pain relief, security, grounding' },
+  { hz: 285, name: 'Quantum Cognition', color: '#228B22', desc: 'Influences energy fields. Heals tissues and organs, rejuvenates the body.', chakra: 'Sacral', angelNumber: '222', benefit: 'Tissue healing, energy field repair' },
+  { hz: 396, name: 'Liberation', color: '#e53e3e', desc: 'Liberates guilt and fear. Turns grief into joy and guilt into forgiveness.', chakra: 'Root', angelNumber: '333', benefit: 'Release fear, guilt liberation' },
+  { hz: 417, name: 'Transformation', color: '#ed8936', desc: 'Undoes situations and facilitates change. Clears traumatic experiences.', chakra: 'Sacral', angelNumber: '444', benefit: 'Change, trauma clearing, new beginnings' },
+  { hz: 528, name: 'Miracle', color: '#ecc94b', desc: 'The Love frequency. DNA repair, transformation and miracles.', chakra: 'Solar Plexus', angelNumber: '555', benefit: 'DNA repair, love, miracles' },
+  { hz: 639, name: 'Connection', color: '#48bb78', desc: 'Enhances communication, understanding, tolerance and love in relationships.', chakra: 'Heart', angelNumber: '666', benefit: 'Relationships, harmony, communication' },
+  { hz: 741, name: 'Awakening', color: '#4299e1', desc: 'Awakens intuition. Cleans cells from toxins. Leads to a purer life.', chakra: 'Throat', angelNumber: '777', benefit: 'Intuition, detox, problem solving' },
+  { hz: 852, name: 'Intuition', color: '#805ad5', desc: 'Returns to spiritual order. Awakens inner strength and self-realization.', chakra: 'Third Eye', angelNumber: '888', benefit: 'Spiritual awakening, inner strength' },
+  { hz: 963, name: 'Divine', color: '#b794f4', desc: 'Connects to higher self and divine consciousness. Pure miracle tone.', chakra: 'Crown', angelNumber: '999', benefit: 'Divine connection, enlightenment' },
+];
 
 export default function SolfeggioPage() {
-  const [playing, setPlaying] = useState<number|null>(null)
-  const [timer, setTimer] = useState(10)
-  const [remaining, setRemaining] = useState<number|null>(null)
-  const [volume, setVolume] = useState(0.5)
-  const [selected, setSelected] = useState<number|null>(null)
-  const audioCtxRef = useRef<AudioContext|null>(null)
-  const oscillatorRef = useRef<OscillatorNode|null>(null)
-  const gainRef = useRef<GainNode|null>(null)
-  const intervalRef = useRef<any>(null)
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)',padding:'1.25rem',marginBottom:'0.875rem'}
+  const [playing, setPlaying] = useState<number | null>(null);
+  const [selected, setSelected] = useState(4);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
 
-  function startFrequency(hz: number) {
-    stopFrequency()
+  const playFrequency = (hz: number, idx: number) => {
+    stopSound();
+    if (playing === idx) { setPlaying(null); return; }
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(hz, ctx.currentTime)
-      gain.gain.setValueAtTime(volume, ctx.currentTime)
-      osc.start()
-      audioCtxRef.current = ctx
-      oscillatorRef.current = osc
-      gainRef.current = gain
-      setPlaying(hz)
-      setRemaining(timer * 60)
-      intervalRef.current = setInterval(() => {
-        setRemaining(r => {
-          if (r === null || r <= 1) { stopFrequency(); return null }
-          return r - 1
-        })
-      }, 1000)
-    } catch(e) { console.error(e) }
-  }
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(hz, ctx.currentTime);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.5);
+      osc.start();
+      oscillatorRef.current = osc;
+      gainRef.current = gain;
+      setPlaying(idx);
+    } catch(e) { console.error(e); }
+  };
 
-  function stopFrequency() {
-    if (oscillatorRef.current) { try { oscillatorRef.current.stop() } catch {} }
-    if (audioCtxRef.current) { try { audioCtxRef.current.close() } catch {} }
-    oscillatorRef.current = null
-    audioCtxRef.current = null
-    gainRef.current = null
-    clearInterval(intervalRef.current)
-    setPlaying(null)
-    setRemaining(null)
-  }
-
-  useEffect(() => {
+  const stopSound = () => {
     if (gainRef.current && audioCtxRef.current) {
-      gainRef.current.gain.setValueAtTime(volume, audioCtxRef.current.currentTime)
+      gainRef.current.gain.linearRampToValueAtTime(0, audioCtxRef.current.currentTime + 0.3);
+      setTimeout(() => { oscillatorRef.current?.stop(); audioCtxRef.current?.close(); }, 400);
     }
-  }, [volume])
+    setPlaying(null);
+  };
 
-  useEffect(() => () => stopFrequency(), [])
-
-  const activeFreq = FREQUENCIES.find(f => f.hz === playing)
-  const fmt = (s: number) => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`
+  useEffect(() => () => stopSound(), []);
+  const f = frequencies[selected];
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
-      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Solfeggio Frequencies</h1>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.25rem'}}>Ancient sacred tones for healing, transformation and spiritual awakening</p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>🎵 Solfeggio Frequencies</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.9rem' }}>Ancient healing tones aligned with sacred numerology</p>
 
-      {/* Now Playing */}
-      {playing && activeFreq && (
-        <div style={{...card,background:'linear-gradient(135deg,rgba(167,139,250,0.12),rgba(201,168,76,0.08))',borderColor:'rgba(167,139,250,0.25)',marginBottom:'1.25rem',textAlign:'center'}}>
-          <div style={{fontSize:'2.5rem',marginBottom:'0.5rem',animation:'pulse 2s infinite'}}>{activeFreq.emoji}</div>
-          <div style={{color:'rgba(220,200,255,0.9)',fontSize:'1.4rem',fontWeight:700,marginBottom:'0.1rem'}}>{activeFreq.hz} Hz</div>
-          <div style={{color:activeFreq.color,fontSize:'0.85rem',marginBottom:'0.5rem'}}>{activeFreq.name}</div>
-          {remaining !== null && <div style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',marginBottom:'0.875rem'}}>{fmt(remaining)} remaining</div>}
-          <div style={{display:'flex',alignItems:'center',gap:'0.75rem',justifyContent:'center',marginBottom:'0.875rem'}}>
-            <span style={{color:'rgba(180,160,255,0.4)',fontSize:'0.75rem'}}>🔈</span>
-            <input type='range' min='0' max='1' step='0.05' value={volume} onChange={e=>setVolume(parseFloat(e.target.value))} style={{width:'120px',accentColor:'#a78bfa'}} />
-            <span style={{color:'rgba(180,160,255,0.4)',fontSize:'0.75rem'}}>🔊</span>
-          </div>
-          <button onClick={stopFrequency} style={{padding:'0.5rem 1.5rem',borderRadius:'9999px',background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#f87171',fontSize:'0.82rem',cursor:'pointer'}}>⏹ Stop</button>
+      <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid ' + f.color + '55', borderRadius: '1.25rem', padding: '1.75rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)', textAlign: 'center' }}>
+        <div style={{ fontSize: '3.5rem', fontWeight: 800, color: f.color, marginBottom: '0.25rem', textShadow: '0 0 30px ' + f.color + '66' }}>{f.hz} Hz</div>
+        <div style={{ color: '#e8d5b7', fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem' }}>{f.name}</div>
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>{f.desc}</div>
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+          <span style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', border: '1px solid rgba(201,168,76,0.3)' }}>✨ {f.benefit}</span>
+          <span style={{ background: f.color + '22', color: f.color, padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', border: '1px solid ' + f.color + '44' }}>🔢 {f.angelNumber}</span>
+          <span style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem' }}>⚡ {f.chakra}</span>
         </div>
-      )}
-
-      {/* Timer */}
-      <div style={{...card,marginBottom:'1.25rem'}}>
-        <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>Session Duration</div>
-        <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
-          {TIMER_OPTIONS.map(t=>(
-            <button key={t} onClick={()=>setTimer(t)} style={{padding:'0.35rem 0.75rem',borderRadius:'9999px',border:timer===t?'1px solid rgba(167,139,250,0.5)':'1px solid rgba(200,180,255,0.1)',background:timer===t?'rgba(167,139,250,0.15)':'transparent',color:timer===t?'#a78bfa':'rgba(180,160,255,0.4)',fontSize:'0.75rem',cursor:'pointer'}}>{t} min</button>
-          ))}
-        </div>
+        <button onClick={() => playFrequency(f.hz, selected)} style={{ background: playing === selected ? 'rgba(255,100,100,0.2)' : f.color + '33', color: playing === selected ? '#fc8181' : f.color, border: '1px solid ' + (playing === selected ? 'rgba(255,100,100,0.4)' : f.color + '66'), padding: '0.8rem 2.5rem', borderRadius: '999px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' }}>
+          {playing === selected ? '⏹ Stop' : '▶ Play ' + f.hz + 'Hz'}
+        </button>
       </div>
 
-      {/* Frequency grid */}
-      <div style={{display:'flex',flexDirection:'column',gap:'0.625rem'}}>
-        {FREQUENCIES.map(freq=>(
-          <div key={freq.hz}
-            onClick={()=>setSelected(selected===freq.hz?null:freq.hz)}
-            style={{...card,padding:'1rem',cursor:'pointer',borderColor:playing===freq.hz?freq.color+'50':selected===freq.hz?'rgba(200,180,255,0.2)':'rgba(200,180,255,0.08)',marginBottom:0}}>
-            <div style={{display:'flex',alignItems:'center',gap:'0.875rem'}}>
-              <div style={{width:'48px',height:'48px',borderRadius:'50%',background:freq.color+'15',border:'2px solid '+freq.color+'30',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.3rem',flexShrink:0}}>{freq.emoji}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.15rem'}}>
-                  <span style={{color:'rgba(220,200,255,0.9)',fontSize:'0.95rem',fontWeight:700}}>{freq.hz} Hz</span>
-                  <span style={{color:freq.color,fontSize:'0.75rem'}}>{freq.name}</span>
-                  <span style={{color:'rgba(180,160,255,0.3)',fontSize:'0.65rem',marginLeft:'auto'}}>{freq.chakra}</span>
-                </div>
-                <div style={{color:'rgba(180,160,255,0.45)',fontSize:'0.72rem'}}>{freq.benefit}</div>
-              </div>
-              <button
-                onClick={e=>{e.stopPropagation();playing===freq.hz?stopFrequency():startFrequency(freq.hz)}}
-                style={{width:'36px',height:'36px',borderRadius:'50%',background:playing===freq.hz?freq.color+'25':'rgba(200,180,255,0.06)',border:'1px solid '+(playing===freq.hz?freq.color+'50':'rgba(200,180,255,0.15)'),color:playing===freq.hz?freq.color:'rgba(180,160,255,0.5)',fontSize:'0.9rem',cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}
-              >{playing===freq.hz?'⏹':'▶'}</button>
-            </div>
-            {selected===freq.hz && (
-              <div style={{marginTop:'0.75rem',paddingTop:'0.75rem',borderTop:'1px solid rgba(200,180,255,0.06)'}}>
-                <p style={{color:'rgba(200,180,255,0.6)',fontSize:'0.82rem',lineHeight:1.6,margin:0}}>{freq.desc}</p>
-              </div>
-            )}
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+        {frequencies.map((freq, i) => (
+          <button key={i} onClick={() => { stopSound(); setSelected(i); }} style={{ padding: '0.9rem 0.5rem', borderRadius: '0.9rem', background: selected === i ? 'rgba(8,6,28,0.9)' : 'rgba(8,6,28,0.5)', border: selected === i ? '1px solid ' + freq.color + '66' : '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: freq.color }}>{freq.hz}</div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.2rem' }}>{freq.name}</div>
+            {playing === i && <div style={{ fontSize: '0.6rem', color: freq.color, marginTop: '0.2rem' }}>♪ playing</div>}
+          </button>
         ))}
       </div>
     </div>
-  )
+  );
 }

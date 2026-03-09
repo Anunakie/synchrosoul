@@ -1,153 +1,150 @@
-'use client'
-import { useState, useEffect } from 'react'
+'use client';
+import { useState, useEffect } from 'react';
 
-const KEY_LOGS = 'synchrosoul_logs'
-const KEY_DREAMS = 'synchrosoul_dreams'
-const KEY_GRATITUDE = 'synchrosoul_gratitude'
-
-function getStreakData(items: {createdAt:string}[]) {
-  if (!items.length) return { current:0, longest:0, totalDays:0, heatmap:[] as {date:string;count:number}[] }
-  const dayMap: Record<string,number> = {}
-  items.forEach(i => { const d = new Date(i.createdAt).toDateString(); dayMap[d]=(dayMap[d]||0)+1 })
-  let current = 0
-  const today = new Date()
-  for (let i=0;i<365;i++) {
-    const d = new Date(today); d.setDate(today.getDate()-i)
-    if (dayMap[d.toDateString()]) current++
-    else if (i>0) break
-  }
-  const sortedDays = Object.keys(dayMap).map(d=>new Date(d)).sort((a,b)=>a.getTime()-b.getTime())
-  let longest=0,run=0
-  for (let i=0;i<sortedDays.length;i++) {
-    if (i===0){run=1;continue}
-    const diff=(sortedDays[i].getTime()-sortedDays[i-1].getTime())/86400000
-    if (diff<=1.5) run++; else run=1
-    if (run>longest) longest=run
-  }
-  if (run>longest) longest=run
-  const heatmap=[]
-  for (let i=83;i>=0;i--) {
-    const d=new Date(today); d.setDate(today.getDate()-i)
-    heatmap.push({date:d.toDateString(),count:dayMap[d.toDateString()]||0})
-  }
-  return {current,longest,totalDays:Object.keys(dayMap).length,heatmap}
-}
-
-const MILESTONES = [
-  {days:3,emoji:'🌱',label:'Spark',desc:'You have begun'},
-  {days:7,emoji:'🌙',label:'One Week',desc:'A full lunar phase'},
-  {days:11,emoji:'✨',label:'Master 11',desc:'Master number energy'},
-  {days:21,emoji:'🌸',label:'Habit Formed',desc:'21 days of devotion'},
-  {days:22,emoji:'⚡',label:'Master 22',desc:'The master builder'},
-  {days:33,emoji:'👑',label:'Master 33',desc:'The master teacher'},
-  {days:40,emoji:'🔥',label:'Sacred 40',desc:'Biblical transformation'},
-  {days:100,emoji:'💎',label:'Century',desc:'100 days of alignment'},
-  {days:111,emoji:'🌌',label:'Portal 111',desc:'Cosmic gateway opened'},
-  {days:222,emoji:'🕊️',label:'Balance 222',desc:'Divine harmony achieved'},
-  {days:333,emoji:'🔮',label:'Trinity 333',desc:'Ascended master level'},
-  {days:365,emoji:'☀️',label:'Solar Year',desc:'One full revolution'},
-]
-
-type TabType = 'logs'|'dreams'|'gratitude'
+const milestones = [
+  { days: 3, emoji: '🌱', title: 'Seedling', desc: 'Your spiritual practice is taking root', color: '#48bb78' },
+  { days: 7, emoji: '🌿', title: 'One Week Wonder', desc: 'Seven days of cosmic awareness', color: '#38a169' },
+  { days: 14, emoji: '🌸', title: 'Blossoming', desc: 'Two weeks of divine connection', color: '#ed64a6' },
+  { days: 21, emoji: '🌟', title: 'Habit Formed', desc: 'Twenty-one days — a new neural pathway', color: '#c9a84c' },
+  { days: 30, emoji: '🌙', title: 'Moon Cycle', desc: 'A full lunar cycle of awareness', color: '#9b59b6' },
+  { days: 40, emoji: '🔮', title: 'Prophet', desc: 'Forty days — the sacred number of transformation', color: '#3498db' },
+  { days: 66, emoji: '♾️', title: 'Infinite Loop', desc: 'Sixty-six days — true habit formation', color: '#e74c3c' },
+  { days: 100, emoji: '💎', title: 'Diamond Soul', desc: 'One hundred days of unbroken awareness', color: '#f6ad55' },
+  { days: 365, emoji: '👑', title: 'Cosmic Master', desc: 'A full year of divine synchronicity', color: '#ffd700' },
+];
 
 export default function StreakPage() {
-  const [logS,setLogS] = useState({current:0,longest:0,totalDays:0,heatmap:[] as {date:string;count:number}[]})
-  const [dreamS,setDreamS] = useState({current:0,longest:0,totalDays:0,heatmap:[] as {date:string;count:number}[]})
-  const [gratS,setGratS] = useState({current:0,longest:0,totalDays:0,heatmap:[] as {date:string;count:number}[]})
-  const [tab,setTab] = useState<TabType>('logs')
+  const [logs, setLogs] = useState<any[]>([]);
+  const [streak, setStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
+  const [calendarDays, setCalendarDays] = useState<Record<string, number>>({});
 
-  useEffect(()=>{
-    try {
-      setLogS(getStreakData(JSON.parse(localStorage.getItem(KEY_LOGS)||'[]')))
-      setDreamS(getStreakData(JSON.parse(localStorage.getItem(KEY_DREAMS)||'[]')))
-      setGratS(getStreakData(JSON.parse(localStorage.getItem(KEY_GRATITUDE)||'[]')))
-    } catch {}
-  },[])
+  useEffect(() => {
+    const l = localStorage.getItem('synchrosoul_logs');
+    if (!l) return;
+    const parsed = JSON.parse(l);
+    setLogs(parsed);
 
-  const active = tab==='logs'?logS:tab==='dreams'?dreamS:gratS
-  const nextM = MILESTONES.find(m=>m.days>active.current)
-  const lastM = [...MILESTONES].reverse().find(m=>m.days<=active.current)
+    // Build calendar
+    const dayMap: Record<string, number> = {};
+    parsed.forEach((log: any) => {
+      const key = new Date(log.createdAt || log.timestamp).toDateString();
+      dayMap[key] = (dayMap[key] || 0) + 1;
+    });
+    setCalendarDays(dayMap);
 
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)',padding:'1.25rem',marginBottom:'0.875rem'}
+    // Calculate current streak
+    const uniqueDates = [...new Set(parsed.map((l: any) => new Date(l.createdAt || l.timestamp).toDateString()))] as string[];
+    const sorted = uniqueDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    let cur = 0;
+    if (sorted[0] === today || sorted[0] === yesterday) {
+      cur = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        const diff = new Date(sorted[i-1]).getTime() - new Date(sorted[i]).getTime();
+        if (diff <= 86400000 * 1.5) cur++; else break;
+      }
+    }
+    setStreak(cur);
+
+    // Calculate longest streak
+    let longest = 0, current = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      const diff = new Date(sorted[i-1]).getTime() - new Date(sorted[i]).getTime();
+      if (diff <= 86400000 * 1.5) { current++; longest = Math.max(longest, current); }
+      else current = 1;
+    }
+    setLongestStreak(Math.max(longest, cur));
+  }, []);
+
+  const nextMilestone = milestones.find(m => m.days > streak);
+  const lastMilestone = [...milestones].reverse().find(m => m.days <= streak);
+  const progressToNext = nextMilestone ? Math.round((streak / nextMilestone.days) * 100) : 100;
+
+  // Last 30 days calendar
+  const last30 = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(Date.now() - (29 - i) * 86400000);
+    return { date: d, key: d.toDateString(), count: calendarDays[d.toDateString()] || 0 };
+  });
+
+  const flameColor = streak >= 30 ? '#ffd700' : streak >= 14 ? '#f6ad55' : streak >= 7 ? '#e74c3c' : streak >= 3 ? '#ed8936' : '#c9a84c';
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
-      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Streaks</h1>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.25rem'}}>Consistency is the highest spiritual practice</p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>🔥 Streak Tracker</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.9rem' }}>Your unbroken chain of cosmic awareness</p>
 
-      <div style={{display:'flex',gap:'0.4rem',marginBottom:'1.25rem'}}>
-        {([['logs','❆ Signs'],['dreams','🌙 Dreams'],['gratitude','💛 Gratitude']] as [TabType,string][]).map(([t,l])=>(
-          <button key={t} onClick={()=>setTab(t)} style={{padding:'0.4rem 0.875rem',borderRadius:'9999px',border:tab===t?'1px solid rgba(167,139,250,0.5)':'1px solid rgba(200,180,255,0.1)',background:tab===t?'rgba(167,139,250,0.15)':'transparent',color:tab===t?'#a78bfa':'rgba(180,160,255,0.4)',fontSize:'0.75rem',cursor:'pointer'}}>{l}</button>
-        ))}
-      </div>
-
-      <div style={{...card,textAlign:'center',borderColor:active.current>0?'rgba(251,146,60,0.25)':'rgba(200,180,255,0.1)'}}>
-        <div style={{fontSize:'3.5rem',marginBottom:'0.25rem'}}>{active.current>0?'🔥':'❆'}</div>
-        <div style={{color:active.current>0?'#fb923c':'rgba(180,160,255,0.4)',fontSize:'3rem',fontWeight:700,lineHeight:1}}>{active.current}</div>
-        <div style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',marginTop:'0.25rem'}}>day streak</div>
-        {lastM&&<div style={{marginTop:'0.875rem',display:'inline-flex',alignItems:'center',gap:'0.4rem',background:'rgba(251,146,60,0.08)',border:'1px solid rgba(251,146,60,0.15)',borderRadius:'9999px',padding:'0.3rem 0.875rem'}}><span>{lastM.emoji}</span><span style={{color:'#fb923c',fontSize:'0.78rem'}}>{lastM.label} achieved!</span></div>}
-      </div>
-
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'0.5rem',marginBottom:'1rem'}}>
-        {[
-          {label:'Current',value:active.current+'🔥',color:'#fb923c'},
-          {label:'Longest',value:active.longest,color:'#a78bfa'},
-          {label:'Total Days',value:active.totalDays,color:'#c9a84c'},
-        ].map(s=>(
-          <div key={s.label} style={{background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.08)',borderRadius:'0.875rem',padding:'0.75rem',textAlign:'center'}}>
-            <div style={{color:s.color,fontSize:'1.3rem',fontWeight:700}}>{s.value}</div>
-            <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.06em'}}>{s.label}</div>
+      <div style={{ background: 'rgba(8,6,28,0.9)', border: '1px solid ' + flameColor + '44', borderRadius: '1.5rem', padding: '2.5rem', backdropFilter: 'blur(12px)', textAlign: 'center', marginBottom: '1.5rem', boxShadow: '0 0 40px ' + flameColor + '22' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '0.5rem' }}>{streak >= 30 ? '👑' : streak >= 14 ? '💎' : streak >= 7 ? '🌟' : streak >= 3 ? '🔥' : '✨'}</div>
+        <div style={{ fontSize: '5rem', fontWeight: 900, color: flameColor, lineHeight: 1, marginBottom: '0.25rem' }}>{streak}</div>
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', marginBottom: '1.5rem' }}>day{streak !== 1 ? 's' : ''} in a row</div>
+        {lastMilestone && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', background: 'rgba(255,255,255,0.06)', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '1.25rem' }}>
+            <span>{lastMilestone.emoji}</span>
+            <span style={{ color: lastMilestone.color, fontSize: '0.85rem', fontWeight: 600 }}>{lastMilestone.title}</span>
           </div>
-        ))}
-      </div>
-
-      {nextM&&(
-        <div style={{...card,borderColor:'rgba(201,168,76,0.15)'}}>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.62rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.75rem'}}>Next Milestone</div>
-          <div style={{display:'flex',alignItems:'center',gap:'1rem'}}>
-            <div style={{fontSize:'2rem',flexShrink:0}}>{nextM.emoji}</div>
-            <div style={{flex:1}}>
-              <div style={{color:'rgba(220,200,255,0.85)',fontSize:'0.9rem',fontWeight:600}}>{nextM.label} — {nextM.days} days</div>
-              <div style={{color:'rgba(180,160,255,0.45)',fontSize:'0.78rem',marginBottom:'0.5rem'}}>{nextM.desc} · {nextM.days-active.current} days to go</div>
-              <div style={{height:'4px',background:'rgba(200,180,255,0.08)',borderRadius:'9999px',overflow:'hidden'}}>
-                <div style={{height:'100%',width:Math.min(active.current/nextM.days*100,100)+'%',background:'linear-gradient(90deg,#fb923c,#c9a84c)',borderRadius:'9999px'}} />
-              </div>
+        )}
+        {nextMilestone && (
+          <>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginBottom: '0.5rem' }}>Next: {nextMilestone.emoji} {nextMilestone.title} in {nextMilestone.days - streak} day{nextMilestone.days - streak !== 1 ? 's' : ''}</div>
+            <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '999px', height: '8px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: progressToNext + '%', background: 'linear-gradient(90deg, ' + flameColor + '88, ' + flameColor + ')', borderRadius: '999px', transition: 'width 1s ease' }} />
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
-      <div style={card}>
-        <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.62rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.875rem'}}>Last 12 Weeks</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:'3px'}}>
-          {Array.from({length:12}).map((_,week)=>(
-            <div key={week} style={{display:'flex',flexDirection:'column',gap:'3px'}}>
-              {active.heatmap.slice(week*7,week*7+7).map((day,i)=>(
-                <div key={i} title={day.date+': '+day.count} style={{width:'100%',aspectRatio:'1',borderRadius:'2px',background:day.count===0?'rgba(200,180,255,0.05)':day.count===1?'rgba(167,139,250,0.3)':day.count<=3?'rgba(167,139,250,0.6)':'rgba(167,139,250,0.9)'}} />
-              ))}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.25rem', backdropFilter: 'blur(8px)', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>🏆</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#c9a84c' }}>{longestStreak}</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>Longest Streak</div>
+        </div>
+        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.25rem', backdropFilter: 'blur(8px)', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>📅</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#9b59b6' }}>{Object.keys(calendarDays).length}</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>Total Active Days</div>
+        </div>
+      </div>
+
+      <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)', marginBottom: '1.5rem' }}>
+        <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>📅 Last 30 Days</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '4px' }}>
+          {last30.map((d, i) => (
+            <div key={i} title={d.date.toLocaleDateString() + (d.count > 0 ? ' · ' + d.count + ' logs' : '')} style={{ aspectRatio: '1', borderRadius: '4px', background: d.count > 0 ? (d.count >= 3 ? '#c9a84c' : d.count >= 2 ? '#c9a84c88' : '#c9a84c44') : 'rgba(255,255,255,0.05)', border: d.key === new Date().toDateString() ? '1px solid rgba(201,168,76,0.6)' : '1px solid transparent', cursor: 'default' }} />
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', justifyContent: 'flex-end' }}>
+          {[['rgba(255,255,255,0.05)', 'No logs'], ['#c9a84c44', '1 log'], ['#c9a84c88', '2 logs'], ['#c9a84c', '3+']].map(([color, label]) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>{label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={card}>
-        <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.62rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.875rem'}}>All Milestones</div>
-        <div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}>
-          {MILESTONES.map(m=>{
-            const done=active.current>=m.days
+      <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)' }}>
+        <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>🏅 Milestone Path</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {milestones.map((m, i) => {
+            const achieved = streak >= m.days;
+            const isNext = nextMilestone?.days === m.days;
             return (
-              <div key={m.days} style={{display:'flex',alignItems:'center',gap:'0.75rem',opacity:done?1:0.4}}>
-                <span style={{fontSize:'1.2rem',filter:done?'none':'grayscale(1)'}}>{m.emoji}</span>
-                <div style={{flex:1}}>
-                  <span style={{color:done?'rgba(220,200,255,0.85)':'rgba(180,160,255,0.4)',fontSize:'0.82rem'}}>{m.label}</span>
-                  <span style={{color:'rgba(180,160,255,0.3)',fontSize:'0.72rem',marginLeft:'0.5rem'}}>· {m.days} days</span>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '0.75rem', background: achieved ? 'rgba(255,255,255,0.06)' : isNext ? 'rgba(201,168,76,0.06)' : 'rgba(255,255,255,0.02)', border: achieved ? '1px solid ' + m.color + '44' : isNext ? '1px solid rgba(201,168,76,0.2)' : '1px solid rgba(255,255,255,0.04)', opacity: achieved ? 1 : isNext ? 0.9 : 0.45 }}>
+                <span style={{ fontSize: '1.25rem' }}>{achieved ? m.emoji : '🔒'}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: achieved ? m.color : 'rgba(255,255,255,0.5)', fontWeight: achieved ? 600 : 400, fontSize: '0.88rem' }}>{m.title} — {m.days} days</div>
+                  <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{m.desc}</div>
                 </div>
-                {done&&<span style={{color:'#4ade80',fontSize:'0.7rem'}}>✓</span>}
+                {achieved && <span style={{ color: '#48bb78', fontSize: '0.75rem' }}>✓</span>}
+                {isNext && <span style={{ color: '#c9a84c', fontSize: '0.75rem' }}>{m.days - streak}d</span>}
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }

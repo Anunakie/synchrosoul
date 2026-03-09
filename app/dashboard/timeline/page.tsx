@@ -1,162 +1,136 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { getLogs, AngelLog } from '@/lib/storage'
-import { ANGEL_MEANINGS } from '@/lib/angel-meanings'
+'use client';
+import { useState, useEffect } from 'react';
 
-interface TimelineGroup {
-  date: string
-  label: string
-  logs: AngelLog[]
-  dominantNumber: string
-  dominantColor: string
+const angelMeanings: Record<string, { title: string; color: string; emoji: string }> = {
+  '111': { title: 'Manifestation Portal', color: '#ffd700', emoji: '🌟' },
+  '222': { title: 'Divine Balance', color: '#48bb78', emoji: '☯️' },
+  '333': { title: 'Ascended Masters', color: '#ed8936', emoji: '🔺' },
+  '444': { title: 'Angelic Protection', color: '#4299e1', emoji: '🛡️' },
+  '555': { title: 'Major Change', color: '#9b59b6', emoji: '🌀' },
+  '666': { title: 'Rebalance', color: '#e53e3e', emoji: '⚖️' },
+  '777': { title: 'Divine Magic', color: '#c9a84c', emoji: '✨' },
+  '888': { title: 'Infinite Abundance', color: '#f6ad55', emoji: '♾️' },
+  '999': { title: 'Completion', color: '#fc8181', emoji: '🔄' },
+  '1111': { title: 'Master Portal', color: '#ffd700', emoji: '🌠' },
+  '000': { title: 'Divine Wholeness', color: '#b794f4', emoji: '⭕' },
+  '1212': { title: 'Cosmic Alignment', color: '#76e4f7', emoji: '🎯' },
+};
+
+function getMeaning(num: string) {
+  return angelMeanings[num] || { title: 'Sacred Message', color: '#c9a84c', emoji: '🔢' };
 }
 
-function groupByDate(logs: AngelLog[]): TimelineGroup[] {
-  const groups: Record<string, AngelLog[]> = {}
-  logs.forEach(l => {
-    const d = new Date(l.createdAt).toDateString()
-    if (!groups[d]) groups[d] = []
-    groups[d].push(l)
-  })
-  return Object.entries(groups).map(([date, dayLogs]) => {
-    const freq: Record<string, number> = {}
-    dayLogs.forEach(l => { freq[l.number] = (freq[l.number] || 0) + 1 })
-    const dominant = Object.entries(freq).sort((a,b) => b[1]-a[1])[0]?.[0] || '111'
-    const meaning = ANGEL_MEANINGS[dominant] || ANGEL_MEANINGS['default']
-    const d = new Date(date)
-    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-    return { date, label, logs: dayLogs, dominantNumber: dominant, dominantColor: meaning?.color || '#c9a84c' }
-  }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+function groupByMonth(logs: any[]) {
+  const groups: Record<string, any[]> = {};
+  logs.forEach(log => {
+    const d = new Date(log.createdAt || log.timestamp);
+    const key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(log);
+  });
+  return groups;
 }
 
 export default function TimelinePage() {
-  const [groups, setGroups] = useState<TimelineGroup[]>([])
-  const [expanded, setExpanded] = useState<string | null>(null)
-  const [filter, setFilter] = useState('')
+  const [logs, setLogs] = useState<any[]>([]);
+  const [dreams, setDreams] = useState<any[]>([]);
+  const [manifests, setManifests] = useState<any[]>([]);
+  const [filter, setFilter] = useState<'all'|'numbers'|'dreams'|'manifestations'>('all');
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    const logs = getLogs()
-    setGroups(groupByDate(logs))
-  }, [])
+    const l = localStorage.getItem('synchrosoul_logs');
+    const d = localStorage.getItem('synchrosoul_dreams');
+    const m = localStorage.getItem('synchrosoul_manifestations');
+    if (l) setLogs(JSON.parse(l));
+    if (d) setDreams(JSON.parse(d));
+    if (m) setManifests(JSON.parse(m));
+  }, []);
 
-  const filtered = filter
-    ? groups.filter(g => g.logs.some(l => l.number.includes(filter) || l.thought?.toLowerCase().includes(filter.toLowerCase())))
-    : groups
+  const allEvents = [
+    ...logs.map(l => ({ ...l, _type: 'number', _date: new Date(l.createdAt || l.timestamp) })),
+    ...dreams.map(d => ({ ...d, _type: 'dream', _date: new Date(d.createdAt || d.timestamp) })),
+    ...manifests.map(m => ({ ...m, _type: 'manifestation', _date: new Date(m.createdAt || m.updatedAt) })),
+  ].sort((a, b) => b._date.getTime() - a._date.getTime());
 
-  const totalLogs = groups.reduce((sum, g) => sum + g.logs.length, 0)
-  const uniqueNumbers = [...new Set(groups.flatMap(g => g.logs.map(l => l.number)))]
-  const verifiedCount = groups.flatMap(g => g.logs).filter(l => l.screenshotUrl).length
+  const filtered = filter === 'all' ? allEvents : allEvents.filter(e => {
+    if (filter === 'numbers') return e._type === 'number';
+    if (filter === 'dreams') return e._type === 'dream';
+    if (filter === 'manifestations') return e._type === 'manifestation';
+    return true;
+  });
+
+  const grouped = groupByMonth(filtered.map(e => ({ ...e, createdAt: e._date.toISOString() })));
+
+  const typeIcon = { number: '🔢', dream: '🌙', manifestation: '🌱' };
+  const typeColor = { number: '#c9a84c', dream: '#9b59b6', manifestation: '#48bb78' };
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '2rem 1rem 6rem' }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🌠</div>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: 'rgba(220,200,255,0.95)', letterSpacing: '0.05em', margin: 0 }}>Vision Timeline</h1>
-        <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.8rem', letterSpacing: '0.1em', marginTop: '0.5rem' }}>Your complete cosmic journey</p>
-      </div>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>📅 Soul Timeline</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Your complete spiritual journey in one view</p>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Total Sightings', value: totalLogs, emoji: '👁️' },
-          { label: 'Unique Numbers', value: uniqueNumbers.length, emoji: '✦' },
-          { label: 'Verified', value: verifiedCount, emoji: '✅' },
-        ].map(s => (
-          <div key={s.label} style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1rem', padding: '1rem', textAlign: 'center', backdropFilter: 'blur(12px)' }}>
-            <div style={{ fontSize: '1.2rem', marginBottom: '0.25rem' }}>{s.emoji}</div>
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: '#c9a84c', fontWeight: 300 }}>{s.value}</div>
-            <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(200,180,255,0.35)', marginTop: '0.2rem' }}>{s.label}</div>
-          </div>
+      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        {(['all','numbers','dreams','manifestations'] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.4rem 1rem', borderRadius: '999px', background: filter === f ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: filter === f ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)', color: filter === f ? '#c9a84c' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.82rem', textTransform: 'capitalize' }}>
+            {f === 'numbers' ? '🔢' : f === 'dreams' ? '🌙' : f === 'manifestations' ? '🌱' : '✨'} {f}
+          </button>
         ))}
       </div>
 
-      {/* Number constellation */}
-      {uniqueNumbers.length > 0 && (
-        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', padding: '1.25rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)' }}>
-          <p style={{ color: 'rgba(200,180,255,0.35)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 0.75rem' }}>Your number constellation</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {uniqueNumbers.map(num => {
-              const m = ANGEL_MEANINGS[num] || ANGEL_MEANINGS['default']
-              const count = groups.flatMap(g => g.logs).filter(l => l.number === num).length
-              return (
-                <button key={num} onClick={() => setFilter(filter === num ? '' : num)} style={{ padding: '0.35rem 0.85rem', background: filter === num ? `${m?.color || '#c9a84c'}22` : 'rgba(8,6,28,0.6)', border: `1px solid ${filter === num ? (m?.color || '#c9a84c') + '55' : 'rgba(200,180,255,0.12)'}`, borderRadius: '9999px', color: filter === num ? (m?.color || '#c9a84c') : 'rgba(200,180,255,0.6)', cursor: 'pointer', fontSize: '0.78rem', transition: 'all 0.2s' }}>
-                  {num} <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>×{count}</span>
-                </button>
-              )
-            })}
-          </div>
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '4rem 2rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌌</div>
+          <p>Your timeline is empty. Start logging angel numbers, dreams, and manifestations to see your journey unfold.</p>
         </div>
-      )}
-
-      {/* Search */}
-      <input
-        value={filter}
-        onChange={e => setFilter(e.target.value)}
-        placeholder="Search by number or thought..."
-        style={{ width: '100%', background: 'rgba(8,6,28,0.75)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '0.75rem', padding: '0.75rem 1rem', color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', outline: 'none', marginBottom: '1.5rem', boxSizing: 'border-box', fontFamily: 'inherit' }}
-      />
-
-      {/* Empty state */}
-      {filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(200,180,255,0.4)' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🌌</div>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem' }}>{totalLogs === 0 ? 'Your timeline is waiting to be written.' : 'No entries match your search.'}</p>
-        </div>
-      )}
-
-      {/* Timeline */}
-      <div style={{ position: 'relative' }}>
-        {/* Vertical line */}
-        {filtered.length > 0 && <div style={{ position: 'absolute', left: '1.25rem', top: '1.5rem', bottom: '1.5rem', width: '1px', background: 'linear-gradient(to bottom, rgba(200,180,255,0.2), rgba(200,180,255,0.05))' }} />}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {filtered.map(group => (
-            <div key={group.date} style={{ paddingLeft: '3rem', position: 'relative' }}>
-              {/* Dot */}
-              <div style={{ position: 'absolute', left: '0.75rem', top: '1.1rem', width: '1rem', height: '1rem', borderRadius: '50%', background: `${group.dominantColor}33`, border: `2px solid ${group.dominantColor}77`, transform: 'translateX(-50%)' }} />
-
-              <button onClick={() => setExpanded(expanded === group.date ? null : group.date)} style={{ width: '100%', background: 'rgba(8,6,28,0.82)', border: `1px solid ${expanded === group.date ? group.dominantColor + '44' : 'rgba(200,180,255,0.1)'}`, borderRadius: '1rem', padding: '1rem 1.25rem', cursor: 'pointer', textAlign: 'left', backdropFilter: 'blur(12px)', transition: 'all 0.2s' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{group.label}</div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {[...new Set(group.logs.map(l => l.number))].slice(0, 4).map(num => {
-                        const m = ANGEL_MEANINGS[num] || ANGEL_MEANINGS['default']
-                        return <span key={num} style={{ fontSize: '0.7rem', color: m?.color || '#c9a84c', background: `${m?.color || '#c9a84c'}15`, padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>{num}</span>
-                      })}
+      ) : (
+        Object.entries(grouped).map(([month, events]) => (
+          <div key={month} style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ height: '1px', flex: 1, background: 'rgba(255,255,255,0.08)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{month}</span>
+              <div style={{ height: '1px', flex: 1, background: 'rgba(255,255,255,0.08)' }} />
+            </div>
+            <div style={{ position: 'relative', paddingLeft: '2rem' }}>
+              <div style={{ position: 'absolute', left: '0.6rem', top: 0, bottom: 0, width: '2px', background: 'linear-gradient(to bottom, rgba(201,168,76,0.4), rgba(201,168,76,0.05))' }} />
+              {events.map((event: any, i: number) => {
+                const id = event.id || i;
+                const isOpen = expanded === String(id);
+                const m = event._type === 'number' ? getMeaning(event.number) : null;
+                const color = typeColor[event._type as keyof typeof typeColor];
+                return (
+                  <div key={i} style={{ position: 'relative', marginBottom: '0.75rem' }}>
+                    <div style={{ position: 'absolute', left: '-1.65rem', top: '0.9rem', width: '10px', height: '10px', borderRadius: '50%', background: color, boxShadow: '0 0 8px ' + color + '88' }} />
+                    <div onClick={() => setExpanded(isOpen ? null : String(id))} style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '0.9rem', padding: '0.9rem 1rem', cursor: 'pointer', backdropFilter: 'blur(8px)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '1.2rem' }}>{event._type === 'number' ? (m?.emoji || '🔢') : event._type === 'dream' ? '🌙' : '🌱'}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: color, fontWeight: 600, fontSize: '0.9rem' }}>
+                            {event._type === 'number' ? event.number + ' — ' + (m?.title || 'Angel Number') : event._type === 'dream' ? (event.title || 'Dream Entry') : (event.title || 'Manifestation')}
+                          </div>
+                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{event._date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                        {event.screenshotUrl && <span style={{ fontSize: '0.7rem', background: 'rgba(72,187,120,0.2)', color: '#48bb78', padding: '0.15rem 0.5rem', borderRadius: '999px', border: '1px solid rgba(72,187,120,0.3)' }}>✓ Verified</span>}
+                        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>{isOpen ? '▲' : '▼'}</span>
+                      </div>
+                      {isOpen && event.thought && (
+                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.6rem', borderLeft: '2px solid ' + color }}>
+                          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>“{event.thought}”</p>
+                        </div>
+                      )}
+                      {isOpen && event.description && (
+                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.6rem' }}>
+                          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>{event.description}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ color: 'rgba(200,180,255,0.4)', fontSize: '0.75rem' }}>{group.logs.length} sighting{group.logs.length > 1 ? 's' : ''}</div>
-                    <div style={{ color: 'rgba(200,180,255,0.25)', fontSize: '0.7rem', marginTop: '0.2rem' }}>{expanded === group.date ? '▲' : '▼'}</div>
-                  </div>
-                </div>
-              </button>
-
-              {expanded === group.date && (
-                <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {group.logs.map((log, i) => {
-                    const m = ANGEL_MEANINGS[log.number] || ANGEL_MEANINGS['default']
-                    return (
-                      <div key={i} style={{ background: 'rgba(8,6,28,0.7)', border: `1px solid ${m?.color || '#c9a84c'}22`, borderRadius: '0.75rem', padding: '0.875rem 1rem', backdropFilter: 'blur(8px)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: log.thought ? '0.5rem' : 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: m?.color || '#c9a84c' }}>{log.number}</span>
-                            {log.screenshotUrl && <span style={{ fontSize: '0.65rem', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', color: '#4ade80', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>✓ Verified</span>}
-                          </div>
-                          <span style={{ color: 'rgba(200,180,255,0.3)', fontSize: '0.7rem' }}>{new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        {log.thought && <p style={{ color: 'rgba(200,180,255,0.65)', fontSize: '0.82rem', margin: 0, fontStyle: 'italic', lineHeight: 1.5 }}>"{ log.thought}"</p>}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        ))
+      )}
     </div>
-  )
+  );
 }

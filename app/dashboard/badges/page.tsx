@@ -1,124 +1,109 @@
-'use client'
-import { useState, useEffect } from 'react'
+'use client';
+import { useState, useEffect } from 'react';
 
-const KEY_LOGS = 'synchrosoul_logs'
-const KEY_PROFILE = 'synchrosoul_numerology_profile'
-const KEY_STREAK = 'synchrosoul_streak'
-
-const ALL_BADGES = [
-  // Logging milestones
-  { id:'first_log', emoji:'✦', name:'First Sighting', desc:'Log your first angel number', category:'journey', req:(l:any[],s:number,p:any)=>l.length>=1 },
-  { id:'logs_10', emoji:'◎', name:'Awakening', desc:'Log 10 angel numbers', category:'journey', req:(l:any[])=>l.length>=10 },
-  { id:'logs_50', emoji:'🌟', name:'Seeker', desc:'Log 50 angel numbers', category:'journey', req:(l:any[])=>l.length>=50 },
-  { id:'logs_100', emoji:'💫', name:'Devoted', desc:'Log 100 angel numbers', category:'journey', req:(l:any[])=>l.length>=100 },
-  { id:'logs_333', emoji:'✶', name:'Sacred 333', desc:'Log 333 angel numbers', category:'journey', req:(l:any[])=>l.length>=333 },
-  { id:'logs_1000', emoji:'🌌', name:'Cosmic Master', desc:'Log 1000 angel numbers', category:'journey', req:(l:any[])=>l.length>=1000 },
-  // Streak badges
-  { id:'streak_3', emoji:'🔥', name:'Spark', desc:'3-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=3 },
-  { id:'streak_7', emoji:'⚡', name:'Lightning', desc:'7-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=7 },
-  { id:'streak_21', emoji:'🌙', name:'Moon Cycle', desc:'21-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=21 },
-  { id:'streak_30', emoji:'☀️', name:'Solar Month', desc:'30-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=30 },
-  { id:'streak_111', emoji:'👑', name:'111 Days', desc:'111-day logging streak', category:'streak', req:(_:any[],s:number)=>s>=111 },
-  // Number-specific badges
-  { id:'seen_1111', emoji:'🌠', name:'Portal Keeper', desc:'Log 1111 five times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='1111').length>=5 },
-  { id:'seen_777', emoji:'🍀', name:'Lucky Star', desc:'Log 777 three times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='777').length>=3 },
-  { id:'seen_888', emoji:'💰', name:'Abundance Flow', desc:'Log 888 three times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='888').length>=3 },
-  { id:'seen_999', emoji:'🦋', name:'Completion', desc:'Log 999 three times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='999').length>=3 },
-  { id:'seen_444', emoji:'🛡️', name:'Protected', desc:'Log 444 five times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='444').length>=5 },
-  { id:'seen_555', emoji:'🌊', name:'Change Rider', desc:'Log 555 five times', category:'numbers', req:(l:any[])=>l.filter((x:any)=>x.number==='555').length>=5 },
-  { id:'unique_10', emoji:'🎨', name:'Number Collector', desc:'See 10 unique numbers', category:'numbers', req:(l:any[])=>new Set(l.map((x:any)=>x.number)).size>=10 },
-  { id:'unique_20', emoji:'🔮', name:'Number Sage', desc:'See 20 unique numbers', category:'numbers', req:(l:any[])=>new Set(l.map((x:any)=>x.number)).size>=20 },
-  // Truth Score badges
-  { id:'first_proof', emoji:'📸', name:'Truth Seeker', desc:'Upload your first screenshot proof', category:'truth', req:(l:any[])=>l.some((x:any)=>x.screenshotUrl) },
-  { id:'proof_10', emoji:'✅', name:'Angel Approved', desc:'Upload 10 screenshot proofs', category:'truth', req:(l:any[])=>l.filter((x:any)=>x.screenshotUrl).length>=10 },
-  { id:'proof_50', emoji:'🏆', name:'Truth Champion', desc:'Upload 50 screenshot proofs', category:'truth', req:(l:any[])=>l.filter((x:any)=>x.screenshotUrl).length>=50 },
-  // Journal badges
-  { id:'first_thought', emoji:'💭', name:'Thought Anchor', desc:'Record your first thought', category:'journal', req:(l:any[])=>l.some((x:any)=>x.thought?.trim()) },
-  { id:'thoughts_20', emoji:'📖', name:'Soul Journalist', desc:'Record 20 thoughts', category:'journal', req:(l:any[])=>l.filter((x:any)=>x.thought?.trim()).length>=20 },
-  { id:'thoughts_100', emoji:'📚', name:'Cosmic Scribe', desc:'Record 100 thoughts', category:'journal', req:(l:any[])=>l.filter((x:any)=>x.thought?.trim()).length>=100 },
-  // Numerology badges
-  { id:'numerology_done', emoji:'🧮', name:'Blueprint Revealed', desc:'Complete your numerology profile', category:'numerology', req:(_:any[],__:number,p:any)=>!!p?.lifePathNumber },
-  { id:'life_path_11', emoji:'⚡', name:'Master 11', desc:'Have Life Path 11', category:'numerology', req:(_:any[],__:number,p:any)=>p?.lifePathNumber===11 },
-  { id:'life_path_22', emoji:'🏗️', name:'Master 22', desc:'Have Life Path 22', category:'numerology', req:(_:any[],__:number,p:any)=>p?.lifePathNumber===22 },
-  { id:'life_path_33', emoji:'💝', name:'Master 33', desc:'Have Life Path 33', category:'numerology', req:(_:any[],__:number,p:any)=>p?.lifePathNumber===33 },
-]
-
-const CATEGORIES = ['all','journey','streak','numbers','truth','journal','numerology']
-const CAT_COLORS: Record<string,string> = {
-  journey:'#a78bfa', streak:'#f97316', numbers:'#c9a84c',
-  truth:'#4ade80', journal:'#60a5fa', numerology:'#f472b6'
-}
+const allBadges = [
+  { id: 'first_log', emoji: '🌱', name: 'First Sighting', desc: 'Logged your first angel number', category: 'Beginner', color: '#48bb78', requirement: 'Log 1 angel number' },
+  { id: 'streak_3', emoji: '🔥', name: 'Spark', desc: '3-day logging streak', category: 'Streak', color: '#ed8936', requirement: '3 days in a row' },
+  { id: 'streak_7', emoji: '⚡', name: 'Lightning', desc: '7-day logging streak', category: 'Streak', color: '#ecc94b', requirement: '7 days in a row' },
+  { id: 'streak_30', emoji: '🌟', name: 'Star Keeper', desc: '30-day logging streak', category: 'Streak', color: '#c9a84c', requirement: '30 days in a row' },
+  { id: 'streak_100', emoji: '👑', name: 'Cosmic Crown', desc: '100-day logging streak', category: 'Streak', color: '#ffd700', requirement: '100 days in a row' },
+  { id: 'logs_10', emoji: '📖', name: 'Seeker', desc: 'Logged 10 angel numbers', category: 'Logger', color: '#4299e1', requirement: 'Log 10 numbers' },
+  { id: 'logs_50', emoji: '🔮', name: 'Oracle', desc: 'Logged 50 angel numbers', category: 'Logger', color: '#9b59b6', requirement: 'Log 50 numbers' },
+  { id: 'logs_100', emoji: '💫', name: 'Starseed', desc: 'Logged 100 angel numbers', category: 'Logger', color: '#b794f4', requirement: 'Log 100 numbers' },
+  { id: 'logs_365', emoji: '🌌', name: 'Cosmic Being', desc: 'Logged 365 angel numbers', category: 'Logger', color: '#805ad5', requirement: 'Log 365 numbers' },
+  { id: 'truth_first', emoji: '📸', name: 'Truth Seeker', desc: 'First Angel Approved entry', category: 'Truth', color: '#68d391', requirement: 'Upload first screenshot' },
+  { id: 'truth_10', emoji: '✅', name: 'Verified Soul', desc: '10 Angel Approved entries', category: 'Truth', color: '#48bb78', requirement: '10 verified entries' },
+  { id: 'truth_50', emoji: '🏆', name: 'Angel Champion', desc: '50 Angel Approved entries', category: 'Truth', color: '#c9a84c', requirement: '50 verified entries' },
+  { id: 'number_1111', emoji: '🌠', name: '1111 Portal', desc: 'Logged 1111 five times', category: 'Numbers', color: '#ffd700', requirement: 'Log 1111 × 5' },
+  { id: 'number_777', emoji: '🍀', name: 'Lucky Seven', desc: 'Logged 777 three times', category: 'Numbers', color: '#c9a84c', requirement: 'Log 777 × 3' },
+  { id: 'number_all', emoji: '🎯', name: 'Number Master', desc: 'Logged all 12 common numbers', category: 'Numbers', color: '#ed8936', requirement: 'Log all 12 numbers' },
+  { id: 'journal_10', emoji: '✍️', name: 'Thought Anchor', desc: 'Added thoughts to 10 entries', category: 'Journal', color: '#76e4f7', requirement: '10 entries with thoughts' },
+  { id: 'dream_first', emoji: '🌙', name: 'Dream Walker', desc: 'Logged your first dream', category: 'Dreams', color: '#9b59b6', requirement: 'Log 1 dream' },
+  { id: 'dream_10', emoji: '🌌', name: 'Dream Weaver', desc: 'Logged 10 dreams', category: 'Dreams', color: '#805ad5', requirement: 'Log 10 dreams' },
+  { id: 'gratitude_7', emoji: '🙏', name: 'Grateful Heart', desc: '7-day gratitude streak', category: 'Gratitude', color: '#f48fb1', requirement: '7 days of gratitude' },
+  { id: 'manifest_first', emoji: '🌱', name: 'Planter', desc: 'Created first manifestation', category: 'Manifestation', color: '#48bb78', requirement: 'Create 1 manifestation' },
+  { id: 'manifest_complete', emoji: '🌸', name: 'Manifestor', desc: 'Completed first manifestation', category: 'Manifestation', color: '#f48fb1', requirement: 'Complete 1 manifestation' },
+  { id: 'sync_first', emoji: '💞', name: 'Soul Connector', desc: 'First sync match found', category: 'Social', color: '#fc8181', requirement: 'Get 1 sync match' },
+  { id: 'profile_complete', emoji: '✨', name: 'Cosmic Identity', desc: 'Completed full profile', category: 'Profile', color: '#c9a84c', requirement: 'Fill all profile fields' },
+  { id: 'early_adopter', emoji: '🚀', name: 'Early Adopter', desc: 'Joined in the first wave', category: 'Special', color: '#ffd700', requirement: 'Special — auto awarded' },
+];
 
 export default function BadgesPage() {
-  const [logs, setLogs] = useState<any[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [streak, setStreak] = useState(0)
-  const [category, setCategory] = useState('all')
+  const [logs, setLogs] = useState<any[]>([]);
+  const [category, setCategory] = useState('All');
+  const categories = ['All', ...Array.from(new Set(allBadges.map(b => b.category)))];
 
   useEffect(() => {
-    try {
-      const l = localStorage.getItem(KEY_LOGS); if(l) setLogs(JSON.parse(l))
-      const p = localStorage.getItem(KEY_PROFILE); if(p) setProfile(JSON.parse(p))
-      // Calc streak
-      const allLogs = l ? JSON.parse(l) : []
-      const logDays = new Set(allLogs.map((x:any)=>new Date(x.timestamp).toDateString()))
-      let s = 0, d = new Date()
-      while(logDays.has(d.toDateString())) { s++; d.setDate(d.getDate()-1) }
-      setStreak(s)
-    } catch {}
-  }, [])
+    const saved = localStorage.getItem('synchrosoul_logs');
+    if (saved) setLogs(JSON.parse(saved));
+  }, []);
 
-  const earned = ALL_BADGES.filter(b => { try { return b.req(logs, streak, profile) } catch { return false } })
-  const filtered = (category==='all' ? ALL_BADGES : ALL_BADGES.filter(b=>b.category===category))
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
+  const isEarned = (id: string): boolean => {
+    const count = logs.length;
+    const streak = (() => {
+      if (!logs.length) return 0;
+      const dates = [...new Set(logs.map((l: any) => new Date(l.timestamp).toDateString()))].sort();
+      let max = 1, cur = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const diff = (new Date(dates[i]).getTime() - new Date(dates[i-1]).getTime()) / 86400000;
+        if (diff === 1) { cur++; max = Math.max(max, cur); } else cur = 1;
+      }
+      return max;
+    })();
+    const nums = logs.map((l: any) => l.number);
+    const withThoughts = logs.filter((l: any) => l.thought).length;
+    const verified = logs.filter((l: any) => l.screenshotUrl).length;
+    const uniqueNums = new Set(nums).size;
+    switch(id) {
+      case 'first_log': return count >= 1;
+      case 'streak_3': return streak >= 3;
+      case 'streak_7': return streak >= 7;
+      case 'streak_30': return streak >= 30;
+      case 'streak_100': return streak >= 100;
+      case 'logs_10': return count >= 10;
+      case 'logs_50': return count >= 50;
+      case 'logs_100': return count >= 100;
+      case 'logs_365': return count >= 365;
+      case 'truth_first': return verified >= 1;
+      case 'truth_10': return verified >= 10;
+      case 'truth_50': return verified >= 50;
+      case 'number_1111': return nums.filter((n: string) => n === '1111').length >= 5;
+      case 'number_777': return nums.filter((n: string) => n === '777').length >= 3;
+      case 'number_all': return uniqueNums >= 12;
+      case 'journal_10': return withThoughts >= 10;
+      case 'early_adopter': return count >= 1;
+      default: return false;
+    }
+  };
+
+  const earned = allBadges.filter(b => isEarned(b.id));
+  const filtered = (category === 'All' ? allBadges : allBadges.filter(b => b.category === category));
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
-      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Sacred Badges</h1>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 0.875rem'}}>Milestones on your spiritual journey</p>
-
-      {/* Progress summary */}
-      <div style={{...card,padding:'1rem',marginBottom:'1.25rem',display:'flex',alignItems:'center',gap:'1.25rem',background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(201,168,76,0.05))',borderColor:'rgba(167,139,250,0.2)'}}>
-        <div style={{textAlign:'center'}}>
-          <div style={{color:'#a78bfa',fontSize:'2rem',fontWeight:700,lineHeight:1}}>{earned.length}</div>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Earned</div>
-        </div>
-        <div style={{width:'1px',height:'40px',background:'rgba(200,180,255,0.1)'}} />
-        <div style={{textAlign:'center'}}>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'2rem',fontWeight:700,lineHeight:1}}>{ALL_BADGES.length - earned.length}</div>
-          <div style={{color:'rgba(180,160,255,0.3)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Remaining</div>
-        </div>
-        <div style={{flex:1}}>
-          <div style={{height:'6px',background:'rgba(200,180,255,0.06)',borderRadius:'3px',overflow:'hidden'}}>
-            <div style={{height:'100%',width:(earned.length/ALL_BADGES.length*100)+'%',background:'linear-gradient(90deg,#a78bfa,#c9a84c)',borderRadius:'3px',transition:'width 1s ease'}} />
-          </div>
-          <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.7rem',marginTop:'0.3rem'}}>{Math.round(earned.length/ALL_BADGES.length*100)}% complete</div>
-        </div>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>🏆 Cosmic Badges</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '0.75rem', fontSize: '0.9rem' }}>Achievements on your spiritual journey</p>
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <span style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c', padding: '0.4rem 1.25rem', borderRadius: '999px', fontSize: '0.9rem', border: '1px solid rgba(201,168,76,0.3)' }}>{earned.length} / {allBadges.length} earned</span>
       </div>
-
-      {/* Category filter */}
-      <div style={{display:'flex',gap:'0.35rem',flexWrap:'wrap',marginBottom:'1.25rem'}}>
-        {CATEGORIES.map(c=>(
-          <button key={c} onClick={()=>setCategory(c)} style={{padding:'0.3rem 0.625rem',borderRadius:'9999px',border:category===c?'1px solid '+(CAT_COLORS[c]||'rgba(167,139,250,0.5)'):'1px solid rgba(200,180,255,0.1)',background:category===c?((CAT_COLORS[c]||'#a78bfa')+'18'):'transparent',color:category===c?(CAT_COLORS[c]||'#a78bfa'):'rgba(180,160,255,0.4)',fontSize:'0.7rem',cursor:'pointer',textTransform:'capitalize'}}>{c}</button>
+      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        {categories.map(cat => (
+          <button key={cat} onClick={() => setCategory(cat)} style={{ padding: '0.35rem 0.85rem', borderRadius: '999px', background: category === cat ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: category === cat ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)', color: category === cat ? '#c9a84c' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.78rem' }}>{cat}</button>
         ))}
       </div>
-
-      {/* Badges grid */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.5rem'}}>
-        {filtered.map(badge=>{
-          const isEarned = earned.some(e=>e.id===badge.id)
-          const color = CAT_COLORS[badge.category] || '#a78bfa'
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+        {filtered.map(badge => {
+          const earned = isEarned(badge.id);
           return (
-            <div key={badge.id} style={{...card,padding:'1rem',opacity:isEarned?1:0.45,borderColor:isEarned?color+'30':'rgba(200,180,255,0.06)',background:isEarned?color+'06':'rgba(8,6,28,0.6)',transition:'all 0.3s'}}>
-              <div style={{fontSize:'1.8rem',marginBottom:'0.4rem',filter:isEarned?'none':'grayscale(1)'}}>{badge.emoji}</div>
-              <div style={{color:isEarned?color:'rgba(180,160,255,0.4)',fontSize:'0.82rem',fontWeight:600,marginBottom:'0.15rem'}}>{badge.name}</div>
-              <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.7rem',lineHeight:1.4,marginBottom:'0.4rem'}}>{badge.desc}</div>
-              {isEarned && <div style={{color:color,fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>✓ Earned</div>}
-              {!isEarned && <div style={{color:'rgba(180,160,255,0.2)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Locked</div>}
+            <div key={badge.id} style={{ background: earned ? 'rgba(8,6,28,0.9)' : 'rgba(8,6,28,0.5)', border: earned ? '1px solid ' + badge.color + '55' : '1px solid rgba(255,255,255,0.06)', borderRadius: '1rem', padding: '1.1rem 0.75rem', textAlign: 'center', opacity: earned ? 1 : 0.45, transition: 'all 0.2s' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.4rem', filter: earned ? 'drop-shadow(0 0 8px ' + badge.color + '88)' : 'grayscale(1)' }}>{badge.emoji}</div>
+              <div style={{ color: earned ? badge.color : 'rgba(255,255,255,0.4)', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.25rem' }}>{badge.name}</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', lineHeight: 1.3 }}>{earned ? badge.desc : badge.requirement}</div>
+              {earned && <div style={{ marginTop: '0.4rem', fontSize: '0.6rem', color: badge.color }}>✓ Earned</div>}
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

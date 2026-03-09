@@ -1,191 +1,133 @@
-'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-
-const KEY_LOGS = 'synchrosoul_logs'
-const KEY_PROFILE = 'synchrosoul_numerology_profile'
-
-function BarChart({ data, color }: { data: {label:string,value:number,color?:string}[], color: string }) {
-  const max = Math.max(...data.map(d=>d.value), 1)
-  return (
-    <div style={{display:'flex',flexDirection:'column',gap:'0.4rem'}}>
-      {data.map((d,i) => (
-        <div key={i} style={{display:'flex',alignItems:'center',gap:'0.625rem'}}>
-          <div style={{width:'40px',color:'rgba(180,160,255,0.5)',fontSize:'0.72rem',textAlign:'right',flexShrink:0}}>{d.label}</div>
-          <div style={{flex:1,height:'22px',background:'rgba(200,180,255,0.05)',borderRadius:'4px',overflow:'hidden'}}>
-            <div style={{height:'100%',width:(d.value/max*100)+'%',background:d.color||color,borderRadius:'4px',transition:'width 0.8s ease',display:'flex',alignItems:'center',paddingLeft:'6px',minWidth:d.value>0?'22px':'0'}}>
-              {d.value>0 && <span style={{color:'rgba(255,255,255,0.8)',fontSize:'0.65rem',fontWeight:700}}>{d.value}</span>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function DonutChart({ value, max, color, label }: { value:number, max:number, color:string, label:string }) {
-  const r = 36, circ = 2*Math.PI*r
-  const pct = Math.min(value/Math.max(max,1), 1)
-  const dash = pct * circ
-  return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.4rem'}}>
-      <svg width='88' height='88'>
-        <circle cx='44' cy='44' r={r} fill='none' stroke='rgba(200,180,255,0.07)' strokeWidth='7'/>
-        <circle cx='44' cy='44' r={r} fill='none' stroke={color} strokeWidth='7'
-          strokeDasharray={dash+' '+circ} strokeLinecap='round'
-          transform='rotate(-90 44 44)'
-          style={{filter:'drop-shadow(0 0 4px '+color+'60)',transition:'stroke-dasharray 1s ease'}}/>
-        <text x='44' y='40' textAnchor='middle' fill='rgba(220,200,255,0.9)' fontSize='14' fontWeight='700'>{value}</text>
-        <text x='44' y='56' textAnchor='middle' fill='rgba(180,160,255,0.4)' fontSize='9'>{label}</text>
-      </svg>
-    </div>
-  )
-}
+'use client';
+import { useState, useEffect } from 'react';
 
 export default function StatsPage() {
-  const [logs, setLogs] = useState<any[]>([])
-  const [profile, setProfile] = useState<any>(null)
-  const [period, setPeriod] = useState<'7d'|'30d'|'all'>('30d')
+  const [logs, setLogs] = useState<any[]>([]);
+  const [dreams, setDreams] = useState<any[]>([]);
+  const [manifests, setManifests] = useState<any[]>([]);
+  const [gratitude, setGratitude] = useState<any[]>([]);
+  const [affirmFavs, setAffirmFavs] = useState<string[]>([]);
 
   useEffect(() => {
-    try {
-      const l = localStorage.getItem(KEY_LOGS); if(l) setLogs(JSON.parse(l))
-      const p = localStorage.getItem(KEY_PROFILE); if(p) setProfile(JSON.parse(p))
-    } catch {}
-  }, [])
-
-  const now = Date.now()
-  const cutoff = period==='7d' ? now-7*86400000 : period==='30d' ? now-30*86400000 : 0
-  const filtered = logs.filter(l => new Date(l.timestamp).getTime() >= cutoff)
+    const l = localStorage.getItem('synchrosoul_logs'); if (l) setLogs(JSON.parse(l));
+    const d = localStorage.getItem('synchrosoul_dreams'); if (d) setDreams(JSON.parse(d));
+    const m = localStorage.getItem('synchrosoul_manifestations'); if (m) setManifests(JSON.parse(m));
+    const g = localStorage.getItem('synchrosoul_gratitude'); if (g) setGratitude(JSON.parse(g));
+    const a = localStorage.getItem('synchrosoul_affirmation_favorites'); if (a) setAffirmFavs(JSON.parse(a));
+  }, []);
 
   // Number frequency
-  const numCounts: Record<string,number> = {}
-  filtered.forEach(l => { numCounts[l.number]=(numCounts[l.number]||0)+1 })
-  const topNumbers = Object.entries(numCounts).sort((a,b)=>b[1]-a[1]).slice(0,8)
-    .map(([label,value])=>({label,value}))
+  const freq: Record<string, number> = {};
+  logs.forEach((l: any) => { freq[l.number] = (freq[l.number] || 0) + 1; });
+  const topNumbers = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const maxFreq = topNumbers[0]?.[1] || 1;
 
-  // Daily activity (last 14 days)
-  const dailyCounts: Record<string,number> = {}
-  const days = period==='7d'?7:14
-  for(let i=days-1;i>=0;i--) {
-    const d = new Date(now-i*86400000)
-    const key = (d.getMonth()+1)+'/'+(d.getDate())
-    dailyCounts[key] = 0
-  }
-  filtered.forEach(l => {
-    const d = new Date(l.timestamp)
-    const key = (d.getMonth()+1)+'/'+(d.getDate())
-    if(key in dailyCounts) dailyCounts[key]++
-  })
-  const dailyData = Object.entries(dailyCounts).map(([label,value])=>({label,value}))
-
-  // Hour of day distribution
-  const hourCounts: Record<number,number> = {}
-  for(let h=0;h<24;h++) hourCounts[h]=0
-  filtered.forEach(l => { const h=new Date(l.timestamp).getHours(); hourCounts[h]++ })
-  const peakHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0]
-  const peakHourLabel = peakHour ? (parseInt(peakHour[0])%12||12)+(parseInt(peakHour[0])<12?'am':'pm') : '—'
-
-  // Verified count
-  const verified = filtered.filter(l=>l.screenshotUrl).length
-  const withThoughts = filtered.filter(l=>l.thought?.trim()).length
-
-  // Streak calc
-  let streak = 0
-  const today = new Date().toDateString()
-  const logDays = new Set(logs.map(l=>new Date(l.timestamp).toDateString()))
-  let checkDate = new Date()
-  while(logDays.has(checkDate.toDateString())) {
-    streak++
-    checkDate.setDate(checkDate.getDate()-1)
+  // Streak calculation
+  const uniqueDates = [...new Set(logs.map((l: any) => new Date(l.createdAt || l.timestamp).toDateString()))];
+  const sortedDates = uniqueDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  let streak = 0;
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (sortedDates[0] === today || sortedDates[0] === yesterday) {
+    streak = 1;
+    for (let i = 1; i < sortedDates.length; i++) {
+      const diff = new Date(sortedDates[i-1]).getTime() - new Date(sortedDates[i]).getTime();
+      if (diff <= 86400000 * 1.5) streak++; else break;
+    }
   }
 
-  // Category breakdown (by number prefix)
-  const categories = [
-    {label:'111x',color:'#a78bfa',nums:['111','1111','11']},
-    {label:'222x',color:'#67e8f9',nums:['222','2222','22']},
-    {label:'333x',color:'#34d399',nums:['333','3333','33']},
-    {label:'444x',color:'#60a5fa',nums:['444','4444','44']},
-    {label:'555x',color:'#f97316',nums:['555','5555','55']},
-    {label:'777x',color:'#818cf8',nums:['777','7777','77']},
-    {label:'888x',color:'#c9a84c',nums:['888','8888','88']},
-    {label:'999x',color:'#f472b6',nums:['999','9999','99']},
-  ]
-  const catData = categories.map(c=>({
-    label:c.label,
-    value:filtered.filter(l=>c.nums.some(n=>l.number.startsWith(n[0])&&l.number===n||l.number.includes(n[0].repeat(3)))).length,
-    color:c.color
-  })).filter(c=>c.value>0)
+  // Verified entries
+  const verified = logs.filter((l: any) => l.screenshotUrl).length;
+  const verifiedPct = logs.length > 0 ? Math.round((verified / logs.length) * 100) : 0;
 
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)',padding:'1.25rem',marginBottom:'0.875rem'}
+  // Time of day distribution
+  const timeSlots = { morning: 0, afternoon: 0, evening: 0, night: 0 };
+  logs.forEach((l: any) => {
+    const h = new Date(l.createdAt || l.timestamp).getHours();
+    if (h >= 5 && h < 12) timeSlots.morning++;
+    else if (h >= 12 && h < 17) timeSlots.afternoon++;
+    else if (h >= 17 && h < 21) timeSlots.evening++;
+    else timeSlots.night++;
+  });
+  const maxSlot = Math.max(...Object.values(timeSlots)) || 1;
+
+  // Weekly activity (last 7 days)
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.now() - (6 - i) * 86400000);
+    const key = d.toDateString();
+    const count = logs.filter((l: any) => new Date(l.createdAt || l.timestamp).toDateString() === key).length;
+    return { label: d.toLocaleDateString('en-US', { weekday: 'short' }), count };
+  });
+  const maxDay = Math.max(...weekDays.map(d => d.count)) || 1;
+
+  const statCard = (emoji: string, value: string | number, label: string, color: string, sub?: string) => (
+    <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.25rem', backdropFilter: 'blur(10px)', textAlign: 'center' }}>
+      <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{emoji}</div>
+      <div style={{ fontSize: '2rem', fontWeight: 800, color, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', marginTop: '0.25rem' }}>{label}</div>
+      {sub && <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', marginTop: '0.2rem' }}>{sub}</div>}
+    </div>
+  );
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
-      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Your Statistics</h1>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.25rem'}}>Patterns in your spiritual journey</p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>📊 Soul Statistics</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.9rem' }}>Your spiritual journey by the numbers</p>
 
-      {/* Period filter */}
-      <div style={{display:'flex',gap:'0.4rem',marginBottom:'1.25rem'}}>
-        {([['7d','7 Days'],['30d','30 Days'],['all','All Time']] as const).map(([p,l])=>(
-          <button key={p} onClick={()=>setPeriod(p)} style={{padding:'0.35rem 0.875rem',borderRadius:'9999px',border:period===p?'1px solid rgba(167,139,250,0.5)':'1px solid rgba(200,180,255,0.1)',background:period===p?'rgba(167,139,250,0.15)':'transparent',color:period===p?'#a78bfa':'rgba(180,160,255,0.4)',fontSize:'0.75rem',cursor:'pointer'}}>{l}</button>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        {statCard('🔢', logs.length, 'Angel Numbers Logged', '#c9a84c')}
+        {statCard('🔥', streak, 'Day Streak', '#e74c3c', streak > 0 ? 'Keep it going!' : 'Start today!')}
+        {statCard('🌙', dreams.length, 'Dreams Recorded', '#9b59b6')}
+        {statCard('🌱', manifests.length, 'Manifestations', '#48bb78')}
+        {statCard('🙏', gratitude.length, 'Gratitude Entries', '#3498db')}
+        {statCard('✅', verified + '%', 'Truth Score Rate', '#f39c12', verified + ' verified entries')}
       </div>
 
-      {/* Summary donuts */}
-      <div style={{...card,display:'flex',justifyContent:'space-around',flexWrap:'wrap',gap:'0.5rem'}}>
-        <DonutChart value={filtered.length} max={Math.max(filtered.length,50)} color='#a78bfa' label='Logged' />
-        <DonutChart value={streak} max={30} color='#f97316' label='Streak' />
-        <DonutChart value={verified} max={Math.max(filtered.length,1)} color='#4ade80' label='Verified' />
-        <DonutChart value={withThoughts} max={Math.max(filtered.length,1)} color='#c9a84c' label='Journaled' />
-      </div>
-
-      {/* Top numbers */}
       {topNumbers.length > 0 && (
-        <div style={card}>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.875rem'}}>Most Seen Numbers</div>
-          <BarChart data={topNumbers} color='#a78bfa' />
+        <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)', marginBottom: '1rem' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>🏆 Your Top Angel Numbers</h3>
+          {topNumbers.map(([num, count], i) => (
+            <div key={num} style={{ marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                <span style={{ color: i === 0 ? '#c9a84c' : 'rgba(255,255,255,0.7)', fontWeight: i === 0 ? 700 : 400, fontSize: '0.9rem' }}>{i === 0 ? '👑 ' : ''}{num}</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>{count}x</span>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '999px', height: '6px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: (count / maxFreq * 100) + '%', background: i === 0 ? 'linear-gradient(90deg, #c9a84c, #f6e27a)' : 'rgba(255,255,255,0.2)', borderRadius: '999px', transition: 'width 0.8s ease' }} />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Daily activity */}
-      {dailyData.some(d=>d.value>0) && (
-        <div style={card}>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.875rem'}}>Daily Activity</div>
-          <BarChart data={dailyData} color='#60a5fa' />
+      <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)', marginBottom: '1rem' }}>
+        <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>📅 Last 7 Days Activity</h3>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '80px' }}>
+          {weekDays.map((d, i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
+              <div style={{ width: '100%', background: d.count > 0 ? 'linear-gradient(to top, #c9a84c88, #c9a84c44)' : 'rgba(255,255,255,0.05)', borderRadius: '4px 4px 0 0', height: Math.max(4, (d.count / maxDay) * 60) + 'px', border: d.count > 0 ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.05)', transition: 'height 0.5s ease' }} />
+              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem' }}>{d.label}</span>
+            </div>
+          ))}
         </div>
-      )}
-
-      {/* Insights row */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.5rem',marginBottom:'0.875rem'}}>
-        {[
-          {label:'Peak Sighting Time',value:peakHourLabel,emoji:'⏰',color:'#c9a84c'},
-          {label:'Unique Numbers',value:Object.keys(numCounts).length,emoji:'◎',color:'#a78bfa'},
-          {label:'Truth Score',value:filtered.length>0?Math.round(verified/filtered.length*100)+'%':'—',emoji:'✓',color:'#4ade80'},
-          {label:'Thought Capture',value:filtered.length>0?Math.round(withThoughts/filtered.length*100)+'%':'—',emoji:'💭',color:'#f472b6'},
-        ].map(s=>(
-          <div key={s.label} style={{...card,marginBottom:0,textAlign:'center'}}>
-            <div style={{fontSize:'1.2rem',marginBottom:'0.25rem'}}>{s.emoji}</div>
-            <div style={{color:s.color,fontSize:'1.1rem',fontWeight:700,marginBottom:'0.15rem'}}>{s.value}</div>
-            <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem'}}>{s.label}</div>
-          </div>
-        ))}
       </div>
 
-      {/* Category breakdown */}
-      {catData.length > 0 && (
-        <div style={card}>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.875rem'}}>Number Family Breakdown</div>
-          <BarChart data={catData} color='#a78bfa' />
+      <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(10px)' }}>
+        <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>🕐 When You See Signs</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+          {Object.entries(timeSlots).map(([slot, count]) => {
+            const icons: Record<string, string> = { morning: '🌅', afternoon: '☀️', evening: '🌆', night: '🌙' };
+            const colors: Record<string, string> = { morning: '#f6ad55', afternoon: '#c9a84c', evening: '#9b59b6', night: '#3498db' };
+            return (
+              <div key={slot} style={{ textAlign: 'center', padding: '0.75rem 0.5rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{icons[slot]}</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: colors[slot] }}>{count}</div>
+                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'capitalize' }}>{slot}</div>
+              </div>
+            );
+          })}
         </div>
-      )}
-
-      {filtered.length === 0 && (
-        <div style={{...card,textAlign:'center',padding:'3rem'}}>
-          <div style={{fontSize:'2rem',marginBottom:'0.625rem'}}>📊</div>
-          <p style={{color:'rgba(180,160,255,0.4)',fontSize:'0.9rem',fontFamily:'Cormorant Garamond,serif',fontStyle:'italic',margin:'0 0 0.5rem'}}>No data for this period yet</p>
-          <Link href='/dashboard' style={{color:'#a78bfa',fontSize:'0.82rem'}}>Start logging numbers →</Link>
-        </div>
-      )}
+      </div>
     </div>
-  )
+  );
 }

@@ -1,170 +1,173 @@
-'use client'
-import { useState, useEffect } from 'react'
+'use client';
+import { useState, useEffect } from 'react';
 
-const KEY_PROFILE = 'synchrosoul_numerology_profile'
+const personalYearData: Record<number, { title: string; theme: string; color: string; emoji: string; guidance: string; focus: string[]; avoid: string[] }> = {
+  1: { title: 'New Beginnings', theme: 'The year of planting seeds and bold new starts', color: '#e74c3c', emoji: '🌱', guidance: 'This is your year to initiate, lead, and launch. The universe is clearing the path for you to step into something entirely new. Do not wait for permission — take the first step and the road will appear.', focus: ['Starting new projects', 'Building independence', 'Taking initiative', 'Establishing identity'], avoid: ['Clinging to the past', 'Waiting for others', 'Self-doubt', 'Procrastination'] },
+  2: { title: 'Partnership & Patience', theme: 'The year of cooperation, sensitivity, and divine timing', color: '#3498db', emoji: '🤝', guidance: 'This year asks you to slow down and collaborate. Relationships — romantic, business, and spiritual — are your greatest teachers. Practice patience; what you plant now will bloom in year 3.', focus: ['Deepening relationships', 'Listening and diplomacy', 'Emotional healing', 'Building trust'], avoid: ['Forcing outcomes', 'Isolation', 'Impatience', 'Oversensitivity'] },
+  3: { title: 'Creative Expression', theme: 'The year of joy, creativity, and social expansion', color: '#f39c12', emoji: '🎨', guidance: 'Your creative energy is at its peak. Express yourself boldly — through art, writing, speaking, or simply living joyfully. Social connections made this year carry special magic.', focus: ['Creative projects', 'Social expansion', 'Self-expression', 'Joy and play'], avoid: ['Scattering energy', 'Superficiality', 'Suppressing emotions', 'Overindulgence'] },
+  4: { title: 'Foundation Building', theme: 'The year of hard work, structure, and lasting roots', color: '#27ae60', emoji: '🏗️', guidance: 'This is a year to build, not dream. Roll up your sleeves and create the structures that will support your future. The work you do now creates stability for years to come.', focus: ['Discipline and routine', 'Financial planning', 'Health and body', 'Long-term projects'], avoid: ['Shortcuts', 'Rigidity', 'Neglecting rest', 'Resistance to work'] },
+  5: { title: 'Freedom & Change', theme: 'The year of adventure, transformation, and liberation', color: '#9b59b6', emoji: '🦋', guidance: 'Expect the unexpected and embrace it. This year brings rapid change, travel, new experiences, and liberation from old constraints. Stay flexible — the universe is rerouting you toward something better.', focus: ['Embracing change', 'Travel and adventure', 'New experiences', 'Personal freedom'], avoid: ['Resistance to change', 'Overindulgence', 'Recklessness', 'Commitment issues'] },
+  6: { title: 'Love & Responsibility', theme: 'The year of home, family, healing, and service', color: '#e91e63', emoji: '💝', guidance: 'Your heart is the compass this year. Family, home, and community call for your loving attention. This is also a powerful year for healing old wounds and deepening romantic bonds.', focus: ['Family and home', 'Romantic relationships', 'Community service', 'Healing and nurturing'], avoid: ['Martyrdom', 'Meddling in others affairs', 'Perfectionism', 'Neglecting self-care'] },
+  7: { title: 'Spiritual Awakening', theme: 'The year of introspection, wisdom, and inner truth', color: '#1abc9c', emoji: '🔮', guidance: 'The universe is calling you inward. This is a year for deep study, meditation, and spiritual development. Solitude is not loneliness — it is sacred preparation. Trust what is being revealed to you.', focus: ['Meditation and spirituality', 'Study and research', 'Inner wisdom', 'Solitude and reflection'], avoid: ['Isolation becoming depression', 'Skepticism', 'Neglecting relationships', 'Escapism'] },
+  8: { title: 'Power & Abundance', theme: 'The year of manifestation, authority, and material success', color: '#c9a84c', emoji: '♾️', guidance: 'Your manifestation power is at its absolute peak. Step into your authority, pursue financial goals boldly, and claim the abundance that is your birthright. What you focus on expands dramatically this year.', focus: ['Career advancement', 'Financial goals', 'Leadership', 'Manifesting abundance'], avoid: ['Greed', 'Workaholism', 'Power struggles', 'Neglecting spiritual life'] },
+  9: { title: 'Completion & Release', theme: 'The year of endings, wisdom, and compassionate service', color: '#e67e22', emoji: '🌅', guidance: 'A major cycle of your life is completing. Release what no longer serves you with gratitude — relationships, beliefs, habits, and situations. What you let go of now creates space for the magnificent new beginning of year 1.', focus: ['Releasing and letting go', 'Forgiveness', 'Humanitarian service', 'Wisdom sharing'], avoid: ['Clinging to the past', 'Starting major new projects', 'Bitterness', 'Isolation'] },
+};
 
-function calcPersonalYear(dob: string, year: number): number {
-  const d = new Date(dob)
-  const month = d.getMonth() + 1
-  const day = d.getDate()
-  let n = month + day + year
-  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-    n = String(n).split('').reduce((s,c) => s + parseInt(c), 0)
+function calcPersonalYear(birthdate: string, year: number): number {
+  if (!birthdate) return 0;
+  const d = new Date(birthdate);
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const digits = String(month) + String(day) + String(year);
+  let sum = digits.split('').reduce((a, c) => a + parseInt(c), 0);
+  while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
+    sum = String(sum).split('').reduce((a, c) => a + parseInt(c), 0);
   }
-  return n
+  return sum > 9 ? sum % 9 || 9 : sum;
 }
 
-function calcPersonalMonth(personalYear: number, month: number): number {
-  let n = personalYear + month
-  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-    n = String(n).split('').reduce((s,c) => s + parseInt(c), 0)
-  }
-  return n
+function getMonthlyTheme(month: number, pyNum: number): string {
+  const themes = [
+    'Setting intentions for the year ahead',
+    'Relationships and partnerships highlighted',
+    'Creative energy peaks — express yourself',
+    'Focus on foundations and practical matters',
+    'Change and unexpected opportunities arrive',
+    'Home, family, and love take center stage',
+    'Deep reflection and spiritual insights',
+    'Financial and career matters come to a head',
+    'Completion, release, and preparation for renewal',
+    'New seeds planted for the next cycle',
+    'Intuition and inner wisdom guide you',
+    'Review, rest, and integrate the years lessons',
+  ];
+  return themes[(month - 1 + pyNum - 1) % 12];
 }
-
-const YEAR_DATA: Record<number, { theme: string; keywords: string[]; advice: string; color: string; emoji: string }> = {
-  1: { theme: 'New Beginnings', keywords: ['initiation','independence','courage','leadership','fresh start'], advice: 'Plant seeds boldly. This is your year to begin what you have been dreaming of. Take initiative — the universe backs your first steps.', color: '#f87171', emoji: '🌱' },
-  2: { theme: 'Patience & Partnership', keywords: ['cooperation','sensitivity','balance','waiting','relationships'], advice: 'Slow down and trust divine timing. Nurture your relationships. What you planted last year is quietly growing beneath the surface.', color: '#60a5fa', emoji: '🕊️' },
-  3: { theme: 'Creative Expression', keywords: ['creativity','joy','communication','expansion','socializing'], advice: 'Express yourself fully. Write, create, speak your truth. Joy is your spiritual practice this year — follow what lights you up.', color: '#fbbf24', emoji: '🌟' },
-  4: { theme: 'Foundation Building', keywords: ['discipline','work','structure','stability','health'], advice: 'Build the structures that will support your dreams. Hard work now creates lasting results. Focus on health, finances, and solid foundations.', color: '#34d399', emoji: '🏛️' },
-  5: { theme: 'Freedom & Change', keywords: ['transformation','adventure','freedom','travel','unexpected'], advice: 'Embrace change — it is your teacher this year. Release what no longer serves you. Adventure and unexpected opportunities are your gifts.', color: '#a78bfa', emoji: '🌊' },
-  6: { theme: 'Love & Responsibility', keywords: ['family','service','healing','home','love'], advice: 'Your heart is your compass. Tend to your relationships, home, and community. Service to others brings deep fulfillment this year.', color: '#f472b6', emoji: '💗' },
-  7: { theme: 'Spiritual Deepening', keywords: ['introspection','wisdom','solitude','research','faith'], advice: 'Go within. This is a year of spiritual growth, not outer achievement. Study, meditate, and trust the quiet voice of your soul.', color: '#818cf8', emoji: '🔮' },
-  8: { theme: 'Power & Abundance', keywords: ['manifestation','success','authority','finances','karma'], advice: 'Step into your power. What you have built is ready to bear fruit. Financial and professional abundance flows when you act with integrity.', color: '#c9a84c', emoji: '👑' },
-  9: { theme: 'Completion & Release', keywords: ['endings','compassion','release','wisdom','completion'], advice: 'Let go with grace. This is a year of completion — release what has run its course. Your compassion and wisdom are gifts to the world.', color: '#fb923c', emoji: '🌌' },
-  11: { theme: 'Illumination', keywords: ['inspiration','intuition','spiritual mastery','vision','awakening'], advice: 'You are a channel for higher wisdom this year. Trust your intuition completely. Your sensitivity is your superpower — use it to inspire others.', color: '#e879f9', emoji: '⚡' },
-  22: { theme: 'Master Building', keywords: ['legacy','vision','manifestation','leadership','impact'], advice: 'You have the power to build something of lasting significance this year. Think big — your dreams can become reality on a grand scale.', color: '#2dd4bf', emoji: '🏗️' },
-  33: { theme: 'Master Teaching', keywords: ['unconditional love','healing','teaching','service','compassion'], advice: 'You are called to serve humanity with unconditional love. Your healing presence transforms everyone you touch. Lead with your heart.', color: '#f9a8d4', emoji: '🧡' },
-}
-
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 export default function PersonalYearPage() {
-  const [dob, setDob] = useState('')
-  const [profile, setProfile] = useState<any>(null)
-  const [year, setYear] = useState(new Date().getFullYear())
+  const [birthdate, setBirthdate] = useState('');
+  const [pyNum, setPyNum] = useState(0);
+  const [nextPyNum, setNextPyNum] = useState(0);
+  const [activeTab, setActiveTab] = useState<'overview'|'monthly'|'next'>('overview');
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
 
   useEffect(() => {
-    try {
-      const p = JSON.parse(localStorage.getItem(KEY_PROFILE) || 'null')
-      if (p?.birthdate) { setProfile(p); setDob(p.birthdate) }
-    } catch {}
-  }, [])
+    const p = localStorage.getItem('synchrosoul_profile');
+    if (p) {
+      const prof = JSON.parse(p);
+      if (prof.birthdate) {
+        setBirthdate(prof.birthdate);
+        setPyNum(calcPersonalYear(prof.birthdate, currentYear));
+        setNextPyNum(calcPersonalYear(prof.birthdate, currentYear + 1));
+      }
+    }
+  }, []);
 
-  const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth() + 1
-  const py = dob ? calcPersonalYear(dob, year) : null
-  const pyData = py ? YEAR_DATA[py] : null
-  const pm = py ? calcPersonalMonth(py, currentMonth) : null
-  const pmData = pm ? YEAR_DATA[pm] : null
+  const handleBirthdate = (val: string) => {
+    setBirthdate(val);
+    if (val) {
+      setPyNum(calcPersonalYear(val, currentYear));
+      setNextPyNum(calcPersonalYear(val, currentYear + 1));
+      const p = localStorage.getItem('synchrosoul_profile');
+      const prof = p ? JSON.parse(p) : {};
+      localStorage.setItem('synchrosoul_profile', JSON.stringify({ ...prof, birthdate: val }));
+    }
+  };
 
-  // 9-year cycle
-  const cycleStart = dob ? year - ((calcPersonalYear(dob, year) - 1 + 9) % 9) : null
-
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)',padding:'1.25rem',marginBottom:'0.875rem'}
-  const input: React.CSSProperties = {background:'rgba(255,255,255,0.03)',border:'1px solid rgba(200,180,255,0.12)',borderRadius:'0.75rem',padding:'0.65rem 0.875rem',color:'rgba(220,200,255,0.85)',fontSize:'0.9rem',fontFamily:'inherit',outline:'none'}
+  const data = personalYearData[pyNum];
+  const nextData = personalYearData[nextPyNum];
+  const monthsRemaining = 12 - currentMonth + 1;
+  const progress = Math.round(((currentMonth - 1) / 12) * 100);
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
-      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Personal Year</h1>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.25rem'}}>Your numerological forecast for {year}</p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>📅 Personal Year</h1>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.9rem' }}>Your numerological forecast for {currentYear}</p>
 
-      {!profile && (
-        <div style={{...card,borderColor:'rgba(201,168,76,0.2)',marginBottom:'1.25rem'}}>
-          <div style={{color:'rgba(201,168,76,0.6)',fontSize:'0.72rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.75rem'}}>Enter Your Birthdate</div>
-          <input type='date' value={dob} onChange={e=>setDob(e.target.value)} style={{...input,width:'100%',boxSizing:'border-box' as const}} />
+      {!birthdate && (
+        <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(12px)', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🎂</div>
+          <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '1rem', fontSize: '0.9rem' }}>Enter your birthdate to calculate your Personal Year number</p>
+          <input type="date" value={birthdate} onChange={e => handleBirthdate(e.target.value)} style={{ padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', outline: 'none' }} />
         </div>
       )}
 
-      {/* Year selector */}
-      <div style={{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'1.25rem'}}>
-        <button onClick={()=>setYear(y=>y-1)} style={{background:'rgba(200,180,255,0.08)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'0.5rem',padding:'0.4rem 0.75rem',color:'rgba(180,160,255,0.6)',cursor:'pointer',fontSize:'0.9rem'}}>←</button>
-        <div style={{flex:1,textAlign:'center',color:'rgba(220,200,255,0.85)',fontSize:'1.1rem',fontWeight:600}}>{year}</div>
-        <button onClick={()=>setYear(y=>y+1)} style={{background:'rgba(200,180,255,0.08)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'0.5rem',padding:'0.4rem 0.75rem',color:'rgba(180,160,255,0.6)',cursor:'pointer',fontSize:'0.9rem'}}>→</button>
-      </div>
+      {birthdate && (
+        <input type="date" value={birthdate} onChange={e => handleBirthdate(e.target.value)} style={{ display: 'block', margin: '0 auto 1.5rem', padding: '0.5rem 1rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', outline: 'none' }} />
+      )}
 
-      {py && pyData && (
+      {data && (
         <>
-          {/* Main card */}
-          <div style={{...card,borderColor:pyData.color+'30',background:'rgba(8,6,28,0.95)',textAlign:'center'}}>
-            <div style={{fontSize:'3rem',marginBottom:'0.5rem'}}>{pyData.emoji}</div>
-            <div style={{color:pyData.color,fontSize:'3.5rem',fontWeight:700,lineHeight:1,marginBottom:'0.25rem'}}>{py}</div>
-            <div style={{color:'rgba(220,200,255,0.85)',fontSize:'1.1rem',fontFamily:'Cormorant Garamond,serif',marginBottom:'0.875rem'}}>{pyData.theme}</div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'0.35rem',justifyContent:'center',marginBottom:'1rem'}}>
-              {pyData.keywords.map(k=>(
-                <span key={k} style={{background:pyData.color+'12',border:'1px solid '+pyData.color+'25',borderRadius:'9999px',padding:'0.2rem 0.65rem',color:pyData.color,fontSize:'0.72rem'}}>{k}</span>
-              ))}
+          <div style={{ background: 'rgba(8,6,28,0.9)', border: '1px solid ' + data.color + '44', borderRadius: '1.5rem', padding: '2rem', backdropFilter: 'blur(12px)', marginBottom: '1.5rem', textAlign: 'center', boxShadow: '0 0 40px ' + data.color + '22' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: '0.5rem' }}>{data.emoji}</div>
+            <div style={{ fontSize: '4rem', fontWeight: 800, color: data.color, lineHeight: 1, marginBottom: '0.5rem' }}>{pyNum}</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>{data.title}</div>
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{data.theme}</div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '999px', height: '6px', marginBottom: '0.5rem', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: progress + '%', background: 'linear-gradient(90deg, ' + data.color + '88, ' + data.color + ')', borderRadius: '999px', transition: 'width 1s ease' }} />
             </div>
-            <p style={{color:'rgba(200,180,255,0.7)',fontSize:'1rem'}}>{pyData.advice}</p>
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{progress}% through {currentYear} · {monthsRemaining} months remaining</div>
           </div>
 
-          {/* Personal month */}
-          {year === currentYear && pm && pmData && (
-            <div style={{...card,borderColor:pmData.color+'25'}}>
-              <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.62rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.875rem'}}>Personal Month — {MONTHS[currentMonth-1]}</div>
-              <div style={{display:'flex',alignItems:'center',gap:'1rem'}}>
-                <div style={{width:'56px',height:'56px',borderRadius:'50%',background:pmData.color+'12',border:'1px solid '+pmData.color+'25',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <span style={{color:pmData.color,fontSize:'1.5rem',fontWeight:700}}>{pm}</span>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+            {(['overview','monthly','next'] as const).map(t => (
+              <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '0.5rem 1.25rem', borderRadius: '999px', background: activeTab === t ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: activeTab === t ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)', color: activeTab === t ? '#c9a84c' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.82rem', textTransform: 'capitalize' }}>{t === 'next' ? 'Next Year' : t}</button>
+            ))}
+          </div>
+
+          {activeTab === 'overview' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
+                <h3 style={{ color: data.color, marginBottom: '0.75rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✨ Your Guidance</h3>
+                <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.8, fontSize: '0.95rem', fontStyle: 'italic', margin: 0 }}>{data.guidance}</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(72,187,120,0.2)', borderRadius: '1.25rem', padding: '1.25rem', backdropFilter: 'blur(8px)' }}>
+                  <h3 style={{ color: '#48bb78', marginBottom: '0.75rem', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>✅ Focus On</h3>
+                  {data.focus.map((f, i) => <div key={i} style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', padding: '0.3rem 0', borderBottom: i < data.focus.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>· {f}</div>)}
                 </div>
-                <div>
-                  <div style={{color:'rgba(220,200,255,0.85)',fontSize:'0.9rem',fontWeight:600,marginBottom:'0.2rem'}}>{pmData.theme}</div>
-                  <div style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',lineHeight:1.5}}>{pmData.advice.slice(0,100)}...</div>
+                <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(252,129,129,0.2)', borderRadius: '1.25rem', padding: '1.25rem', backdropFilter: 'blur(8px)' }}>
+                  <h3 style={{ color: '#fc8181', marginBottom: '0.75rem', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>⚠️ Avoid</h3>
+                  {data.avoid.map((a, i) => <div key={i} style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', padding: '0.3rem 0', borderBottom: i < data.avoid.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>· {a}</div>)}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 12-month overview */}
-          <div style={card}>
-            <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.62rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.875rem'}}>Monthly Forecast {year}</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'0.4rem'}}>
-              {MONTHS.map((m,i)=>{
-                const monthNum = i+1
-                const monthPY = calcPersonalMonth(py, monthNum)
-                const mData = YEAR_DATA[monthPY]
-                const isNow = year===currentYear && monthNum===currentMonth
+          {activeTab === 'monthly' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(month => {
+                const monthName = new Date(currentYear, month - 1).toLocaleString('default', { month: 'long' });
+                const theme = getMonthlyTheme(month, pyNum);
+                const isCurrent = month === currentMonth;
+                const isPast = month < currentMonth;
                 return (
-                  <div key={m} style={{background:isNow?mData?.color+'15':'rgba(8,6,28,0.5)',border:isNow?'1px solid '+mData?.color+'40':'1px solid rgba(200,180,255,0.06)',borderRadius:'0.625rem',padding:'0.5rem',textAlign:'center'}}>
-                    <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.6rem',marginBottom:'0.2rem'}}>{m}</div>
-                    <div style={{color:mData?.color||'#a78bfa',fontSize:'1rem',fontWeight:700}}>{monthPY}</div>
-                    <div style={{color:'rgba(180,160,255,0.3)',fontSize:'0.55rem',marginTop:'0.15rem'}}>{mData?.emoji}</div>
+                  <div key={month} style={{ background: isCurrent ? 'rgba(201,168,76,0.1)' : 'rgba(8,6,28,0.75)', border: isCurrent ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.06)', borderRadius: '0.9rem', padding: '0.9rem 1.25rem', backdropFilter: 'blur(8px)', opacity: isPast ? 0.5 : 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: isCurrent ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: isCurrent ? '#c9a84c' : 'rgba(255,255,255,0.4)', fontWeight: 700, flexShrink: 0 }}>{month}</div>
+                      <div>
+                        <div style={{ color: isCurrent ? '#c9a84c' : 'rgba(255,255,255,0.7)', fontWeight: isCurrent ? 600 : 400, fontSize: '0.9rem' }}>{monthName} {isCurrent ? '← Now' : ''}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{theme}</div>
+                      </div>
+                    </div>
                   </div>
-                )
+                );
               })}
             </div>
-          </div>
+          )}
 
-          {/* 9-year cycle */}
-          {cycleStart && (
-            <div style={card}>
-              <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.62rem',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.875rem'}}>Your 9-Year Cycle</div>
-              <div style={{display:'flex',gap:'0.3rem',alignItems:'flex-end'}}>
-                {Array.from({length:9}).map((_,i)=>{
-                  const cycleYear = cycleStart+i
-                  const cycleNum = i+1
-                  const cData = YEAR_DATA[cycleNum]
-                  const isCurrent = cycleYear===year
-                  return (
-                    <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.2rem'}}>
-                      <div style={{width:'100%',height:isCurrent?'48px':'32px',background:isCurrent?cData?.color+'50':cData?.color+'20',borderRadius:'3px 3px 0 0',border:isCurrent?'1px solid '+cData?.color+'60':'none',transition:'all 0.3s',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                        <span style={{color:cData?.color,fontSize:'0.7rem',fontWeight:700}}>{cycleNum}</span>
-                      </div>
-                      <div style={{color:isCurrent?'rgba(220,200,255,0.7)':'rgba(180,160,255,0.25)',fontSize:'0.55rem'}}>{cycleYear}</div>
-                    </div>
-                  )
-                })}
-              </div>
+          {activeTab === 'next' && nextData && (
+            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid ' + nextData.color + '33', borderRadius: '1.5rem', padding: '2rem', backdropFilter: 'blur(12px)', textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{nextData.emoji}</div>
+              <div style={{ fontSize: '3rem', fontWeight: 800, color: nextData.color, lineHeight: 1, marginBottom: '0.5rem' }}>{nextPyNum}</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>{nextData.title} — {currentYear + 1}</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>{nextData.theme}</div>
+              <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, fontSize: '0.9rem', fontStyle: 'italic' }}>{nextData.guidance}</p>
             </div>
           )}
         </>
       )}
-
-      {!dob && (
-        <div style={{textAlign:'center',padding:'3rem 1rem'}}>
-          <div style={{fontSize:'2.5rem',marginBottom:'0.875rem'}}>📅</div>
-          <p style={{color:'rgba(180,160,255,0.4)',fontSize:'0.85rem'}}>Enter your birthdate above to reveal your personal year forecast.</p>
-        </div>
-      )}
     </div>
-  )
+  );
 }
