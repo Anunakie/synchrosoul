@@ -12,10 +12,10 @@ import { ThemeProvider, useTheme, THEMES } from '@/lib/theme-context'
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home', emoji: '✦' },
   { href: '/dashboard/journal', label: 'Journal', emoji: '📖' },
-  { href: '/dashboard/dreams', label: 'Dreams', emoji: '🌙' },
-  { href: '/dashboard/tools', label: 'Tools', emoji: '✧' },
+  { href: '/dashboard/tools', label: 'Tools', emoji: '🔮' },
   { href: '/dashboard/feed', label: 'Feed', emoji: '✧' },
   { href: '/dashboard/profile', label: 'Profile', emoji: '◎' },
+  { href: '/dashboard/upgrade', label: 'Upgrade', emoji: '⭐' },
 ]
 
 const MORE_SECTIONS = [

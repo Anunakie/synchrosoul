@@ -1,217 +1,152 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AngelLogger from '@/components/AngelLogger'
-import { getLogs, getStats, getNumerologyProfile, AngelLog } from '@/lib/storage'
-import { getLifePathData } from '@/lib/numerology'
-import { generateDailyGuidance, getStreak, DailyGuidance } from '@/lib/daily-guidance'
-import type { NumerologyProfile } from '@/lib/numerology'
+import { generateDailyGuidance } from '@/lib/daily-guidance'
 
-function NumerologyBadges({ profile }: { profile: NumerologyProfile }) {
-  const lpData = getLifePathData(profile.lifePath)
-  const suData = profile.soulUrge ? getLifePathData(profile.soulUrge) : null
-  const dData = profile.destiny ? getLifePathData(profile.destiny) : null
-  const badges = [
-    { label: 'Life Path', number: profile.lifePath, keyword: lpData.keyword, color: lpData.color },
-    ...(suData && profile.soulUrge ? [{ label: 'Soul Urge', number: profile.soulUrge, keyword: suData.keyword, color: '#a78bfa' }] : []),
-    ...(dData && profile.destiny ? [{ label: 'Destiny', number: profile.destiny, keyword: dData.keyword, color: '#34d399' }] : []),
-  ]
+const KEY_LOGS = 'synchrosoul_logs'
+const KEY_PROFILE = 'synchrosoul_numerology_profile'
+
+const QUICK_TOOLS = [
+  { href: '/dashboard/oracle', emoji: '◈', label: 'Oracle', color: '#e0e7ff' },
+  { href: '/dashboard/meditations', emoji: '🧘', label: 'Meditate', color: '#a78bfa' },
+  { href: '/dashboard/tarot', emoji: '🃏', label: 'Tarot', color: '#f472b6' },
+  { href: '/dashboard/moon', emoji: '🌙', label: 'Moon', color: '#94a3b8' },
+  { href: '/dashboard/chakras', emoji: '🌀', label: 'Chakras', color: '#f97316' },
+  { href: '/dashboard/breathwork', emoji: '💨', label: 'Breathe', color: '#67e8f9' },
+  { href: '/dashboard/affirmations', emoji: '💫', label: 'Affirm', color: '#60a5fa' },
+  { href: '/dashboard/rituals', emoji: '✦', label: 'Rituals', color: '#c9a84c' },
+]
+
+const FEATURE_CARDS = [
+  { href: '/dashboard/synthesis', emoji: '✶', title: 'Cosmic Synthesis', desc: 'Your weekly pattern report', color: '#c9a84c', bg: 'rgba(201,168,76,0.08)' },
+  { href: '/dashboard/soul-twin', emoji: '🧬', title: 'Soul Twin Radar', desc: 'Find your number matches', color: '#f472b6', bg: 'rgba(244,114,182,0.08)' },
+  { href: '/dashboard/compatibility', emoji: '💞', title: 'Compatibility', desc: 'Numerology match score', color: '#60a5fa', bg: 'rgba(96,165,250,0.08)' },
+  { href: '/dashboard/numerology-deep', emoji: '🧮', title: 'Deep Numerology', desc: 'Your full soul blueprint', color: '#a78bfa', bg: 'rgba(167,139,250,0.08)' },
+  { href: '/dashboard/vision-board', emoji: '🌌', title: 'Vision Board', desc: 'Your cosmic dream board', color: '#818cf8', bg: 'rgba(129,140,248,0.08)' },
+  { href: '/dashboard/manifestations', emoji: '🌱', title: 'Manifestations', desc: 'Track what you are calling in', color: '#4ade80', bg: 'rgba(74,222,128,0.08)' },
+]
+
+export default function DashboardPage() {
+  const [logs, setLogs] = useState<any[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [guidance, setGuidance] = useState<any>(null)
+  const [greeting, setGreeting] = useState('Good evening')
+
+  useEffect(() => {
+    const l = localStorage.getItem(KEY_LOGS)
+    if (l) setLogs(JSON.parse(l))
+    const p = localStorage.getItem(KEY_PROFILE)
+    if (p) {
+      const parsed = JSON.parse(p)
+      setProfile(parsed)
+      const recentNums = (() => { try { const l = localStorage.getItem(KEY_LOGS); return l ? JSON.parse(l).slice(0,10).map((x:any)=>x.number) : [] } catch { return [] } })()
+      setGuidance(generateDailyGuidance(recentNums, parsed.lifePathNumber || null, Math.min(logs.length, 30)))
+    }
+    const h = new Date().getHours()
+    setGreeting(h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening')
+  }, [])
+
+  const recentLogs = logs.slice(0, 5)
+  const todayLogs = logs.filter((l:any) => new Date(l.timestamp).toDateString() === new Date().toDateString())
+  const streak = Math.min(logs.length, 7)
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
+
   return (
-    <div style={{ marginBottom: '2rem' }}>
-      <p style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.4)', marginBottom: '0.875rem', textAlign: 'center' }}>
-        Your Cosmic Blueprint
-      </p>
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${badges.length}, 1fr)`, gap: '0.75rem' }}>
-        {badges.map((b) => (
-          <div key={b.label} style={{ background: 'rgba(5,5,16,0.6)', border: `1px solid ${b.color}30`, borderRadius: '1rem', padding: '1rem 0.75rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 0%, ${b.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            <div style={{ fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: `${b.color}70`, marginBottom: '0.3rem' }}>{b.label}</div>
-            <div style={{ fontSize: '2rem', fontWeight: 300, color: b.color, lineHeight: 1, textShadow: `0 0 16px ${b.color}50` }}>{b.number}</div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)', marginTop: '0.3rem', fontStyle: 'italic' }}>{b.keyword}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.25rem 1rem 2rem' }}>
 
-function DailyGuidanceCard({ guidance, streak }: { guidance: DailyGuidance; streak: number }) {
-  const [expanded, setExpanded] = useState(false)
-  return (
-    <div style={{ marginBottom: '2rem', background: `linear-gradient(135deg, ${guidance.themeColor}10, rgba(155,89,182,0.08))`, border: `1px solid ${guidance.themeColor}30`, borderRadius: '1.25rem', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ padding: '1.25rem 1.25rem 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-          <div>
-            <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: `${guidance.themeColor}80`, textTransform: 'uppercase', marginBottom: '0.2rem' }}>Daily Guidance</div>
-            <div style={{ fontSize: '0.8rem', color: 'rgba(220,200,255,0.68)' }}>{guidance.date}</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem' }}>
-            <div style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', background: `${guidance.themeColor}20`, border: `1px solid ${guidance.themeColor}40`, fontSize: '0.7rem', color: guidance.themeColor, fontWeight: 600 }}>
-              {guidance.theme}
-            </div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)' }}>{guidance.moonPhase}</div>
-          </div>
-        </div>
-
-        {/* Angel number of the day */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.875rem', marginBottom: '1rem' }}>
-          <div style={{ textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: guidance.themeColor, letterSpacing: '0.05em', lineHeight: 1 }}>{guidance.angelNumberOfDay}</div>
-            <div style={{ fontSize: '0.55rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem', letterSpacing: '0.1em' }}>TODAY</div>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, fontStyle: 'italic' }}>{guidance.angelNumberMeaning}</div>
-          </div>
-        </div>
-
-        {/* Personal message */}
-        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: '0 0 1rem' }}>
-          {guidance.personalMessage}
+      {/* Greeting */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: 'rgba(220,200,255,0.9)', margin: '0 0 0.2rem', fontWeight: 400 }}>{greeting} ✨</h1>
+        <p style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.8rem', margin: 0 }}>
+          {todayLogs.length > 0 ? `${todayLogs.length} angel number${todayLogs.length > 1 ? 's' : ''} logged today · ${streak} day streak` : 'Log your first angel number today'}
         </p>
       </div>
 
-      {/* Expandable section */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        style={{ width: '100%', padding: '0.6rem 1.25rem', background: 'rgba(0,0,0,0.15)', border: 'none', borderTop: `1px solid ${guidance.themeColor}15`, color: 'rgba(220,200,255,0.62)', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-      >
-        {expanded ? 'Less' : 'Full reading'} {expanded ? '▲' : '▼'}
-      </button>
-
-      {expanded && (
-        <div style={{ padding: '1rem 1.25rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-          {/* Numerology forecast */}
-          <div style={{ padding: '0.875rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.75rem' }}>
-            <div style={{ fontSize: '0.6rem', letterSpacing: '0.12em', color: `${guidance.themeColor}70`, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Numerology Forecast — Day {guidance.dateNumber}</div>
-            <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, margin: 0 }}>{guidance.numerologyForecast}</p>
+      {/* Daily Guidance */}
+      {guidance && (
+        <div style={{ ...card, padding: '1.25rem', marginBottom: '1.25rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(167,139,250,0.08))' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem' }}>
+            <span style={{ fontSize: '1rem' }}>✶</span>
+            <span style={{ color: 'rgba(201,168,76,0.7)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Today's Cosmic Guidance</span>
           </div>
-
-          {/* Affirmation */}
-          <div style={{ padding: '0.875rem', background: `${guidance.themeColor}08`, border: `1px solid ${guidance.themeColor}20`, borderRadius: '0.75rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.6rem', letterSpacing: '0.12em', color: `${guidance.themeColor}70`, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Today's Affirmation</div>
-            <p style={{ fontSize: '0.9rem', color: guidance.themeColor, lineHeight: 1.6, margin: 0, fontStyle: 'italic', fontWeight: 500 }}>“{guidance.affirmation}”</p>
-          </div>
-
-          {/* Streak */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.75rem' }}>
-            <span style={{ fontSize: '1rem' }}>*</span>
-            <span style={{ fontSize: '0.78rem', color: 'rgba(201,168,76,0.8)', fontWeight: 500 }}>{guidance.streakMessage}</span>
+          <p style={{ color: 'rgba(200,180,255,0.85)', fontSize: '0.9rem', margin: '0 0 0.625rem', lineHeight: 1.6, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>&ldquo;{guidance.message}&rdquo;</p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {guidance.focusNumber && <span style={{ padding: '0.2rem 0.5rem', borderRadius: '2rem', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c', fontSize: '0.7rem' }}>Focus: {guidance.focusNumber}</span>}
+            {guidance.moonPhase && <span style={{ padding: '0.2rem 0.5rem', borderRadius: '2rem', background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', color: 'rgba(180,160,255,0.6)', fontSize: '0.7rem' }}>{guidance.moonPhase}</span>}
           </div>
         </div>
       )}
-    </div>
-  )
-}
 
-export default function DashboardPage() {
-  const [logs, setLogs] = useState<AngelLog[]>([])
-  const [stats, setStats] = useState({ total: 0, topNumber: null as string | null, topCount: 0, withProof: 0, streak: 0 })
-  const [numerology, setNumerology] = useState<NumerologyProfile | null>(null)
-  const [guidance, setGuidance] = useState<DailyGuidance | null>(null)
-  const [streak, setStreak] = useState(0)
-  const [mounted, setMounted] = useState(false)
+      {/* Angel Logger */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <AngelLogger onLogged={() => { const l = localStorage.getItem(KEY_LOGS); if (l) setLogs(JSON.parse(l)) }} />
+      </div>
 
-  useEffect(() => {
-    setMounted(true)
-    const allLogs = getLogs()
-    setLogs(allLogs)
-    setStats(getStats())
-    const num = getNumerologyProfile()
-    setNumerology(num)
-    const s = getStreak(allLogs)
-    setStreak(s)
-    const recentNumbers = allLogs.slice(0, 10).map((l: AngelLog) => l.number)
-    setGuidance(generateDailyGuidance(recentNumbers, num?.lifePath ?? null, s))
-  }, [])
-
-  function handleLogged() { 
-    const allLogs = getLogs()
-    setLogs(allLogs)
-    setStats(getStats())
-    const s = getStreak(allLogs)
-    setStreak(s)
-    const num = getNumerologyProfile()
-    const recentNumbers = allLogs.slice(0, 10).map((l: AngelLog) => l.number)
-    setGuidance(generateDailyGuidance(recentNumbers, num?.lifePath ?? null, s))
-  }
-
-  const recentLogs = logs.slice(0, 3)
-
-  if (!mounted) return null
-
-  return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#f0e6ff', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '2rem 1rem 6rem' }}>
-
-        {/* Daily Guidance */}
-        {guidance && <DailyGuidanceCard guidance={guidance} streak={streak} />}
-
-        {/* Numerology Blueprint */}
-        {numerology && <NumerologyBadges profile={numerology} />}
-
-        {/* Logger */}
-        <div style={{ marginBottom: '2rem' }}>
-          <AngelLogger onLogged={handleLogged} />
-        </div>
-
-        {/* Quick stats */}
-        {stats.total > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#c9a84c' }}>{stats.total}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem' }}>LOGGED</div>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#9b59b6' }}>{streak}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem' }}>DAY STREAK</div>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3498db' }}>{stats.withProof}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', marginTop: '0.2rem' }}>VERIFIED</div>
-            </div>
-          </div>
-        )}
-
-        {/* Recent sightings */}
-        {recentLogs.length > 0 && (
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
-              <span style={{ fontSize: '0.65rem', letterSpacing: '0.15em', color: 'rgba(220,200,255,0.58)', textTransform: 'uppercase' }}>Recent Sightings</span>
-              <Link href="/dashboard/journal" style={{ fontSize: '0.72rem', color: 'rgba(201,168,76,0.6)', textDecoration: 'none' }}>View all</Link>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {recentLogs.map((log: AngelLog) => (
-                <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.875rem' }}>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#c9a84c', minWidth: 48 }}>{log.number}</span>
-                  <span style={{ flex: 1, fontSize: '0.78rem', color: 'rgba(220,200,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {log.thought || 'No thought recorded'}
-                  </span>
-                  {log.screenshotUrl && <span style={{ fontSize: '0.65rem', color: '#2ecc71' }}>Verified</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick nav cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          {[
-            { href: '/dashboard/journal', label: 'Journal', desc: 'Your thought anchors', color: '#9b59b6' },
-            { href: '/dashboard/sync', label: 'Sync', desc: 'Find your matches', color: '#3498db' },
-            { href: '/dashboard/feed', label: 'Feed', desc: 'Cosmic community', color: '#e91e63' },
-            { href: '/dashboard/dreams', label: 'Dreams', desc: 'Dream journal', color: '#1abc9c' },
-          ].map(item => (
-            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-              <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', border: `1px solid ${item.color}20`, borderRadius: '1rem', cursor: 'pointer', transition: 'border-color 0.2s' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: item.color, marginBottom: '0.2rem' }}>{item.label}</div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(220,200,255,0.62)' }}>{item.desc}</div>
+      {/* Quick Tools */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Quick Access</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+          {QUICK_TOOLS.map(t => (
+            <Link key={t.href} href={t.href} style={{ textDecoration: 'none' }}>
+              <div style={{ ...card, padding: '0.75rem 0.5rem', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <div style={{ fontSize: '1.3rem', marginBottom: '0.25rem' }}>{t.emoji}</div>
+                <div style={{ color: t.color, fontSize: '0.62rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.label}</div>
               </div>
             </Link>
           ))}
         </div>
       </div>
+
+      {/* Feature Cards */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Explore</div>
+          <Link href='/dashboard/tools' style={{ color: 'rgba(167,139,250,0.5)', fontSize: '0.72rem', textDecoration: 'none' }}>All Tools →</Link>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
+          {FEATURE_CARDS.map(f => (
+            <Link key={f.href} href={f.href} style={{ textDecoration: 'none' }}>
+              <div style={{ ...card, padding: '1rem', background: f.bg, cursor: 'pointer', transition: 'all 0.2s', height: '100%' }}>
+                <div style={{ fontSize: '1.3rem', marginBottom: '0.4rem' }}>{f.emoji}</div>
+                <div style={{ color: f.color, fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.2rem' }}>{f.title}</div>
+                <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.7rem', lineHeight: 1.4 }}>{f.desc}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Sightings */}
+      {recentLogs.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Recent Sightings</div>
+            <Link href='/dashboard/journal' style={{ color: 'rgba(167,139,250,0.5)', fontSize: '0.72rem', textDecoration: 'none' }}>View All →</Link>
+          </div>
+          <div style={{ ...card, overflow: 'hidden' }}>
+            {recentLogs.map((log: any, i: number) => (
+              <div key={log.id || i} style={{ padding: '0.75rem 1.1rem', borderBottom: i < recentLogs.length - 1 ? '1px solid rgba(200,180,255,0.06)' : 'none', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c9a84c', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>{log.number}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.82rem', fontWeight: 600 }}>{log.number}</div>
+                  {log.thought && <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.72rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.thought}</div>}
+                </div>
+                <div style={{ color: 'rgba(180,160,255,0.25)', fontSize: '0.65rem', flexShrink: 0 }}>{new Date(log.timestamp).toLocaleDateString()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No logs yet */}
+      {recentLogs.length === 0 && (
+        <div style={{ ...card, padding: '2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✨</div>
+          <p style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.9rem', margin: '0 0 0.5rem', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic' }}>The universe is sending you signs</p>
+          <p style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.78rem', margin: 0 }}>Log your first angel number above to begin your journey</p>
+        </div>
+      )}
     </div>
   )
 }
