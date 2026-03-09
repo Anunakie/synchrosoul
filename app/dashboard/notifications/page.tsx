@@ -1,161 +1,151 @@
-'use client'
-import { useState, useEffect } from 'react'
+'use client';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-const KEY = 'synchrosoul_notifications'
-const KEY_SETTINGS = 'synchrosoul_notif_settings'
-
-type Notif = {
-  id: string
-  type: 'sync'|'angel'|'streak'|'badge'|'moon'|'guidance'|'match'
-  title: string
-  body: string
-  emoji: string
-  time: string
-  read: boolean
+interface Notification {
+  id: string;
+  type: 'match' | 'milestone' | 'guidance' | 'reminder' | 'cosmic';
+  title: string;
+  body: string;
+  href: string;
+  emoji: string;
+  color: string;
+  time: string;
+  read: boolean;
 }
 
-const TYPE_COLORS: Record<string,string> = {
-  sync:'#a78bfa', angel:'#c9a84c', streak:'#f97316',
-  badge:'#4ade80', moon:'#818cf8', guidance:'#67e8f9', match:'#f472b6'
+function generateNotifications(logs: any[], profile: any): Notification[] {
+  const notes: Notification[] = [];
+  const now = new Date();
+
+  // Streak milestone
+  const dates = [...new Set(logs.map((l: any) => new Date(l.createdAt).toDateString()))];
+  if (dates.length >= 7) notes.push({ id: 'streak-7', type: 'milestone', title: '7-Day Streak! 🔥', body: 'You have logged angel numbers 7 days in a row. The universe is responding to your awareness.', href: '/dashboard/streak', emoji: '🔥', color: '#f97316', time: 'Today', read: false });
+  if (dates.length >= 3) notes.push({ id: 'streak-3', type: 'milestone', title: '3-Day Streak Achieved', body: 'Three days of consistent logging. Your vibration is rising.', href: '/dashboard/streak', emoji: '✦', color: '#c9a84c', time: 'Yesterday', read: true });
+
+  // First log
+  if (logs.length >= 1) notes.push({ id: 'first-log', type: 'milestone', title: 'First Angel Number Logged', body: `You logged ${logs[logs.length-1]?.number} — your journey with the angels has begun.`, href: '/dashboard/journal', emoji: '🌟', color: '#c9a84c', time: logs.length > 0 ? new Date(logs[logs.length-1]?.createdAt).toLocaleDateString() : 'Recently', read: true });
+
+  // Numerology profile
+  if (profile) notes.push({ id: 'profile-complete', type: 'milestone', title: 'Cosmic Blueprint Unlocked', body: `Your Life Path ${profile.lifePath || ''} has been calculated. Explore your full soul report.`, href: '/dashboard/cosmic-report', emoji: '📜', color: '#a78bfa', time: 'This week', read: false });
+
+  // Daily cosmic weather
+  notes.push({ id: 'cosmic-today', type: 'cosmic', title: "Today's Cosmic Weather is Ready", body: 'Check the universal day number, moon phase, and your personal energy forecast.', href: '/dashboard/cosmic-weather', emoji: '🌌', color: '#60a5fa', time: 'Today', read: false });
+
+  // Sync match
+  notes.push({ id: 'sync-match', type: 'match', title: 'New Soul Sync Detected', body: '3 souls are seeing the same numbers as you in the last 24 hours. Check your matches.', href: '/dashboard/sync', emoji: '⟳', color: '#4ade80', time: '2 hours ago', read: false });
+
+  // Oracle reminder
+  notes.push({ id: 'oracle-reminder', type: 'reminder', title: 'Your Oracle Awaits', body: "You haven't consulted the Angel Oracle today. Your guides have a message for you.", href: '/dashboard/oracle', emoji: '◈', color: '#c9a84c', time: 'Today', read: true });
+
+  // Guidance
+  notes.push({ id: 'guidance-1', type: 'guidance', title: 'Angel Message: Trust the Timing', body: "The numbers you've been seeing point to divine orchestration. Everything is unfolding perfectly.", href: '/dashboard', emoji: '💫', color: '#f472b6', time: '3 hours ago', read: true });
+
+  // 1111 portal
+  const d = now.getDate() + now.getMonth() + 1;
+  if (d % 11 === 0) notes.push({ id: 'portal-1111', type: 'cosmic', title: '1111 Portal Open Today', body: 'Numerological alignment creates a manifestation portal. Log your intentions now.', href: '/dashboard', emoji: '🌀', color: '#8b5cf6', time: 'Today', read: false });
+
+  return notes.slice(0, 10);
 }
 
-const DEMO_NOTIFS: Notif[] = [
-  { id:'n1', type:'match', emoji:'💫', title:'New Soul Sync!', body:'Luna M. is seeing 1111 just like you — 94% sync score. Your cosmic paths are crossing.', time: new Date(Date.now()-1000*60*8).toISOString(), read:false },
-  { id:'n2', type:'angel', emoji:'✦', title:'Angel Number Alert', body:'You logged 444 three times this week. Your angels are sending a strong protection message.', time: new Date(Date.now()-1000*60*45).toISOString(), read:false },
-  { id:'n3', type:'streak', emoji:'🔥', title:'7-Day Streak!', body:'You have been logging angel numbers for 7 days straight. You earned the Lightning badge!', time: new Date(Date.now()-1000*60*60*2).toISOString(), read:false },
-  { id:'n4', type:'moon', emoji:'🌕', title:'Full Moon Tonight', body:'The Full Moon in Virgo amplifies your 6 Life Path energy. Perfect time to log and journal.', time: new Date(Date.now()-1000*60*60*5).toISOString(), read:true },
-  { id:'n5', type:'sync', emoji:'⟳', title:'Sync Surge', body:'3 people in your area logged 555 in the last hour. A wave of change energy is building.', time: new Date(Date.now()-1000*60*60*8).toISOString(), read:true },
-  { id:'n6', type:'badge', emoji:'🏆', title:'Badge Unlocked: Seeker', body:'You have logged 50 angel numbers. Your dedication to the path is being recognized.', time: new Date(Date.now()-1000*60*60*24).toISOString(), read:true },
-  { id:'n7', type:'guidance', emoji:'🌟', title:'Daily Guidance Ready', body:'Your cosmic message for today is waiting. The numbers you logged yesterday have a message.', time: new Date(Date.now()-1000*60*60*26).toISOString(), read:true },
-  { id:'n8', type:'match', emoji:'💫', title:'Orion S. resonated with you', body:'Orion resonated with your 777 post. You share a 88% numerology compatibility.', time: new Date(Date.now()-1000*60*60*48).toISOString(), read:true },
-  { id:'n9', type:'angel', emoji:'✦', title:'Pattern Detected', body:'You have seen 1111 every Monday for 3 weeks. Your angels have a Monday message for you.', time: new Date(Date.now()-1000*60*60*72).toISOString(), read:true },
-]
-
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff/60000)
-  if(m<1) return 'just now'
-  if(m<60) return m+'m ago'
-  const h = Math.floor(m/60)
-  if(h<24) return h+'h ago'
-  return Math.floor(h/24)+'d ago'
-}
+const TYPE_COLORS: Record<string, string> = { match: '#4ade80', milestone: '#c9a84c', guidance: '#f472b6', reminder: '#60a5fa', cosmic: '#8b5cf6' };
 
 export default function NotificationsPage() {
-  const [notifs, setNotifs] = useState<Notif[]>([])
-  const [filter, setFilter] = useState<'all'|'unread'>('all')
-  const [settings, setSettings] = useState({ streaks:true, matches:true, moon:true, guidance:true, badges:true, angels:true })
-  const [showSettings, setShowSettings] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(KEY)
-      setNotifs(saved ? JSON.parse(saved) : DEMO_NOTIFS)
-      const s = localStorage.getItem(KEY_SETTINGS)
-      if(s) setSettings(JSON.parse(s))
-    } catch { setNotifs(DEMO_NOTIFS) }
-  }, [])
+      const logs = JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]');
+      const profile = JSON.parse(localStorage.getItem('synchrosoul_numerology_profile') || 'null');
+      const generated = generateNotifications(logs, profile);
+      // Merge with any saved read states
+      const saved: Record<string, boolean> = JSON.parse(localStorage.getItem('synchrosoul_notif_read') || '{}');
+      setNotifications(generated.map(n => ({ ...n, read: saved[n.id] ?? n.read })));
+    } catch {}
+  }, []);
 
-  function markAllRead() {
-    const updated = notifs.map(n=>({...n,read:true}))
-    setNotifs(updated)
-    localStorage.setItem(KEY, JSON.stringify(updated))
-  }
+  const markRead = (id: string) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      const readMap: Record<string, boolean> = {};
+      updated.forEach(n => { readMap[n.id] = n.read; });
+      try { localStorage.setItem('synchrosoul_notif_read', JSON.stringify(readMap)); } catch {}
+      return updated;
+    });
+  };
 
-  function markRead(id: string) {
-    const updated = notifs.map(n=>n.id===id?{...n,read:true}:n)
-    setNotifs(updated)
-    localStorage.setItem(KEY, JSON.stringify(updated))
-  }
+  const markAllRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      const readMap: Record<string, boolean> = {};
+      updated.forEach(n => { readMap[n.id] = true; });
+      try { localStorage.setItem('synchrosoul_notif_read', JSON.stringify(readMap)); } catch {}
+      return updated;
+    });
+  };
 
-  function deleteNotif(id: string) {
-    const updated = notifs.filter(n=>n.id!==id)
-    setNotifs(updated)
-    localStorage.setItem(KEY, JSON.stringify(updated))
-  }
-
-  function saveSettings(s: typeof settings) {
-    setSettings(s)
-    localStorage.setItem(KEY_SETTINGS, JSON.stringify(s))
-  }
-
-  const displayed = filter==='unread' ? notifs.filter(n=>!n.read) : notifs
-  const unreadCount = notifs.filter(n=>!n.read).length
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
+  const filtered = filter === 'all' ? notifications : filter === 'unread' ? notifications.filter(n => !n.read) : notifications.filter(n => n.type === filter);
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.25rem'}}>
-        <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:0,fontWeight:400}}>Notifications</h1>
-        <button onClick={()=>setShowSettings(s=>!s)} style={{background:'none',border:'1px solid rgba(200,180,255,0.12)',borderRadius:'0.5rem',padding:'0.35rem 0.625rem',color:'rgba(180,160,255,0.5)',cursor:'pointer',fontSize:'0.75rem'}}>⚙ Settings</button>
-      </div>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.25rem'}}>{unreadCount > 0 ? unreadCount+' unread messages from the cosmos' : 'All caught up ✓'}</p>
-
-      {/* Settings panel */}
-      {showSettings && (
-        <div style={{...card,padding:'1.25rem',marginBottom:'1.25rem',borderColor:'rgba(167,139,250,0.2)'}}>
-          <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.68rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.875rem'}}>Notification Preferences</div>
-          {([
-            ['streaks','🔥','Streak milestones'],
-            ['matches','💫','New soul matches'],
-            ['moon','🌙','Moon phase alerts'],
-            ['guidance','🌟','Daily guidance'],
-            ['badges','🏆','Badge unlocks'],
-            ['angels','✦','Angel number patterns'],
-          ] as const).map(([key,emoji,label])=>(
-            <div key={key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.5rem 0',borderBottom:'1px solid rgba(200,180,255,0.04)'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
-                <span>{emoji}</span>
-                <span style={{color:'rgba(200,180,255,0.65)',fontSize:'0.85rem'}}>{label}</span>
-              </div>
-              <button
-                onClick={()=>saveSettings({...settings,[key]:!settings[key]})}
-                style={{width:'40px',height:'22px',borderRadius:'11px',background:settings[key]?'rgba(167,139,250,0.4)':'rgba(200,180,255,0.08)',border:settings[key]?'1px solid rgba(167,139,250,0.5)':'1px solid rgba(200,180,255,0.1)',cursor:'pointer',position:'relative',transition:'all 0.2s'}}>
-                <div style={{width:'16px',height:'16px',borderRadius:'50%',background:settings[key]?'#a78bfa':'rgba(180,160,255,0.3)',position:'absolute',top:'2px',left:settings[key]?'21px':'2px',transition:'all 0.2s'}} />
-              </button>
-            </div>
-          ))}
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', fontFamily: 'Cormorant Garamond, serif' }}>Notifications</h1>
+          {unreadCount > 0 && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.25rem' }}>{unreadCount} unread messages</p>}
         </div>
-      )}
-
-      {/* Filter + mark all */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1rem'}}>
-        <div style={{display:'flex',gap:'0.35rem'}}>
-          {(['all','unread'] as const).map(f=>(
-            <button key={f} onClick={()=>setFilter(f)} style={{padding:'0.3rem 0.75rem',borderRadius:'9999px',border:filter===f?'1px solid rgba(167,139,250,0.4)':'1px solid rgba(200,180,255,0.1)',background:filter===f?'rgba(167,139,250,0.12)':'transparent',color:filter===f?'#a78bfa':'rgba(180,160,255,0.4)',fontSize:'0.75rem',cursor:'pointer',textTransform:'capitalize'}}>
-              {f}{f==='unread'&&unreadCount>0?<span style={{marginLeft:'0.3rem',background:'#a78bfa',color:'white',borderRadius:'9999px',padding:'0 0.3rem',fontSize:'0.6rem'}}>{unreadCount}</span>:null}
-            </button>
-          ))}
-        </div>
-        {unreadCount>0 && <button onClick={markAllRead} style={{background:'none',border:'none',color:'rgba(167,139,250,0.5)',cursor:'pointer',fontSize:'0.75rem'}}>Mark all read</button>}
+        {unreadCount > 0 && (
+          <button onClick={markAllRead} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', padding: '0.4rem 0.875rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', cursor: 'pointer' }}>Mark all read</button>
+        )}
       </div>
 
-      {/* Notification list */}
-      <div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}>
-        {displayed.length===0 && (
-          <div style={{...card,padding:'3rem',textAlign:'center'}}>
-            <div style={{fontSize:'2rem',marginBottom:'0.5rem'}}>🌙</div>
-            <p style={{color:'rgba(180,160,255,0.4)',fontSize:'0.9rem',fontFamily:'Cormorant Garamond,serif',fontStyle:'italic',margin:0}}>The cosmos is quiet right now</p>
+      {/* Filter chips */}
+      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        {['all', 'unread', 'match', 'milestone', 'cosmic', 'guidance'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: '0.3rem 0.75rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.75rem',
+            background: filter === f ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
+            border: filter === f ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.07)',
+            color: filter === f ? '#fff' : 'rgba(255,255,255,0.4)', textTransform: 'capitalize'
+          }}>{f}</button>
+        ))}
+      </div>
+
+      {/* Notifications list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔔</div>
+            <p>No notifications here</p>
           </div>
         )}
-        {displayed.map(n=>(
-          <div key={n.id} onClick={()=>markRead(n.id)}
-            style={{...card,padding:'1rem',cursor:'pointer',borderColor:!n.read?TYPE_COLORS[n.type]+'25':'rgba(200,180,255,0.06)',background:!n.read?TYPE_COLORS[n.type]+'05':'rgba(8,6,28,0.7)',transition:'all 0.2s',position:'relative'}}>
-            {!n.read && <div style={{position:'absolute',top:'1rem',right:'1rem',width:'7px',height:'7px',borderRadius:'50%',background:TYPE_COLORS[n.type]}} />}
-            <div style={{display:'flex',alignItems:'flex-start',gap:'0.75rem'}}>
-              <div style={{width:'36px',height:'36px',borderRadius:'50%',background:TYPE_COLORS[n.type]+'15',border:'1px solid '+TYPE_COLORS[n.type]+'25',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1rem',flexShrink:0}}>{n.emoji}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.2rem'}}>
-                  <div style={{color:!n.read?'rgba(220,200,255,0.9)':'rgba(200,180,255,0.6)',fontSize:'0.85rem',fontWeight:!n.read?600:400}}>{n.title}</div>
-                  <div style={{color:'rgba(180,160,255,0.3)',fontSize:'0.68rem',flexShrink:0,marginLeft:'0.5rem'}}>{timeAgo(n.time)}</div>
-                </div>
-                <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.78rem',lineHeight:1.55,margin:'0 0 0.5rem'}}>{n.body}</p>
-                <button onClick={e=>{e.stopPropagation();deleteNotif(n.id)}} style={{background:'none',border:'none',color:'rgba(180,160,255,0.2)',cursor:'pointer',fontSize:'0.68rem',padding:0}}>dismiss</button>
+        {filtered.map(n => (
+          <Link key={n.id} href={n.href} onClick={() => markRead(n.id)} style={{
+            background: n.read ? 'rgba(8,6,28,0.7)' : 'rgba(8,6,28,0.92)',
+            borderRadius: '1.25rem',
+            border: n.read ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${n.color}30`,
+            padding: '1rem 1.125rem', textDecoration: 'none',
+            display: 'flex', alignItems: 'flex-start', gap: '0.875rem',
+            backdropFilter: 'blur(12px)', position: 'relative', overflow: 'hidden'
+          }}>
+            {!n.read && <div style={{ position: 'absolute', top: '1rem', right: '1rem', width: '7px', height: '7px', borderRadius: '50%', background: n.color, boxShadow: `0 0 8px ${n.color}` }} />}
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
+              background: `${n.color}15`, border: `1px solid ${n.color}30`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'
+            }}>{n.emoji}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ color: n.read ? 'rgba(255,255,255,0.6)' : '#fff', fontWeight: n.read ? 400 : 700, fontSize: '0.9rem', marginBottom: '0.2rem' }}>{n.title}</p>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', lineHeight: 1.5 }}>{n.body}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem' }}>
+                <span style={{ background: `${TYPE_COLORS[n.type]}15`, border: `1px solid ${TYPE_COLORS[n.type]}25`, borderRadius: '999px', padding: '0.1rem 0.4rem', fontSize: '0.6rem', color: TYPE_COLORS[n.type], textTransform: 'capitalize' }}>{n.type}</span>
+                <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.72rem' }}>{n.time}</span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
-  )
+  );
 }
