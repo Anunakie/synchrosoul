@@ -1,208 +1,228 @@
-'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+'use client';
+import { useState, useEffect } from 'react';
 
-function reduceToSingle(n: number): number {
+function reduce(n: number): number {
   while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-    n = String(n).split('').reduce((a, d) => a + parseInt(d), 0)
+    n = String(n).split('').reduce((a, d) => a + parseInt(d), 0);
   }
-  return n
+  return n;
 }
 
-function getUniversalDay(date: Date) {
-  const d = date.getDate() + (date.getMonth() + 1) + date.getFullYear()
-  return reduceToSingle(d)
+function getUniversalDay(d: Date) { return reduce(d.getDate() + d.getMonth() + 1 + d.getFullYear()); }
+function getUniversalMonth(d: Date) { return reduce(d.getMonth() + 1 + d.getFullYear()); }
+function getUniversalYear(d: Date) { return reduce(d.getFullYear()); }
+
+const DAY_DATA: Record<number, { theme: string; energy: string; color: string; emoji: string; advice: string; avoid: string; powerHour: string }> = {
+  1: { theme: 'New Beginnings', energy: 'Pioneering', color: '#ef4444', emoji: '🔴', advice: 'Start something new. Take bold action. Lead.', avoid: 'Waiting for permission or perfect timing', powerHour: '1am, 10am, 1pm' },
+  2: { theme: 'Harmony & Partnership', energy: 'Receptive', color: '#3b82f6', emoji: '🔵', advice: 'Collaborate, listen deeply, nurture bonds.', avoid: 'Forcing outcomes or rushing decisions', powerHour: '2am, 11am, 2pm' },
+  3: { theme: 'Creative Expression', energy: 'Expansive', color: '#f97316', emoji: '🟠', advice: 'Create, communicate, share your gifts.', avoid: 'Self-criticism or holding back your voice', powerHour: '3am, 12pm, 3pm' },
+  4: { theme: 'Foundation & Order', energy: 'Grounding', color: '#22c55e', emoji: '🟢', advice: 'Organize, plan, build solid structures.', avoid: 'Shortcuts or ignoring details', powerHour: '4am, 1pm, 4pm' },
+  5: { theme: 'Change & Freedom', energy: 'Dynamic', color: '#8b5cf6', emoji: '🟣', advice: 'Embrace change, try something different.', avoid: 'Clinging to the familiar out of fear', powerHour: '5am, 2pm, 5pm' },
+  6: { theme: 'Love & Healing', energy: 'Nurturing', color: '#ec4899', emoji: '🩷', advice: 'Tend to relationships, home, and self-care.', avoid: 'Perfectionism or taking on others burdens', powerHour: '6am, 3pm, 6pm' },
+  7: { theme: 'Spiritual Insight', energy: 'Introspective', color: '#6366f1', emoji: '🔮', advice: 'Meditate, study, seek inner wisdom.', avoid: 'Overthinking or isolating too long', powerHour: '7am, 4pm, 7pm' },
+  8: { theme: 'Abundance & Power', energy: 'Magnetic', color: '#f59e0b', emoji: '🟡', advice: 'Take charge, make power moves, manifest.', avoid: 'Fear of success or playing small', powerHour: '8am, 5pm, 8pm' },
+  9: { theme: 'Completion & Release', energy: 'Transcendent', color: '#f87171', emoji: '❤️', advice: 'Let go, forgive, complete unfinished cycles.', avoid: 'Holding onto what no longer serves you', powerHour: '9am, 6pm, 9pm' },
+  11: { theme: 'Illumination', energy: 'Visionary', color: '#e0e7ff', emoji: '⚪', advice: 'Trust your intuition. You are a channel today.', avoid: 'Dismissing your inner knowing', powerHour: '11am, 11pm' },
+  22: { theme: 'Master Building', energy: 'Architectural', color: '#fde68a', emoji: '🌟', advice: 'Think big. Build something that lasts.', avoid: 'Overwhelm — break it into steps', powerHour: '10am, 10pm' },
+};
+
+const MOON_PHASES = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+const MOON_NAMES = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+const MOON_ENERGIES = [
+  'Plant seeds of intention. New beginnings are blessed.',
+  'Take inspired action. Energy is building.',
+  'Push through challenges. Momentum is yours.',
+  'Refine and adjust. The peak approaches.',
+  'Manifest and celebrate. Energy is at its peak.',
+  'Share your gifts. Gratitude amplifies abundance.',
+  'Release and reflect. Let go of what blocks you.',
+  'Rest and restore. Prepare for the new cycle.',
+];
+
+function getMoonPhase(date: Date): number {
+  const known = new Date(2000, 0, 6);
+  const diff = (date.getTime() - known.getTime()) / (1000 * 60 * 60 * 24);
+  const cycle = 29.53059;
+  return Math.floor(((diff % cycle + cycle) % cycle) / cycle * 8) % 8;
 }
 
-function getUniversalMonth(date: Date) {
-  return reduceToSingle((date.getMonth() + 1) + date.getFullYear())
-}
-
-function getUniversalYear(date: Date) {
-  return reduceToSingle(date.getFullYear())
-}
-
-const DAY_ENERGIES: Record<number, { title: string; theme: string; color: string; emoji: string; focus: string[]; avoid: string[]; affirmation: string; angelNumbers: string[] }> = {
-  1: { title: 'New Beginnings', theme: 'Leadership, initiation, independence, fresh starts', color: '#f97316', emoji: '🌅', focus: ['Start new projects', 'Assert your vision', 'Take bold action', 'Trust your instincts'], avoid: ['Procrastination', 'Seeking approval', 'Self-doubt', 'Following others blindly'], affirmation: 'I am a pioneer. I boldly begin what my soul calls me to create.', angelNumbers: ['111', '1111', '1010'] },
-  2: { title: 'Divine Partnership', theme: 'Cooperation, balance, patience, intuition, harmony', color: '#60a5fa', emoji: '🕊️', focus: ['Nurture relationships', 'Listen deeply', 'Seek balance', 'Trust divine timing'], avoid: ['Forcing outcomes', 'Conflict', 'Impatience', 'Isolation'], affirmation: 'I trust the divine timing of my life. All is unfolding perfectly.', angelNumbers: ['222', '2222', '1212'] },
-  3: { title: 'Creative Expression', theme: 'Joy, creativity, communication, self-expression, abundance', color: '#f472b6', emoji: '✨', focus: ['Create freely', 'Express yourself', 'Socialize', 'Embrace joy'], avoid: ['Self-criticism', 'Suppressing feelings', 'Overthinking', 'Isolation'], affirmation: 'I express my authentic self with joy and creative freedom.', angelNumbers: ['333', '3333', '1234'] },
-  4: { title: 'Sacred Foundation', theme: 'Stability, hard work, discipline, building, protection', color: '#4ade80', emoji: '🏛️', focus: ['Build solid foundations', 'Organize your life', 'Work diligently', 'Create systems'], avoid: ['Shortcuts', 'Chaos', 'Procrastination', 'Rigidity'], affirmation: 'I build my life on a foundation of integrity, discipline, and divine order.', angelNumbers: ['444', '4444', '1234'] },
-  5: { title: 'Freedom & Change', theme: 'Adventure, change, freedom, versatility, transformation', color: '#c9a84c', emoji: '🦋', focus: ['Embrace change', 'Seek adventure', 'Be adaptable', 'Try something new'], avoid: ['Resistance to change', 'Overindulgence', 'Recklessness', 'Commitment issues'], affirmation: 'I embrace change as the sacred catalyst for my highest evolution.', angelNumbers: ['555', '5555', '1515'] },
-  6: { title: 'Love & Nurturing', theme: 'Love, family, responsibility, healing, service, beauty', color: '#f472b6', emoji: '💗', focus: ['Nurture loved ones', 'Create beauty', 'Heal relationships', 'Serve others'], avoid: ['Perfectionism', 'Martyrdom', 'Controlling others', 'Neglecting self'], affirmation: 'I give and receive love freely. My heart is a sacred vessel of divine love.', angelNumbers: ['666', '6666', '1616'] },
-  7: { title: 'Spiritual Awakening', theme: 'Wisdom, introspection, spirituality, analysis, mystery', color: '#a78bfa', emoji: '🔮', focus: ['Meditate and reflect', 'Seek deeper truth', 'Study and learn', 'Connect with spirit'], avoid: ['Isolation', 'Cynicism', 'Overthinking', 'Distrust'], affirmation: 'I trust the wisdom within me. I am a channel for divine truth and insight.', angelNumbers: ['777', '7777', '1717'] },
-  8: { title: 'Infinite Abundance', theme: 'Power, abundance, achievement, manifestation, authority', color: '#c9a84c', emoji: '♾️', focus: ['Take charge', 'Pursue abundance', 'Make power moves', 'Manifest boldly'], avoid: ['Greed', 'Control issues', 'Materialism', 'Abuse of power'], affirmation: 'I am a powerful manifestor. Abundance flows to me from all directions.', angelNumbers: ['888', '8888', '1818'] },
-  9: { title: 'Completion & Release', theme: 'Endings, completion, compassion, humanitarianism, wisdom', color: '#818cf8', emoji: '🌅', focus: ['Release what no longer serves', 'Complete unfinished business', 'Forgive and let go', 'Serve humanity'], avoid: ['Holding grudges', 'Clinging to the past', 'Selfishness', 'Bitterness'], affirmation: 'I release with grace and gratitude. Every ending is a sacred new beginning.', angelNumbers: ['999', '9999', '1919'] },
-  11: { title: 'Master Illumination', theme: 'Spiritual insight, intuition, inspiration, enlightenment', color: '#e0e7ff', emoji: '⚡', focus: ['Trust your intuition', 'Inspire others', 'Channel higher wisdom', 'Embrace your gifts'], avoid: ['Self-doubt', 'Anxiety', 'Ignoring intuition', 'Dimming your light'], affirmation: 'I am a beacon of divine light. My intuition is my greatest superpower.', angelNumbers: ['1111', '111', '1010'] },
-  22: { title: 'Master Builder', theme: 'Manifestation, legacy, large-scale creation, mastery', color: '#c9a84c', emoji: '🏗️', focus: ['Think big', 'Build lasting structures', 'Lead with vision', 'Create your legacy'], avoid: ['Small thinking', 'Fear of responsibility', 'Perfectionism', 'Giving up'], affirmation: 'I am here to build something magnificent. My vision serves the greater good.', angelNumbers: ['2222', '222', '1212'] },
-  33: { title: 'Master Teacher', theme: 'Compassion, healing, teaching, unconditional love', color: '#4ade80', emoji: '💚', focus: ['Teach and inspire', 'Heal with love', 'Serve selflessly', 'Embody compassion'], avoid: ['Martyrdom', 'Neglecting self', 'Preaching', 'Savior complex'], affirmation: 'I teach through love and example. My compassion heals and uplifts all I touch.', angelNumbers: ['333', '3333', '1212'] },
-}
-
-const MOON_PHASES = [
-  { name: 'New Moon', emoji: '🌑', energy: 'Set intentions, plant seeds, begin anew' },
-  { name: 'Waxing Crescent', emoji: '🌒', energy: 'Take action, build momentum, stay committed' },
-  { name: 'First Quarter', emoji: '🌓', energy: 'Overcome challenges, make decisions, push forward' },
-  { name: 'Waxing Gibbous', emoji: '🌔', energy: 'Refine, adjust, prepare for manifestation' },
-  { name: 'Full Moon', emoji: '🌕', energy: 'Celebrate, release, illuminate truth, peak energy' },
-  { name: 'Waning Gibbous', emoji: '🌖', energy: 'Share wisdom, express gratitude, give back' },
-  { name: 'Last Quarter', emoji: '🌗', energy: 'Release, forgive, let go of what no longer serves' },
-  { name: 'Waning Crescent', emoji: '🌘', energy: 'Rest, reflect, surrender, prepare for renewal' },
-]
-
-function getMoonPhase(date: Date) {
-  const known = new Date('2000-01-06')
-  const diff = (date.getTime() - known.getTime()) / (1000 * 60 * 60 * 24)
-  const cycle = diff % 29.53
-  const idx = Math.floor((cycle / 29.53) * 8) % 8
-  return MOON_PHASES[idx]
-}
-
-const PLANETS: { name: string; emoji: string; day: number; energy: string }[] = [
-  { name: 'Sun', emoji: '☀️', day: 0, energy: 'Vitality, ego, purpose, leadership' },
-  { name: 'Moon', emoji: '🌙', day: 1, energy: 'Emotions, intuition, nurturing, cycles' },
-  { name: 'Mars', emoji: '♂️', day: 2, energy: 'Action, courage, drive, passion' },
-  { name: 'Mercury', emoji: '☿', day: 3, energy: 'Communication, intellect, travel, commerce' },
-  { name: 'Jupiter', emoji: '♃', day: 4, energy: 'Expansion, luck, wisdom, abundance' },
-  { name: 'Venus', emoji: '♀️', day: 5, energy: 'Love, beauty, harmony, pleasure' },
-  { name: 'Saturn', emoji: '♄', day: 6, energy: 'Discipline, karma, structure, mastery' },
-]
+const ANGEL_FORECAST: Record<number, string[]> = {
+  1: ['111 energy is strong — your thoughts manifest quickly today', '444 supports new beginnings with angelic protection'],
+  2: ['222 brings divine timing — trust the process', '1212 signals alignment in partnerships'],
+  3: ['333 activates your creative channel today', '1111 opens a manifestation portal'],
+  4: ['444 is your anchor today — you are divinely supported', '888 brings abundance through disciplined action'],
+  5: ['555 heralds transformation — embrace the shift', '1010 signals a spiritual upgrade'],
+  6: ['666 (rebalanced) calls you to love yourself first', '999 completes a healing cycle'],
+  7: ['777 is your lucky spiritual number today', '1111 opens the veil for divine downloads'],
+  8: ['888 activates infinite abundance loops', '444 grounds your manifestations in reality'],
+  9: ['999 signals completion — release with grace', '333 guides you through the transition'],
+  11: ['1111 is amplified — you are a portal today', '111 thoughts become reality instantly'],
+  22: ['2222 master builder energy — your vision is supported', '444 provides the foundation for your dreams'],
+};
 
 export default function CosmicWeatherPage() {
-  const [date] = useState(new Date())
-  const [profile, setProfile] = useState<any>(null)
+  const [now] = useState(new Date());
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    try {
-      const p = localStorage.getItem('synchrosoul_numerology_profile')
-      if (p) setProfile(JSON.parse(p))
-    } catch {}
-  }, [])
+    try { setProfile(JSON.parse(localStorage.getItem('synchrosoul_numerology_profile') || 'null')); } catch {}
+  }, []);
 
-  const universalDay = getUniversalDay(date)
-  const universalMonth = getUniversalMonth(date)
-  const universalYear = getUniversalYear(date)
-  const moonPhase = getMoonPhase(date)
-  const planet = PLANETS[date.getDay()]
-  const dayEnergy = DAY_ENERGIES[universalDay] || DAY_ENERGIES[1]
+  const universalDay = getUniversalDay(now);
+  const universalMonth = getUniversalMonth(now);
+  const universalYear = getUniversalYear(now);
+  const moonPhase = getMoonPhase(now);
+  const dayData = DAY_DATA[universalDay] || DAY_DATA[1];
+  const forecast = ANGEL_FORECAST[universalDay] || ANGEL_FORECAST[1];
 
-  let personalDay: number | null = null
-  if (profile?.birthdate) {
-    const bd = new Date(profile.birthdate)
-    const bdNum = bd.getDate() + (bd.getMonth() + 1)
-    personalDay = reduceToSingle(bdNum + universalMonth + universalYear)
-  }
+  const personalDay = profile?.birthdate ? (() => {
+    const [,m,d] = profile.birthdate.split('-').map(Number);
+    return reduce(d + m + now.getFullYear());
+  })() : null;
+  const personalDayData = personalDay ? (DAY_DATA[personalDay] || DAY_DATA[1]) : null;
 
-  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.1)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const energyBars = [
+    { label: 'Manifestation', value: [7,5,8,6,9,7,8,9,5,8,10,9][universalDay-1] || 7, color: '#c9a84c' },
+    { label: 'Intuition', value: [6,8,7,5,7,8,10,6,9,10,8,7][universalDay-1] || 7, color: '#8b5cf6' },
+    { label: 'Love', value: [7,9,8,6,7,10,7,8,8,7,9,8][universalDay-1] || 7, color: '#f472b6' },
+    { label: 'Abundance', value: [8,6,7,9,6,7,6,10,7,8,7,10][universalDay-1] || 7, color: '#22c55e' },
+  ];
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <h1 style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Cosmic Weather</h1>
-      <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '0 0 1.5rem' }}>
-        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-      </p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{dateStr}</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#60a5fa', fontFamily: 'Cormorant Garamond, serif' }}>Cosmic Weather</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Today’s energetic forecast for your soul</p>
+      </div>
 
-      {/* Universal Day - Hero */}
-      <div style={{ ...card, padding: '1.5rem', marginBottom: '1rem', background: 'linear-gradient(135deg,' + dayEnergy.color + '12,' + dayEnergy.color + '06)', borderColor: dayEnergy.color + '30' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-          <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', background: dayEnergy.color + '18', border: '1px solid ' + dayEnergy.color + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', flexShrink: 0 }}>{dayEnergy.emoji}</div>
+      {/* Universal Day - Hero Card */}
+      <div style={{
+        background: `linear-gradient(135deg, ${dayData.color}20, rgba(8,6,28,0.9))`,
+        borderRadius: '1.5rem', border: `1px solid ${dayData.color}40`,
+        padding: '1.75rem', backdropFilter: 'blur(12px)', marginBottom: '1.25rem',
+        boxShadow: `0 0 40px ${dayData.color}15`
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.2rem' }}>Universal Day {universalDay}</div>
-            <div style={{ color: dayEnergy.color, fontSize: '1.3rem', fontFamily: 'Cormorant Garamond,serif', fontWeight: 600 }}>{dayEnergy.title}</div>
-            <div style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.75rem', marginTop: '0.2rem' }}>{dayEnergy.theme}</div>
-          </div>
-        </div>
-        <p style={{ color: 'rgba(220,200,255,0.75)', fontSize: '0.85rem', lineHeight: 1.6, margin: '0 0 1rem', fontStyle: 'italic' }}>“{dayEnergy.affirmation}”</p>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {dayEnergy.angelNumbers.map(n => (
-            <Link key={n} href="/dashboard/dictionary" style={{ textDecoration: 'none', background: dayEnergy.color + '15', color: dayEnergy.color, padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.75rem', border: '1px solid ' + dayEnergy.color + '30' }}>{n}</Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Grid: Moon + Planet */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-        <div style={{ ...card, padding: '1rem' }}>
-          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Moon Phase</div>
-          <div style={{ fontSize: '2rem', marginBottom: '0.35rem' }}>{moonPhase.emoji}</div>
-          <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>{moonPhase.name}</div>
-          <div style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.72rem', lineHeight: 1.4 }}>{moonPhase.energy}</div>
-        </div>
-        <div style={{ ...card, padding: '1rem' }}>
-          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Day Ruler</div>
-          <div style={{ fontSize: '2rem', marginBottom: '0.35rem' }}>{planet.emoji}</div>
-          <div style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>{planet.name}</div>
-          <div style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.72rem', lineHeight: 1.4 }}>{planet.energy}</div>
-        </div>
-      </div>
-
-      {/* Personal Day */}
-      {personalDay && (
-        <div style={{ ...card, padding: '1.25rem', marginBottom: '1rem', background: 'rgba(167,139,250,0.06)', borderColor: 'rgba(167,139,250,0.2)' }}>
-          <div style={{ color: 'rgba(167,139,250,0.5)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.5rem' }}>Your Personal Day</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-            <div style={{ width: '3rem', height: '3rem', borderRadius: '0.75rem', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 700, color: '#a78bfa', flexShrink: 0 }}>{personalDay}</div>
-            <div>
-              <div style={{ color: '#a78bfa', fontSize: '1rem', fontWeight: 600, marginBottom: '0.2rem' }}>{DAY_ENERGIES[personalDay]?.title || 'Personal Energy'}</div>
-              <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem' }}>{DAY_ENERGIES[personalDay]?.theme || 'Your unique energy for today'}</div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.25rem' }}>Universal Day Number</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '3.5rem', fontWeight: 800, color: dayData.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{universalDay}</span>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.1rem', fontFamily: 'Cormorant Garamond, serif' }}>{dayData.theme}</span>
             </div>
           </div>
+          <span style={{ fontSize: '2.5rem' }}>{dayData.emoji}</span>
         </div>
-      )}
-
-      {!profile?.birthdate && (
-        <div style={{ ...card, padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>Add your birthdate to see your Personal Day number</p>
-          <Link href="/dashboard/onboarding" style={{ color: '#a78bfa', fontSize: '0.8rem', textDecoration: 'none' }}>Set up profile →</Link>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>{dayData.energy} energy surrounds today. {dayData.advice}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.875rem', padding: '0.75rem' }}>
+            <p style={{ color: '#4ade80', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>✓ Do Today</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', lineHeight: 1.4 }}>{dayData.advice}</p>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.875rem', padding: '0.75rem' }}>
+            <p style={{ color: '#f87171', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>✕ Avoid</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', lineHeight: 1.4 }}>{dayData.avoid}</p>
+          </div>
         </div>
-      )}
-
-      {/* Focus & Avoid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-        <div style={{ ...card, padding: '1rem' }}>
-          <div style={{ color: '#4ade80', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.625rem' }}>✓ Focus On</div>
-          {dayEnergy.focus.map((f, i) => (
-            <div key={i} style={{ color: 'rgba(220,200,255,0.7)', fontSize: '0.75rem', padding: '0.25rem 0', borderBottom: i < dayEnergy.focus.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>• {f}</div>
-          ))}
-        </div>
-        <div style={{ ...card, padding: '1rem' }}>
-          <div style={{ color: '#f87171', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.625rem' }}>✗ Avoid</div>
-          {dayEnergy.avoid.map((a, i) => (
-            <div key={i} style={{ color: 'rgba(220,200,255,0.7)', fontSize: '0.75rem', padding: '0.25rem 0', borderBottom: i < dayEnergy.avoid.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>• {a}</div>
-          ))}
+        <div style={{ marginTop: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.6rem 0.875rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Power Hours: <span style={{ color: dayData.color }}>{dayData.powerHour}</span></p>
         </div>
       </div>
 
-      {/* Cycle numbers */}
-      <div style={{ ...card, padding: '1.25rem', marginBottom: '1rem' }}>
-        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.875rem' }}>Current Cycles</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem' }}>
-          {[
-            { label: 'Universal Day', value: universalDay, color: dayEnergy.color },
-            { label: 'Universal Month', value: universalMonth, color: '#60a5fa' },
-            { label: 'Universal Year', value: universalYear, color: '#a78bfa' },
-          ].map(c => (
-            <div key={c.label} style={{ textAlign: 'center', padding: '0.75rem 0.5rem', background: c.color + '08', borderRadius: '0.75rem', border: '1px solid ' + c.color + '15' }}>
-              <div style={{ color: c.color, fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.2rem' }}>{c.value}</div>
-              <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.3 }}>{c.label}</div>
+      {/* Energy Bars */}
+      <div style={{
+        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+        border: '1px solid rgba(255,255,255,0.08)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)', marginBottom: '1.25rem'
+      }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem' }}>Today’s Energy Levels</p>
+        {energyBars.map(bar => (
+          <div key={bar.label} style={{ marginBottom: '0.875rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>{bar.label}</span>
+              <span style={{ color: bar.color, fontSize: '0.82rem', fontWeight: 700 }}>{bar.value}/10</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick links */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.5rem' }}>
-        {[
-          { href: '/dashboard/moon', label: 'Moon Calendar', emoji: '🌙' },
-          { href: '/dashboard/personal-year', label: 'Personal Year', emoji: '📅' },
-          { href: '/dashboard/numerology-deep', label: 'Full Blueprint', emoji: '🧮' },
-        ].map(l => (
-          <Link key={l.href} href={l.href} style={{ textDecoration: 'none' }}>
-            <div style={{ ...card, padding: '0.875rem 0.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.3rem', marginBottom: '0.3rem' }}>{l.emoji}</div>
-              <div style={{ color: 'rgba(180,160,255,0.6)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.3 }}>{l.label}</div>
+            <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '999px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${bar.value * 10}%`, background: bar.color, borderRadius: '999px', transition: 'width 1s ease' }} />
             </div>
-          </Link>
+          </div>
         ))}
       </div>
+
+      {/* Moon Phase */}
+      <div style={{
+        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+        border: '1px solid rgba(148,163,184,0.2)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)', marginBottom: '1.25rem',
+        display: 'flex', alignItems: 'center', gap: '1.25rem'
+      }}>
+        <div style={{ fontSize: '3.5rem', lineHeight: 1, flexShrink: 0 }}>{MOON_PHASES[moonPhase]}</div>
+        <div>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.25rem' }}>Moon Phase</p>
+          <p style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.35rem' }}>{MOON_NAMES[moonPhase]}</p>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', lineHeight: 1.5 }}>{MOON_ENERGIES[moonPhase]}</p>
+        </div>
+      </div>
+
+      {/* Angel Number Forecast */}
+      <div style={{
+        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+        border: '1px solid rgba(201,168,76,0.2)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)', marginBottom: '1.25rem'
+      }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem' }}>Angel Number Forecast</p>
+        {forecast.map((f, i) => (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+            marginBottom: i < forecast.length - 1 ? '0.75rem' : 0
+          }}>
+            <span style={{ color: '#c9a84c', fontSize: '1rem', flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', lineHeight: 1.5 }}>{f}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Personal Day (if profile exists) */}
+      {personalDayData && personalDay && (
+        <div style={{
+          background: `${personalDayData.color}12`, borderRadius: '1.5rem',
+          border: `1px solid ${personalDayData.color}30`, padding: '1.5rem',
+          backdropFilter: 'blur(12px)', marginBottom: '1.25rem'
+        }}>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '0.5rem' }}>Your Personal Day Number</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+            <span style={{ fontSize: '2.5rem', fontWeight: 800, color: personalDayData.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{personalDay}</span>
+            <div>
+              <p style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>{personalDayData.theme}</p>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>{personalDayData.advice}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Numerology Snapshot */}
+      <div style={{
+        background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+        border: '1px solid rgba(255,255,255,0.06)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)'
+      }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem' }}>Cosmic Snapshot</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem' }}>
+          {[
+            { label: 'Universal Day', value: universalDay, color: dayData.color },
+            { label: 'Universal Month', value: universalMonth, color: '#a78bfa' },
+            { label: 'Universal Year', value: universalYear, color: '#60a5fa' },
+          ].map(n => (
+            <div key={n.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.875rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: n.color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{n.value}</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.3rem' }}>{n.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  )
+  );
 }
