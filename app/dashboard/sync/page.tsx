@@ -153,7 +153,7 @@ export default function SyncPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#050510', color: '#f0e6ff', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#f0e6ff', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '2rem 1rem 6rem' }}>
 
         {/* Header */}

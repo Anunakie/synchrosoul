@@ -4,25 +4,31 @@ export const dynamic = 'force-dynamic';
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import StarField from '@/components/StarField'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home', emoji: '✦' },
   { href: '/dashboard/journal', label: 'Journal', emoji: '📖' },
   { href: '/dashboard/dreams', label: 'Dreams', emoji: '🌙' },
-  { href: '/dashboard/sync', label: 'Sync', emoji: '*' },
-  { href: '/dashboard/feed', label: 'Feed', emoji: '*' },
-  { href: '/dashboard/profile', label: 'Profile', emoji: '*' },
+  { href: '/dashboard/sync', label: 'Sync', emoji: '⟳' },
+  { href: '/dashboard/feed', label: 'Feed', emoji: '✧' },
+  { href: '/dashboard/profile', label: 'Profile', emoji: '◎' },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#050510', paddingBottom: '5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#050510', paddingBottom: '5rem', position: 'relative' }}>
+      {/* Galaxy background — shared across all dashboard pages */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+        <StarField />
+      </div>
+
       {/* Top bar */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(5,5,16,0.85)',
+        background: 'rgba(5,5,16,0.75)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(200,180,255,0.08)',
         padding: '0 1rem',
@@ -46,13 +52,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}>Sign In</Link>
       </header>
 
-      {/* Page content */}
-      <main>{children}</main>
+      {/* Page content — sits above starfield */}
+      <main style={{ position: 'relative', zIndex: 1 }}>{children}</main>
 
       {/* Bottom navigation */}
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        background: 'rgba(5,5,16,0.92)',
+        background: 'rgba(5,5,16,0.85)',
         backdropFilter: 'blur(24px)',
         borderTop: '1px solid rgba(200,180,255,0.1)',
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
