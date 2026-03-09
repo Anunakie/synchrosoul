@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
 
 const PLANS = [
   {
@@ -8,149 +7,162 @@ const PLANS = [
     name: 'Seeker',
     price: 'Free',
     period: 'forever',
-    emoji: '✦',
+    emoji: '🌱',
     color: '#94a3b8',
-    description: 'Begin your angel number journey',
+    border: 'rgba(148,163,184,0.2)',
     features: [
-      'Angel number logging (unlimited)',
+      'Angel number logger (unlimited)',
       'Thought anchor journal',
       'Basic numerology profile',
-      'Angel number dictionary',
-      'Daily guidance feed',
-      'Cosmic feed & profile',
-      '3 oracle card draws/day',
+      'Dream journal (7 entries)',
+      'Daily guidance message',
+      'Moon phase calendar',
+      'Breathwork & meditations',
+      'Community cosmic feed',
     ],
     cta: 'Current Plan',
-    current: true,
+    disabled: true,
   },
   {
-    id: 'awakened',
-    name: 'Awakened',
+    id: 'mystic',
+    name: 'Mystic',
     price: '$6.99',
-    period: '/month',
+    period: 'per month',
     emoji: '✨',
     color: '#a78bfa',
-    description: 'Deepen your spiritual practice',
+    border: 'rgba(167,139,250,0.4)',
     popular: true,
     features: [
       'Everything in Seeker',
       'Weekly Cosmic Synthesis report',
-      'Full tarot & oracle access',
-      'Dream journal with AI meanings',
-      'Chakra alignment tracker',
-      'Solfeggio frequency player',
-      'Moon phase rituals',
-      'Breathwork sessions',
-      'Vision board (unlimited)',
+      'Angel Number Oracle readings',
+      'Full dream journal (unlimited)',
+      'Gratitude streak tracking',
+      'Crystal & chakra deep guides',
+      'Solfeggio frequency library',
+      'Tarot daily draws (unlimited)',
+      'Vision board (unlimited items)',
       'Manifestation tracker',
-      'Gratitude journal with streaks',
-      'Deep numerology reading',
+      'Shareable soul profile card',
+      'Numerology deep dive',
     ],
     cta: 'Start 7-Day Free Trial',
+    disabled: false,
   },
   {
-    id: 'twin-flame',
+    id: 'twin',
     name: 'Twin Flame',
     price: '$9.99',
-    period: '/month',
+    period: 'per month',
     emoji: '🔥',
-    color: '#c9a84c',
-    description: 'The complete soul alignment experience',
+    color: '#f472b6',
+    border: 'rgba(244,114,182,0.4)',
     features: [
-      'Everything in Awakened',
-      'AI Angel Oracle (unlimited)',
-      'Soul Twin Radar (real-time)',
-      'Soul Compatibility reports',
-      'Private Angel Circles (groups)',
+      'Everything in Mystic',
+      'Soul Twin Radar — live matching',
       'Shared journal peek with matches',
+      'Private Angel Circles (groups)',
+      'Compatibility deep reports',
+      'Karmic debt analysis',
+      'Personal year forecasts',
       'Priority sync matching',
-      'Cosmic profile card (shareable)',
-      'Karmic debt number analysis',
-      'Personal year cycle forecast',
-      'Angel number ritual guides',
+      'AI Oracle (coming soon)',
+      'Exclusive Twin Flame rituals',
       'Early access to new features',
+      'Remove all ads forever',
     ],
     cta: 'Start 7-Day Free Trial',
+    disabled: false,
   },
 ]
 
-const TESTIMONIALS = [
-  { name: 'Luna M.', lp: 7, text: 'The Weekly Synthesis showed me I was seeing 1111 every time I thought about leaving my job. I finally did it. Best decision ever.', emoji: '🌙' },
-  { name: 'Orion K.', lp: 11, text: 'Soul Twin Radar connected me with someone seeing the exact same numbers. We have been talking every day for 3 months.', emoji: '✨' },
-  { name: 'Sage R.', lp: 3, text: 'The AI Oracle gave me a reading that made me cry. It knew exactly what I needed to hear about my twin flame journey.', emoji: '🌿' },
+const FAQS = [
+  { q: 'Can I cancel anytime?', a: 'Yes. Cancel anytime from your settings. No questions asked, no hidden fees.' },
+  { q: 'What happens after the free trial?', a: 'You will be charged at the end of your 7-day trial. We will send a reminder 24 hours before.' },
+  { q: 'Is my data private?', a: 'Absolutely. Your journal entries, dreams, and thoughts are 100% private unless you choose to share them.' },
+  { q: 'Do you offer refunds?', a: 'Yes — if you are not satisfied within 14 days of your first charge, we will refund you in full.' },
+  { q: 'When is the AI Oracle coming?', a: 'We are integrating AI-powered oracle readings in Q2 2025. Twin Flame members get first access.' },
 ]
 
 export default function UpgradePage() {
+  const [faq, setFaq] = useState<number | null>(null)
   const [billing, setBilling] = useState<'monthly'|'annual'>('monthly')
-  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
+  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', backdropFilter: 'blur(16px)', padding: '1.75rem' }
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+    <div style={{ maxWidth: '560px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.5rem', fontWeight: 400 }}>Unlock Your Full Cosmic Potential</h1>
-        <p style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.9rem', margin: '0 0 1.25rem', lineHeight: 1.6 }}>Join thousands of souls using angel numbers to navigate their highest path</p>
-        {/* Billing toggle */}
-        <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.05)', borderRadius: '2rem', padding: '0.25rem', border: '1px solid rgba(200,180,255,0.1)' }}>
-          {(['monthly','annual'] as const).map(b => (
-            <button key={b} onClick={() => setBilling(b)} style={{ padding: '0.4rem 1.25rem', borderRadius: '2rem', border: 'none', background: billing === b ? 'rgba(167,139,250,0.3)' : 'transparent', color: billing === b ? '#a78bfa' : 'rgba(180,160,255,0.4)', fontSize: '0.8rem', cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.2s' }}>
-              {b}{b === 'annual' && <span style={{ color: '#34d399', fontSize: '0.65rem', marginLeft: '0.3rem' }}>-20%</span>}
+        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✦</div>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.5rem', fontWeight: 400 }}>Unlock Your Full Path</h1>
+        <p style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.88rem', lineHeight: 1.6, margin: '0 0 1.25rem' }}>Deepen your spiritual practice with premium tools designed to align you with your highest self.</p>
+        <div style={{ display: 'inline-flex', background: 'rgba(8,6,28,0.8)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '2rem', padding: '0.25rem' }}>
+          {(['monthly', 'annual'] as const).map(b => (
+            <button key={b} onClick={() => setBilling(b)} style={{ padding: '0.4rem 1.25rem', borderRadius: '2rem', border: 'none', background: billing === b ? 'rgba(167,139,250,0.2)' : 'transparent', color: billing === b ? '#a78bfa' : 'rgba(180,160,255,0.4)', fontSize: '0.78rem', cursor: 'pointer', textTransform: 'capitalize', letterSpacing: '0.04em' }}>
+              {b}{b === 'annual' ? ' (save 20%)' : ''}
             </button>
           ))}
         </div>
       </div>
 
       {/* Plans */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
         {PLANS.map(plan => (
-          <div key={plan.id} style={{ ...card, padding: '1.5rem', borderColor: plan.popular ? plan.color+'44' : plan.id === 'twin-flame' ? plan.color+'33' : 'rgba(200,180,255,0.12)', position: 'relative', overflow: 'hidden' }}>
-            {plan.popular && <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(167,139,250,0.25)', border: '1px solid rgba(167,139,250,0.4)', borderRadius: '2rem', padding: '0.2rem 0.6rem', color: '#a78bfa', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Most Popular</div>}
-            {plan.id === 'twin-flame' && <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '2rem', padding: '0.2rem 0.6rem', color: '#c9a84c', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Best Value</div>}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.875rem', background: plan.color+'18', border: '1px solid '+plan.color+'33', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>{plan.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ color: 'rgba(220,200,255,0.95)', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.15rem' }}>{plan.name}</div>
-                <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.78rem' }}>{plan.description}</div>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ color: plan.color, fontSize: '1.4rem', fontWeight: 700 }}>
-                  {plan.price === 'Free' ? 'Free' : billing === 'annual' ? '$' + (parseFloat(plan.price.replace('$','')) * 0.8).toFixed(2) : plan.price}
+          <div key={plan.id} style={{ ...card, border: plan.popular ? '1px solid ' + plan.border : '1px solid rgba(200,180,255,0.1)', position: 'relative', overflow: 'hidden' }}>
+            {plan.popular && (
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: plan.color + '20', border: '1px solid ' + plan.color + '40', borderRadius: '2rem', padding: '0.2rem 0.75rem', color: plan.color, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Most Popular</div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '2rem', lineHeight: 1 }}>{plan.emoji}</div>
+              <div>
+                <h2 style={{ color: plan.color, fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', margin: '0 0 0.15rem', fontWeight: 400 }}>{plan.name}</h2>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+                  <span style={{ color: 'rgba(220,200,255,0.95)', fontSize: '1.5rem', fontWeight: 700 }}>
+                    {plan.price === 'Free' ? plan.price : billing === 'annual' ? '$' + (parseFloat(plan.price.slice(1)) * 0.8).toFixed(2) : plan.price}
+                  </span>
+                  {plan.price !== 'Free' && <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem' }}>{plan.period}</span>}
                 </div>
-                <div style={{ color: 'rgba(180,160,255,0.35)', fontSize: '0.65rem' }}>{plan.period}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1.25rem' }}>
+            <ul style={{ margin: '0 0 1.25rem', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {plan.features.map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: plan.color, fontSize: '0.7rem', flexShrink: 0 }}>✦</span>
-                  <span style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.8rem' }}>{f}</span>
-                </div>
+                <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'rgba(200,180,255,0.7)', fontSize: '0.82rem', lineHeight: 1.4 }}>
+                  <span style={{ color: plan.color, flexShrink: 0, marginTop: '0.05rem' }}>✓</span>
+                  {f}
+                </li>
               ))}
-            </div>
-            <button disabled={plan.current} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.875rem', background: plan.current ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, '+plan.color+'44, '+plan.color+'22)', border: '1px solid '+(plan.current ? 'rgba(200,180,255,0.1)' : plan.color+'44'), color: plan.current ? 'rgba(180,160,255,0.3)' : 'rgba(220,200,255,0.9)', fontSize: '0.9rem', cursor: plan.current ? 'default' : 'pointer', fontWeight: 600, letterSpacing: '0.03em' }}>{plan.cta}</button>
+            </ul>
+            <button disabled={plan.disabled} style={{ width: '100%', padding: '0.875rem', borderRadius: '0.875rem', border: plan.disabled ? '1px solid rgba(200,180,255,0.1)' : '1px solid ' + plan.border, background: plan.disabled ? 'transparent' : plan.color + '18', color: plan.disabled ? 'rgba(180,160,255,0.3)' : plan.color, fontSize: '0.88rem', cursor: plan.disabled ? 'default' : 'pointer', letterSpacing: '0.03em', transition: 'all 0.2s' }}>
+              {plan.cta}
+            </button>
           </div>
         ))}
       </div>
 
-      {/* Testimonials */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', marginBottom: '1rem' }}>What Awakened Souls Are Saying</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {TESTIMONIALS.map(t => (
-            <div key={t.name} style={{ ...card, padding: '1.1rem 1.25rem' }}>
-              <p style={{ color: 'rgba(200,180,255,0.75)', fontSize: '0.85rem', margin: '0 0 0.625rem', lineHeight: 1.6, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>&ldquo;{t.text}&rdquo;</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1rem' }}>{t.emoji}</span>
-                <span style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem' }}>{t.name}</span>
-                <span style={{ color: 'rgba(180,160,255,0.25)', fontSize: '0.7rem' }}>· Life Path {t.lp}</span>
-              </div>
+      {/* Trust badges */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
+        {['🔒 Secure Payment', '↩️ 14-Day Refund', '✕ Cancel Anytime'].map(b => (
+          <span key={b} style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem' }}>{b}</span>
+        ))}
+      </div>
+
+      {/* FAQ */}
+      <div>
+        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: 'rgba(220,200,255,0.8)', margin: '0 0 1rem', fontWeight: 400, textAlign: 'center' }}>Frequently Asked Questions</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {FAQS.map((f, i) => (
+            <div key={i} style={{ background: 'rgba(8,6,28,0.75)', border: '1px solid rgba(200,180,255,0.08)', borderRadius: '0.875rem', overflow: 'hidden' }}>
+              <button onClick={() => setFaq(faq === i ? null : i)} style={{ width: '100%', padding: '0.875rem 1rem', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left' }}>
+                <span style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.85rem' }}>{f.q}</span>
+                <span style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', transform: faq === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: '0.5rem' }}>▾</span>
+              </button>
+              {faq === i && (
+                <div style={{ padding: '0 1rem 0.875rem', color: 'rgba(180,160,255,0.55)', fontSize: '0.82rem', lineHeight: 1.6 }}>{f.a}</div>
+              )}
             </div>
           ))}
         </div>
       </div>
-
-      <p style={{ textAlign: 'center', color: 'rgba(180,160,255,0.25)', fontSize: '0.72rem' }}>Cancel anytime · Secure payment · 7-day free trial on all paid plans</p>
     </div>
   )
 }

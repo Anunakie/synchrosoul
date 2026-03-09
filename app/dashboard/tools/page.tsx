@@ -1,97 +1,143 @@
 'use client'
 import Link from 'next/link'
 
-const TOOL_SECTIONS = [
+const SECTIONS = [
   {
     title: 'Daily Practice',
-    emoji: '🌅',
-    tools: [
-      { href: '/dashboard/meditations', emoji: '🧘', name: 'Meditations', desc: '6 guided practices', color: '#a78bfa' },
-      { href: '/dashboard/circles', emoji: '⭕', name: 'Angel Circles', desc: 'Private number communities', color: '#f472b6' },
-      { href: '/dashboard/rituals', emoji: '✦', name: 'Rituals', desc: 'Sacred daily practices', color: '#c9a84c' },
-      { href: '/dashboard/affirmations', emoji: '💫', name: 'Affirmations', desc: 'Daily cosmic affirmations', color: '#60a5fa' },
-      { href: '/dashboard/gratitude', emoji: '💛', name: 'Gratitude', desc: 'Gratitude journal & streaks', color: '#fbbf24' },
-      { href: '/dashboard/breathwork', emoji: '🌀', name: 'Breathwork', desc: 'Guided breathing exercises', color: '#67e8f9' },
-    ],
+    emoji: '☀️',
+    color: '#c9a84c',
+    items: [
+      { href: '/dashboard', emoji: '✦', label: 'Home', desc: 'Daily guidance & logger' },
+      { href: '/dashboard/gratitude', emoji: '🙏', label: 'Gratitude', desc: 'Daily gratitude practice' },
+      { href: '/dashboard/affirmations', emoji: '💫', label: 'Affirmations', desc: 'Daily cosmic affirmations' },
+      { href: '/dashboard/breathwork', emoji: '💨', label: 'Breathwork', desc: 'Guided breathing patterns' },
+      { href: '/dashboard/meditations', emoji: '🧘', label: 'Meditations', desc: 'Guided meditation sessions' },
+      { href: '/dashboard/streak', emoji: '🔥', label: 'Streak', desc: 'Daily practice streak' },
+    ]
   },
   {
-    title: 'Guidance & Divination',
+    title: 'Angel Numbers',
     emoji: '✨',
-    tools: [
-      { href: '/dashboard/oracle', emoji: '◈', name: 'Angel Oracle', desc: 'Draw sacred number spreads', color: '#e0e7ff' },
-      { href: '/dashboard/tarot', emoji: '🃏', name: 'Daily Tarot', desc: 'Major Arcana daily card', color: '#f472b6' },
-      { href: '/dashboard/dictionary', emoji: '📖', name: 'Number Dictionary', desc: '18 angel number meanings', color: '#34d399' },
-      { href: '/dashboard/moon', emoji: '🌙', name: 'Moon Phases', desc: 'Lunar energy & rituals', color: '#94a3b8' },
-      { href: '/dashboard/crystals', emoji: '💎', name: 'Crystal Guide', desc: 'Crystals for your numbers', color: '#67e8f9' },
-    ],
+    color: '#a78bfa',
+    items: [
+      { href: '/dashboard/journal', emoji: '📖', label: 'Journal', desc: 'Log & track angel numbers' },
+      { href: '/dashboard/oracle', emoji: '◈', label: 'Oracle', desc: 'Angel number readings' },
+      { href: '/dashboard/dictionary', emoji: '📚', label: 'Dictionary', desc: 'Full number meanings guide' },
+      { href: '/dashboard/insights', emoji: '🔍', label: 'Insights', desc: 'Your number patterns' },
+      { href: '/dashboard/stats', emoji: '📊', label: 'Statistics', desc: 'Your logging analytics' },
+    ]
   },
   {
-    title: 'Numerology & Soul',
-    emoji: '✶',
-    tools: [
-      { href: '/dashboard/numerology-deep', emoji: '🧮', name: 'Deep Numerology', desc: 'Full soul blueprint reading', color: '#a78bfa' },
-      { href: '/dashboard/compatibility', emoji: '💞', name: 'Compatibility', desc: 'Numerology match score', color: '#ff6b9d' },
-      { href: '/dashboard/chakras', emoji: '🌀', name: 'Chakra Map', desc: 'Energy body alignment', color: '#f97316' },
-      { href: '/dashboard/solfeggio', emoji: '🎵', name: 'Solfeggio Tones', desc: 'Sacred healing frequencies', color: '#818cf8' },
-    ],
+    title: 'Numerology',
+    emoji: '🔢',
+    color: '#60a5fa',
+    items: [
+      { href: '/dashboard/numerology-deep', emoji: '🧮', label: 'Deep Numerology', desc: 'Full soul blueprint' },
+      { href: '/dashboard/compatibility', emoji: '💞', label: 'Compatibility', desc: 'Numerology match score' },
+      { href: '/dashboard/personal-year', emoji: '📅', label: 'Personal Year', desc: 'Your yearly cycle number' },
+      { href: '/dashboard/karmic-debt', emoji: '⚖️', label: 'Karmic Debt', desc: 'Karmic lessons & patterns' },
+    ]
+  },
+  {
+    title: 'Cosmic Tools',
+    emoji: '🌌',
+    color: '#34d399',
+    items: [
+      { href: '/dashboard/moon', emoji: '🌙', label: 'Moon Calendar', desc: 'Lunar phases & rituals' },
+      { href: '/dashboard/tarot', emoji: '🃏', label: 'Tarot', desc: 'Daily tarot card draws' },
+      { href: '/dashboard/chakras', emoji: '🌀', label: 'Chakras', desc: 'Chakra balance guide' },
+      { href: '/dashboard/crystals', emoji: '💎', label: 'Crystals', desc: 'Crystal healing guide' },
+      { href: '/dashboard/solfeggio', emoji: '🎵', label: 'Solfeggio', desc: 'Healing frequencies' },
+      { href: '/dashboard/rituals', emoji: '✦', label: 'Rituals', desc: 'Sacred ritual guides' },
+    ]
   },
   {
     title: 'Manifestation',
     emoji: '🌱',
-    tools: [
-      { href: '/dashboard/manifestations', emoji: '🌱', name: 'Manifestations', desc: 'Track what you are calling in', color: '#4ade80' },
-      { href: '/dashboard/vision-board', emoji: '🌌', name: 'Vision Board', desc: 'Your cosmic dream board', color: '#818cf8' },
-      { href: '/dashboard/timeline', emoji: '⟳', name: 'Timeline', desc: 'Full sighting history', color: '#fb923c' },
-      { href: '/dashboard/calendar', emoji: '📅', name: 'Cosmic Calendar', desc: 'Angel number calendar view', color: '#60a5fa' },
-    ],
+    color: '#4ade80',
+    items: [
+      { href: '/dashboard/manifestations', emoji: '🌱', label: 'Manifestations', desc: 'Track what you are calling in' },
+      { href: '/dashboard/vision-board', emoji: '🌌', label: 'Vision Board', desc: 'Your cosmic dream board' },
+      { href: '/dashboard/timeline', emoji: '⏳', label: 'Timeline', desc: 'Your manifestation timeline' },
+      { href: '/dashboard/synthesis', emoji: '✶', label: 'Cosmic Synthesis', desc: 'Weekly pattern report' },
+    ]
   },
   {
-    title: 'Insights & Reports',
-    emoji: '📊',
-    tools: [
-      { href: '/dashboard/synthesis', emoji: '✶', name: 'Cosmic Synthesis', desc: 'Weekly pattern report', color: '#c9a84c' },
-      { href: '/dashboard/insights', emoji: '📊', name: 'Insights', desc: 'Your number patterns', color: '#a78bfa' },
-      { href: '/dashboard/badges', emoji: '🏆', name: 'Badges', desc: 'Achievements & milestones', color: '#fbbf24' },
-      { href: '/dashboard/stats', emoji: '📊', name: 'Stats', desc: 'Number frequency & heatmap', color: '#60a5fa' },
-      { href: '/dashboard/streak', emoji: '🔥', name: 'Streak', desc: 'Daily devotion milestones', color: '#f97316' },
-    ],
+    title: 'Dreams & Soul',
+    emoji: '🌙',
+    color: '#f472b6',
+    items: [
+      { href: '/dashboard/dreams', emoji: '🌙', label: 'Dream Journal', desc: 'Log & decode your dreams' },
+      { href: '/dashboard/soul-twin', emoji: '🧬', label: 'Soul Twin Radar', desc: 'Find your number matches' },
+      { href: '/dashboard/circles', emoji: '⭕', label: 'Angel Circles', desc: 'Community by number' },
+      { href: '/dashboard/calendar', emoji: '📆', label: 'Cosmic Calendar', desc: 'Spiritual event calendar' },
+    ]
   },
   {
-    title: 'Community & Profile',
-    emoji: '🌍',
-    tools: [
-      { href: '/dashboard/soul-twin', emoji: '🧬', name: 'Soul Twin Radar', desc: 'Find your number matches', color: '#f472b6' },
-      { href: '/dashboard/profile-card', emoji: '◎', name: 'Profile Card', desc: 'Your shareable cosmic card', color: '#60a5fa' },
-      { href: '/dashboard/upgrade', emoji: '✨', name: 'Upgrade', desc: 'Premium features', color: '#c9a84c' },
-      { href: '/dashboard/notifications', emoji: '🔔', name: 'Notifications', desc: 'Reminders & alerts', color: '#fbbf24' },
-      { href: '/dashboard/settings', emoji: '⚙️', name: 'Settings', desc: 'App preferences', color: '#94a3b8' },
-    ],
+    title: 'Social & Profile',
+    emoji: '👤',
+    color: '#fb923c',
+    items: [
+      { href: '/dashboard/feed', emoji: '✧', label: 'Cosmic Feed', desc: 'Posts from matched souls' },
+      { href: '/dashboard/profile', emoji: '◎', label: 'Profile', desc: 'Your spiritual identity' },
+      { href: '/dashboard/profile-card', emoji: '🪪', label: 'Profile Card', desc: 'Shareable soul card' },
+      { href: '/dashboard/badges', emoji: '🏅', label: 'Badges', desc: 'Your spiritual achievements' },
+    ]
+  },
+  {
+    title: 'Account',
+    emoji: '⚙️',
+    color: '#94a3b8',
+    items: [
+      { href: '/dashboard/settings', emoji: '⚙️', label: 'Settings', desc: 'App preferences' },
+      { href: '/dashboard/upgrade', emoji: '⭐', label: 'Upgrade', desc: 'Premium features' },
+      { href: '/dashboard/notifications', emoji: '🔔', label: 'Notifications', desc: 'Alerts & reminders' },
+      { href: '/dashboard/onboarding', emoji: '🚀', label: 'Onboarding', desc: 'Setup your profile' },
+    ]
   },
 ]
 
 export default function ToolsPage() {
-  const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
+    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Sacred Tools</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>30+ spiritual tools for your awakening journey</p>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>All Features</h1>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Your complete spiritual toolkit</p>
       </div>
-      {TOOL_SECTIONS.map(section => (
+
+      {SECTIONS.map(section => (
         <div key={section.title} style={{ marginBottom: '1.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '1rem' }}>{section.emoji}</span>
-            <span style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>{section.title}</span>
+            <h2 style={{ color: section.color, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 600 }}>{section.title}</h2>
+            <div style={{ flex: 1, height: '1px', background: section.color + '20', marginLeft: '0.5rem' }} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.625rem' }}>
-            {section.tools.map(tool => (
-              <Link key={tool.href} href={tool.href} style={{ textDecoration: 'none' }}>
-                <div style={{ ...card, padding: '1rem', cursor: 'pointer', transition: 'all 0.2s', borderColor: 'rgba(200,180,255,0.1)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                    <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: tool.color+'18', border: '1px solid '+tool.color+'33', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0 }}>{tool.emoji}</div>
-                    <span style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.82rem', fontWeight: 600 }}>{tool.name}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+            {section.items.map(item => (
+              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+                <div style={{
+                  background: 'rgba(8,6,28,0.82)',
+                  border: '1px solid rgba(200,180,255,0.1)',
+                  borderRadius: '0.875rem',
+                  padding: '0.875rem',
+                  backdropFilter: 'blur(12px)',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                }}>
+                  <div style={{
+                    width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem', flexShrink: 0,
+                    background: section.color + '15',
+                    border: '1px solid ' + section.color + '25',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1rem',
+                  }}>{item.emoji}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: 'rgba(220,200,255,0.88)', fontSize: '0.82rem', fontWeight: 500, marginBottom: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
+                    <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.desc}</div>
                   </div>
-                  <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.68rem', lineHeight: 1.4 }}>{tool.desc}</div>
                 </div>
               </Link>
             ))}
