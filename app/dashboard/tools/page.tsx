@@ -51,6 +51,7 @@ const TOOL_SECTIONS = [
       { href: '/dashboard/synthesis', emoji: '✶', name: 'Cosmic Synthesis', desc: 'Weekly pattern report', color: '#c9a84c' },
       { href: '/dashboard/insights', emoji: '📊', name: 'Insights', desc: 'Your number patterns', color: '#a78bfa' },
       { href: '/dashboard/badges', emoji: '🏆', name: 'Badges', desc: 'Achievements & milestones', color: '#fbbf24' },
+      { href: '/dashboard/stats', emoji: '📊', name: 'Stats', desc: 'Number frequency & heatmap', color: '#60a5fa' },
     ],
   },
   {
@@ -60,6 +61,7 @@ const TOOL_SECTIONS = [
       { href: '/dashboard/soul-twin', emoji: '🧬', name: 'Soul Twin Radar', desc: 'Find your number matches', color: '#f472b6' },
       { href: '/dashboard/profile-card', emoji: '◎', name: 'Profile Card', desc: 'Your shareable cosmic card', color: '#60a5fa' },
       { href: '/dashboard/upgrade', emoji: '✨', name: 'Upgrade', desc: 'Premium features', color: '#c9a84c' },
+      { href: '/dashboard/notifications', emoji: '🔔', name: 'Notifications', desc: 'Reminders & alerts', color: '#fbbf24' },
       { href: '/dashboard/settings', emoji: '⚙️', name: 'Settings', desc: 'App preferences', color: '#94a3b8' },
     ],
   },
