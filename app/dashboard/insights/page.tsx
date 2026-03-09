@@ -1,203 +1,195 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-function getWeekNumber(d: Date) {
-  const onejan = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil((((d.getTime() - onejan.getTime()) / 86400000) + onejan.getDay() + 1) / 7);
+interface LogEntry { number: string; timestamp: string; thought?: string; }
+
+function getStoredLogs(): LogEntry[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]'); } catch { return []; }
 }
 
-const angelMeanings: Record<string, { title: string; color: string; keywords: string[] }> = {
-  '111': { title: 'Manifestation Portal', color: '#ffd700', keywords: ['creation', 'intention', 'new beginnings'] },
-  '222': { title: 'Divine Balance', color: '#48bb78', keywords: ['patience', 'harmony', 'trust'] },
-  '333': { title: 'Ascended Masters', color: '#ed8936', keywords: ['creativity', 'expression', 'guidance'] },
-  '444': { title: 'Angelic Protection', color: '#4299e1', keywords: ['stability', 'foundation', 'safety'] },
-  '555': { title: 'Major Change', color: '#9b59b6', keywords: ['transformation', 'freedom', 'adventure'] },
-  '666': { title: 'Rebalance', color: '#e53e3e', keywords: ['home', 'family', 'compassion'] },
-  '777': { title: 'Divine Magic', color: '#c9a84c', keywords: ['luck', 'spirituality', 'wisdom'] },
-  '888': { title: 'Infinite Abundance', color: '#f6ad55', keywords: ['abundance', 'success', 'power'] },
-  '999': { title: 'Completion', color: '#fc8181', keywords: ['endings', 'release', 'service'] },
-  '1111': { title: 'Master Portal', color: '#ffd700', keywords: ['awakening', 'alignment', 'purpose'] },
-  '000': { title: 'Divine Wholeness', color: '#b794f4', keywords: ['infinity', 'oneness', 'potential'] },
-  '1212': { title: 'Cosmic Alignment', color: '#76e4f7', keywords: ['growth', 'positivity', 'manifestation'] },
-};
+function getMostFrequent(logs: LogEntry[]) {
+  const counts: Record<string, number> = {};
+  logs.forEach(l => { counts[l.number] = (counts[l.number] || 0) + 1; });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,5);
+}
+
+function getByHour(logs: LogEntry[]) {
+  const hours = Array(24).fill(0);
+  logs.forEach(l => {
+    const h = new Date(l.timestamp).getHours();
+    hours[h]++;
+  });
+  return hours;
+}
+
+function getByDay(logs: LogEntry[]) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const counts = Array(7).fill(0);
+  logs.forEach(l => { counts[new Date(l.timestamp).getDay()]++; });
+  return days.map((d,i) => ({ day: d, count: counts[i] }));
+}
+
+function getStreak(logs: LogEntry[]) {
+  if (!logs.length) return 0;
+  const dates = [...new Set(logs.map(l => new Date(l.timestamp).toDateString()))].sort();
+  let streak = 1, max = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const diff = (new Date(dates[i]).getTime() - new Date(dates[i-1]).getTime()) / 86400000;
+    if (diff === 1) { streak++; max = Math.max(max, streak); } else streak = 1;
+  }
+  return max;
+}
+
+const DEMO_LOGS: LogEntry[] = [
+  ...Array.from({length: 47}, (_, i) => ({
+    number: ['1111','333','444','555','777','222','888','999'][Math.floor(Math.random()*8)],
+    timestamp: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
+    thought: i % 3 === 0 ? 'Thinking about my purpose' : undefined
+  }))
+];
 
 export default function InsightsPage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [period, setPeriod] = useState<'week'|'month'|'all'>('week');
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [period, setPeriod] = useState<'7d'|'30d'|'all'>('30d');
 
   useEffect(() => {
-    const l = localStorage.getItem('synchrosoul_logs');
-    if (l) setLogs(JSON.parse(l));
+    const stored = getStoredLogs();
+    setLogs(stored.length > 0 ? stored : DEMO_LOGS);
   }, []);
 
-  const now = new Date();
-  const filtered = logs.filter((l: any) => {
-    const d = new Date(l.createdAt || l.timestamp);
-    if (period === 'week') return now.getTime() - d.getTime() < 7 * 86400000;
-    if (period === 'month') return now.getTime() - d.getTime() < 30 * 86400000;
+  const now = Date.now();
+  const filtered = logs.filter(l => {
+    if (period === '7d') return now - new Date(l.timestamp).getTime() < 7*86400000;
+    if (period === '30d') return now - new Date(l.timestamp).getTime() < 30*86400000;
     return true;
   });
 
-  // Frequency map
-  const freq: Record<string, number> = {};
-  filtered.forEach((l: any) => { freq[l.number] = (freq[l.number] || 0) + 1; });
-  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
-  const dominant = sorted[0]?.[0];
-  const dominantData = dominant ? angelMeanings[dominant] : null;
+  const topNumbers = getMostFrequent(filtered);
+  const byHour = getByHour(filtered);
+  const byDay = getByDay(filtered);
+  const streak = getStreak(filtered);
+  const maxHour = Math.max(...byHour, 1);
+  const maxDay = Math.max(...byDay.map(d => d.count), 1);
 
-  // Keyword cloud from all logged numbers
-  const keywordFreq: Record<string, number> = {};
-  filtered.forEach((l: any) => {
-    const m = angelMeanings[l.number];
-    if (m) m.keywords.forEach(k => { keywordFreq[k] = (keywordFreq[k] || 0) + 1; });
-  });
-  const topKeywords = Object.entries(keywordFreq).sort((a, b) => b[1] - a[1]).slice(0, 12);
-  const maxKw = topKeywords[0]?.[1] || 1;
-
-  // Thought themes (simple word frequency from thought entries)
-  const thoughtWords: Record<string, number> = {};
-  const stopWords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','i','my','me','was','is','are','it','this','that','be','have','had','do','did','not','so','as','if','by','from','up','about','into','then','than','when','what','how','all','just','can','will','would','could','should','been','has','its','we','they','their','there','were','he','she','his','her','you','your','our','us','him','them','who','which','also','more','some','any','no','out','get','got','see','saw','feel','felt','know','knew','think','thought','want','wanted','need','needed','go','went','come','came','make','made','take','took','look','looked','like','love','time','day','today','now','back','still','even','much','very','really','just','only','over','after','before','again','never','always','every','each','both','few','many','most','other','same','new','old','good','great','little','own','right','well','way','place','thing','things','something','nothing','everything','anything','someone','anyone','everyone','no one']);
-  filtered.forEach((l: any) => {
-    if (l.thought) {
-      l.thought.toLowerCase().split(/\W+/).forEach((w: string) => {
-        if (w.length > 3 && !stopWords.has(w)) thoughtWords[w] = (thoughtWords[w] || 0) + 1;
-      });
-    }
-  });
-  const topThoughts = Object.entries(thoughtWords).sort((a, b) => b[1] - a[1]).slice(0, 10);
-
-  // Time pattern
-  const hourBuckets = Array(24).fill(0);
-  filtered.forEach((l: any) => { hourBuckets[new Date(l.createdAt || l.timestamp).getHours()]++; });
-  const peakHour = hourBuckets.indexOf(Math.max(...hourBuckets));
-  const peakLabel = peakHour < 12 ? peakHour + ':00 AM' : peakHour === 12 ? '12:00 PM' : (peakHour - 12) + ':00 PM';
-
-  // Weekly trend (last 4 weeks)
-  const weeklyData = [0,1,2,3].map(weeksAgo => {
-    const start = new Date(now.getTime() - (weeksAgo + 1) * 7 * 86400000);
-    const end = new Date(now.getTime() - weeksAgo * 7 * 86400000);
-    const count = logs.filter((l: any) => {
-      const d = new Date(l.createdAt || l.timestamp);
-      return d >= start && d < end;
-    }).length;
-    return { label: weeksAgo === 0 ? 'This week' : weeksAgo === 1 ? 'Last week' : weeksAgo + 'w ago', count };
-  }).reverse();
-  const maxWeek = Math.max(...weeklyData.map(w => w.count)) || 1;
-
-  // Verified ratio
-  const verifiedCount = filtered.filter((l: any) => l.screenshotUrl).length;
-  const verifiedPct = filtered.length > 0 ? Math.round((verifiedCount / filtered.length) * 100) : 0;
+  const COLORS: Record<string,string> = {
+    '1111':'#c9a84c','333':'#f97316','444':'#22c55e','555':'#8b5cf6',
+    '777':'#c9a84c','222':'#3b82f6','888':'#f59e0b','999':'#ef4444'
+  };
 
   return (
-    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 700, color: '#e8d5b7', marginBottom: '0.5rem' }}>🔍 Soul Insights</h1>
-      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Patterns and wisdom from your angel number journey</p>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Cosmic Insights</h1>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Patterns in your angel number journey</p>
+      </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
-        {(['week','month','all'] as const).map(p => (
-          <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.4rem 1.1rem', borderRadius: '999px', background: period === p ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)', color: period === p ? '#c9a84c' : 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.82rem', textTransform: 'capitalize' }}>{p === 'all' ? 'All Time' : 'This ' + p}</button>
+      {/* Period filter */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+        {(['7d','30d','all'] as const).map(p => (
+          <button key={p} onClick={() => setPeriod(p)} style={{
+            padding: '0.4rem 1rem', borderRadius: '999px', cursor: 'pointer',
+            background: period === p ? '#c9a84c' : 'rgba(255,255,255,0.08)',
+            color: period === p ? '#000' : 'rgba(255,255,255,0.7)',
+            border: 'none', fontSize: '0.85rem', fontWeight: 600
+          }}>{p === '7d' ? 'Last 7 Days' : p === '30d' ? 'Last 30 Days' : 'All Time'}</button>
         ))}
       </div>
 
-      {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '4rem 2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌌</div>
-          <p>No logs found for this period. Start logging angel numbers to see your insights.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-          {dominantData && (
-            <div style={{ background: 'rgba(8,6,28,0.9)', border: '1px solid ' + dominantData.color + '44', borderRadius: '1.5rem', padding: '1.75rem', backdropFilter: 'blur(12px)', textAlign: 'center' }}>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Dominant Energy</div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: dominantData.color, marginBottom: '0.25rem' }}>{dominant}</div>
-              <div style={{ color: '#e8d5b7', fontWeight: 600, fontSize: '1rem', marginBottom: '0.5rem' }}>{dominantData.title}</div>
-              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {dominantData.keywords.map(k => (
-                  <span key={k} style={{ padding: '0.2rem 0.6rem', background: dominantData.color + '22', border: '1px solid ' + dominantData.color + '44', borderRadius: '999px', color: dominantData.color, fontSize: '0.75rem' }}>{k}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1rem', backdropFilter: 'blur(8px)', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem' }}>🔢</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#c9a84c' }}>{filtered.length}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>Total Logs</div>
-            </div>
-            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1rem', backdropFilter: 'blur(8px)', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem' }}>🕐</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#9b59b6' }}>{filtered.length > 0 ? peakLabel : '—'}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>Peak Time</div>
-            </div>
-            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1rem', backdropFilter: 'blur(8px)', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem' }}>✅</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#48bb78' }}>{verifiedPct}%</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>Verified</div>
-            </div>
+      {/* Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        {[
+          { label: 'Total Logs', value: filtered.length, icon: '📊', color: '#c9a84c' },
+          { label: 'Unique Numbers', value: new Set(filtered.map(l => l.number)).size, icon: '🔢', color: '#8b5cf6' },
+          { label: 'Best Streak', value: streak + 'd', icon: '🔥', color: '#f97316' },
+          { label: 'With Thoughts', value: filtered.filter(l => l.thought).length, icon: '💭', color: '#3b82f6' },
+        ].map(s => (
+          <div key={s.label} style={{
+            background: 'rgba(8,6,28,0.85)', borderRadius: '1rem',
+            border: `1px solid ${s.color}30`, padding: '1rem',
+            backdropFilter: 'blur(12px)', textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{s.icon}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color }}>{s.value}</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem' }}>{s.label}</div>
           </div>
+        ))}
+      </div>
 
-          {topKeywords.length > 0 && (
-            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>✨ Your Energy Keywords</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {topKeywords.map(([kw, count]) => {
-                  const size = 0.75 + (count / maxKw) * 0.5;
-                  const opacity = 0.4 + (count / maxKw) * 0.6;
-                  return (
-                    <span key={kw} style={{ padding: '0.3rem 0.75rem', background: 'rgba(201,168,76,' + (opacity * 0.15) + ')', border: '1px solid rgba(201,168,76,' + (opacity * 0.3) + ')', borderRadius: '999px', color: 'rgba(201,168,76,' + opacity + ')', fontSize: size + 'rem', fontWeight: count === maxKw ? 700 : 400 }}>{kw}</span>
-                  );
-                })}
+      {/* Top Numbers */}
+      <div style={{
+        background: 'rgba(8,6,28,0.85)', borderRadius: '1.5rem',
+        border: '1px solid rgba(255,255,255,0.08)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)', marginBottom: '1.5rem'
+      }}>
+        <h3 style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Most Seen Numbers</h3>
+        {topNumbers.length === 0 ? (
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>No logs yet. Start logging angel numbers!</p>
+        ) : topNumbers.map(([num, count], i) => {
+          const pct = Math.round((count / filtered.length) * 100);
+          const color = COLORS[num] || '#c9a84c';
+          return (
+            <div key={num} style={{ marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                <span style={{ color: color, fontWeight: 700 }}>#{i+1} {num}</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{count}x · {pct}%</span>
+              </div>
+              <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px' }}>
+                <div style={{ height: '100%', borderRadius: '4px', background: color, width: `${pct}%`, transition: 'width 0.5s' }} />
               </div>
             </div>
-          )}
+          );
+        })}
+      </div>
 
-          {topThoughts.length > 0 && (
-            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>💭 Thought Themes</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {topThoughts.map(([word, count]) => (
-                  <span key={word} style={{ padding: '0.25rem 0.65rem', background: 'rgba(155,89,182,0.12)', border: '1px solid rgba(155,89,182,0.25)', borderRadius: '999px', color: 'rgba(183,148,244,0.8)', fontSize: '0.82rem' }}>{word} <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>×{count}</span></span>
-                ))}
-              </div>
+      {/* Activity by Day */}
+      <div style={{
+        background: 'rgba(8,6,28,0.85)', borderRadius: '1.5rem',
+        border: '1px solid rgba(255,255,255,0.08)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)', marginBottom: '1.5rem'
+      }}>
+        <h3 style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Activity by Day of Week</h3>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '80px' }}>
+          {byDay.map(({ day, count }) => (
+            <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+              <div style={{
+                width: '100%', borderRadius: '4px 4px 0 0',
+                background: count > 0 ? '#c9a84c' : 'rgba(255,255,255,0.06)',
+                height: `${Math.max(4, (count / maxDay) * 64)}px`,
+                transition: 'height 0.5s'
+              }} />
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem' }}>{day}</span>
             </div>
-          )}
-
-          <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>📈 Weekly Trend</h3>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', height: '80px' }}>
-              {weeklyData.map((w, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-                  <div style={{ width: '100%', background: i === 3 ? 'linear-gradient(to top, #c9a84c, #c9a84c88)' : 'rgba(255,255,255,0.08)', borderRadius: '4px 4px 0 0', height: Math.max(4, (w.count / maxWeek) * 60) + 'px', border: i === 3 ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.06)', transition: 'height 0.5s ease' }} />
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.62rem', textAlign: 'center', lineHeight: 1.2 }}>{w.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {sorted.length > 1 && (
-            <div style={{ background: 'rgba(8,6,28,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>🔢 Number Breakdown</h3>
-              {sorted.slice(0, 6).map(([num, count], i) => {
-                const m = angelMeanings[num];
-                const pct = Math.round((count / filtered.length) * 100);
-                return (
-                  <div key={num} style={{ marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                      <span style={{ color: m?.color || '#c9a84c', fontWeight: 600, fontSize: '0.88rem' }}>{num} {m ? '— ' + m.title : ''}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{count}x · {pct}%</span>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '999px', height: '5px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: pct + '%', background: m?.color || '#c9a84c', borderRadius: '999px', opacity: 0.7, transition: 'width 0.8s ease' }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* Activity by Hour */}
+      <div style={{
+        background: 'rgba(8,6,28,0.85)', borderRadius: '1.5rem',
+        border: '1px solid rgba(255,255,255,0.08)', padding: '1.5rem',
+        backdropFilter: 'blur(12px)'
+      }}>
+        <h3 style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Activity by Hour</h3>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '60px' }}>
+          {byHour.map((count, h) => (
+            <div key={h} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{
+                width: '100%', borderRadius: '2px 2px 0 0',
+                background: count > 0 ? `rgba(201,168,76,${0.3 + (count/maxHour)*0.7})` : 'rgba(255,255,255,0.04)',
+                height: `${Math.max(2, (count / maxHour) * 52)}px`
+              }} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>12am</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>6am</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>12pm</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>6pm</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>11pm</span>
+        </div>
+      </div>
     </div>
   );
 }

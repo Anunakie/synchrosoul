@@ -1,303 +1,240 @@
-'use client'
-import { useState, useEffect, useRef } from 'react'
-
-const KEY = 'synchrosoul_meditation_log'
+'use client';
+import { useState, useEffect, useRef } from 'react';
 
 const MEDITATIONS = [
-  {
-    id: 'angel-number-activation',
-    name: 'Angel Number Activation',
-    emoji: '✨',
-    duration: 5,
-    color: '#a78bfa',
-    category: 'activation',
-    description: 'Connect deeply with the angel numbers appearing in your life and receive their full message.',
-    script: [
-      { time: 0, text: 'Close your eyes and take three slow, deep breaths. Let your body relax completely.' },
-      { time: 30, text: 'Bring to mind the angel number you have been seeing. See it glowing in golden light before you.' },
-      { time: 60, text: 'Feel the vibration of this number in your chest. It carries a message specifically for you.' },
-      { time: 90, text: 'Ask silently: What do you want me to know? Then simply listen. Receive without judgment.' },
-      { time: 150, text: 'Feel gratitude for this divine communication. You are seen, guided, and deeply loved.' },
-      { time: 240, text: 'Slowly bring your awareness back. Wiggle your fingers. When ready, open your eyes.' },
-    ],
-    benefits: ['Number connection', 'Intuitive downloads', 'Spiritual clarity'],
-    angelNumbers: ['1111', '444', '777'],
+  { id: 'angel-connection', title: 'Angel Number Connection', duration: 10, color: '#c9a84c',
+    category: 'Spiritual', level: 'Beginner', numbers: ['1111','444','777'],
+    description: 'Open your awareness to angel number messages. This meditation attunes your consciousness to the frequency of divine guidance.',
+    steps: [
+      { time: 0, instruction: 'Find a comfortable position. Close your eyes and take three deep breaths.' },
+      { time: 60, instruction: 'Visualize a golden light entering through the crown of your head with each inhale.' },
+      { time: 180, instruction: 'In your mind’s eye, see the number 1111 glowing in golden light before you.' },
+      { time: 300, instruction: 'Ask your angels: What message do you have for me today? Listen in the silence.' },
+      { time: 480, instruction: 'Feel gratitude for the guidance you receive. Trust what comes.' },
+      { time: 540, instruction: 'Slowly return your awareness to the room. Wiggle your fingers and toes.' },
+    ]
   },
-  {
-    id: 'morning-light',
-    name: 'Morning Light Activation',
-    emoji: '🌅',
-    duration: 7,
-    color: '#f59e0b',
-    category: 'morning',
-    description: 'Begin your day by filling every cell of your body with golden divine light and clear intention.',
-    script: [
-      { time: 0, text: 'Sit comfortably. Spine tall. Hands resting open on your knees. Close your eyes.' },
-      { time: 20, text: 'Imagine a golden sun above your head. With each breath, it grows brighter and warmer.' },
-      { time: 60, text: 'On your next inhale, draw this golden light down through the crown of your head.' },
-      { time: 100, text: 'Feel it filling your mind with clarity, your heart with love, your body with vitality.' },
-      { time: 160, text: 'Set your intention for today. Say it silently three times with full feeling.' },
-      { time: 220, text: 'You are a vessel of light. Everything you touch today is blessed. Open your eyes.' },
-    ],
-    benefits: ['Mental clarity', 'Energetic protection', 'Intentional living'],
-    angelNumbers: ['111', '333', '888'],
+  { id: 'manifestation', title: 'Manifestation Activation', duration: 15, color: '#8b5cf6',
+    category: 'Manifestation', level: 'Intermediate', numbers: ['111','333','888'],
+    description: 'Align your energy with your deepest desires. This powerful meditation activates your manifestation portal.',
+    steps: [
+      { time: 0, instruction: 'Sit upright. Place your hands on your heart. Set your intention clearly.' },
+      { time: 90, instruction: 'Breathe deeply into your heart center. Feel it expand with each breath.' },
+      { time: 240, instruction: 'Visualize your desire as already manifested. Feel the joy, the gratitude.' },
+      { time: 480, instruction: 'See the number 888 surrounding your vision, amplifying its energy.' },
+      { time: 720, instruction: 'Declare: This or something better is manifesting for my highest good.' },
+      { time: 840, instruction: 'Release the vision to the universe with complete trust and gratitude.' },
+    ]
   },
-  {
-    id: 'heart-opening',
-    name: 'Heart Opening',
-    emoji: '💚',
-    duration: 10,
-    color: '#34d399',
-    category: 'healing',
-    description: 'Gently dissolve walls around your heart and expand your capacity to give and receive love.',
-    script: [
-      { time: 0, text: 'Lie down or sit comfortably. Place both hands on your heart center.' },
-      { time: 30, text: 'Feel the warmth of your own hands. Your heart is safe. You are safe.' },
-      { time: 80, text: 'With each inhale, breathe in rose-pink light. With each exhale, release any grief or armor.' },
-      { time: 150, text: 'Think of someone you love unconditionally. Feel that love expand in your chest.' },
-      { time: 240, text: 'Now direct that same love toward yourself. You deserve it just as much.' },
-      { time: 360, text: 'Expand this love outward — to your home, your city, the whole world. You are love itself.' },
-      { time: 540, text: 'Rest here. Breathing. Loving. Being. When ready, gently open your eyes.' },
-    ],
-    benefits: ['Emotional healing', 'Self-love', 'Compassion'],
-    angelNumbers: ['444', '222', '666'],
+  { id: 'chakra-balance', title: 'Chakra Balancing Journey', duration: 20, color: '#22c55e',
+    category: 'Healing', level: 'Intermediate', numbers: ['777','333','1111'],
+    description: 'Travel through all seven chakras, clearing and balancing each energy center with angelic assistance.',
+    steps: [
+      { time: 0, instruction: 'Lie down comfortably. Take 7 deep breaths, one for each chakra.' },
+      { time: 120, instruction: 'Root Chakra: Visualize red light at the base of your spine. Feel grounded.' },
+      { time: 240, instruction: 'Sacral Chakra: Orange light below your navel. Feel creative energy flow.' },
+      { time: 360, instruction: 'Solar Plexus: Yellow light at your stomach. Feel your personal power.' },
+      { time: 480, instruction: 'Heart Chakra: Green light at your chest. Feel unconditional love expand.' },
+      { time: 600, instruction: 'Throat Chakra: Blue light at your throat. Feel your truth ready to speak.' },
+      { time: 720, instruction: 'Third Eye: Indigo light between your brows. See with inner vision.' },
+      { time: 900, instruction: 'Crown Chakra: Violet light at the top of your head. Feel divine connection.' },
+      { time: 1080, instruction: 'All chakras glow in harmony. You are balanced, healed, and whole.' },
+    ]
   },
-  {
-    id: 'manifestation-portal',
-    name: 'Manifestation Portal',
-    emoji: '🌌',
-    duration: 12,
-    color: '#e879f9',
-    category: 'manifestation',
-    description: 'Enter a deep meditative state to plant your desires directly into the quantum field.',
-    script: [
-      { time: 0, text: 'Find a comfortable position. Close your eyes. Take 5 deep breaths to arrive fully.' },
-      { time: 40, text: 'Imagine you are standing before a shimmering portal of violet light. It pulses with possibility.' },
-      { time: 100, text: 'Step through the portal. On the other side, your desires already exist as reality.' },
-      { time: 180, text: 'See yourself living your dream life. What do you see? What do you feel? Make it vivid.' },
-      { time: 280, text: 'Feel the emotions of this reality — the joy, the gratitude, the peace. Let it fill every cell.' },
-      { time: 400, text: 'Know that this is real. The universe is already rearranging itself to match this vision.' },
-      { time: 520, text: 'Step back through the portal, carrying this feeling with you. It is done. It is done. It is done.' },
-      { time: 680, text: 'Slowly return. Wiggle your fingers and toes. Open your eyes when ready.' },
-    ],
-    benefits: ['Manifestation power', 'Visualization', 'Quantum alignment'],
-    angelNumbers: ['1111', '888', '333'],
+  { id: 'twin-flame', title: 'Twin Flame Calling', duration: 12, color: '#ec4899',
+    category: 'Love', level: 'Advanced', numbers: ['1111','222','1212'],
+    description: 'Send a soul-level signal to your twin flame or divine partner. This meditation works across time and space.',
+    steps: [
+      { time: 0, instruction: 'Sit in a quiet space. Light a candle if possible. Breathe into your heart.' },
+      { time: 90, instruction: 'Feel your heart expand into a sphere of rose-gold light.' },
+      { time: 240, instruction: 'Visualize a golden thread extending from your heart into the universe.' },
+      { time: 420, instruction: 'Send love along this thread: I am ready. I am open. I call you to me.' },
+      { time: 540, instruction: 'See the number 1111 as a portal. Your twin flame steps through it toward you.' },
+      { time: 660, instruction: 'Feel the recognition, the homecoming. Trust divine timing completely.' },
+    ]
   },
-  {
-    id: 'chakra-scan',
-    name: 'Full Chakra Scan',
-    emoji: '🌀',
-    duration: 15,
-    color: '#c9a84c',
-    category: 'healing',
-    description: 'A complete journey through all seven chakras, clearing, balancing, and activating each one.',
-    script: [
-      { time: 0, text: 'Sit with spine straight. Close your eyes. Take 3 grounding breaths.' },
-      { time: 30, text: 'Root Chakra: Breathe red light into the base of your spine. Feel safe, grounded, supported.' },
-      { time: 90, text: 'Sacral Chakra: Breathe orange light into your lower belly. Feel creative, fluid, alive.' },
-      { time: 150, text: 'Solar Plexus: Breathe yellow light into your upper belly. Feel powerful, confident, worthy.' },
-      { time: 210, text: 'Heart Chakra: Breathe green light into your chest. Feel loving, open, connected.' },
-      { time: 280, text: 'Throat Chakra: Breathe blue light into your throat. Feel expressive, honest, heard.' },
-      { time: 350, text: 'Third Eye: Breathe indigo light between your brows. Feel intuitive, clear, wise.' },
-      { time: 420, text: 'Crown Chakra: Breathe violet light into the top of your head. Feel connected to all that is.' },
-      { time: 500, text: 'See all seven chakras spinning in perfect harmony — a rainbow pillar of light through your body.' },
-      { time: 600, text: 'Rest in this wholeness. You are complete. You are aligned. You are divine.' },
-      { time: 840, text: 'Slowly return to the room. Take a deep breath. Open your eyes.' },
-    ],
-    benefits: ['Energy alignment', 'Emotional balance', 'Full body healing'],
-    angelNumbers: ['777', '333', '1111'],
+  { id: 'release', title: 'Sacred Release Ceremony', duration: 8, color: '#ef4444',
+    category: 'Healing', level: 'Beginner', numbers: ['999','555','333'],
+    description: 'Release what no longer serves you. Clear old patterns, fears, and energies to make space for the new.',
+    steps: [
+      { time: 0, instruction: 'Sit comfortably. Think of what you wish to release. Name it clearly.' },
+      { time: 60, instruction: 'Breathe in deeply. On the exhale, imagine releasing this energy as grey smoke.' },
+      { time: 180, instruction: 'See the number 999 in your mind. It signals completion and release.' },
+      { time: 300, instruction: 'Say internally: I release you with love. You no longer serve my highest good.' },
+      { time: 420, instruction: 'Feel the lightness as the energy leaves. Breathe in golden light to fill the space.' },
+    ]
   },
-  {
-    id: 'sleep-surrender',
-    name: 'Sleep Surrender',
-    emoji: '🌙',
-    duration: 10,
-    color: '#60a5fa',
-    category: 'evening',
-    description: 'Release the day completely and drift into deep, healing, dream-filled sleep.',
-    script: [
-      { time: 0, text: 'Lie down. Let your body sink into the bed. You have done enough today.' },
-      { time: 30, text: 'Starting from your feet, consciously relax every muscle. Work slowly upward.' },
-      { time: 90, text: 'Release your legs. Release your belly. Release your chest. Release your shoulders.' },
-      { time: 150, text: 'Release your jaw. Release your eyes. Release your forehead. Completely let go.' },
-      { time: 220, text: 'Imagine a gentle wave of silver moonlight washing over you from head to toe.' },
-      { time: 300, text: 'Any worries, any thoughts — place them in a bubble and watch them float away.' },
-      { time: 400, text: 'Set an intention for your dreams: Show me what I need to know. Then surrender.' },
-      { time: 500, text: 'You are safe. You are loved. The universe watches over you as you sleep.' },
-      { time: 580, text: 'Let yourself drift... deeper... and deeper... into peaceful, healing sleep.' },
-    ],
-    benefits: ['Deep sleep', 'Dream activation', 'Nervous system reset'],
-    angelNumbers: ['444', '999', '222'],
+  { id: 'abundance', title: 'Abundance Frequency', duration: 11, color: '#f59e0b',
+    category: 'Manifestation', level: 'Beginner', numbers: ['888','333','1111'],
+    description: 'Tune your energy to the frequency of infinite abundance. Dissolve blocks and open to receive.',
+    steps: [
+      { time: 0, instruction: 'Sit comfortably. Place your hands palms-up in your lap, open to receive.' },
+      { time: 90, instruction: 'Breathe in golden light. With each breath, feel more abundant.' },
+      { time: 240, instruction: 'Repeat silently: I am worthy of abundance. I am open to receive.' },
+      { time: 420, instruction: 'Visualize the number 888 as an infinity symbol of golden coins and light.' },
+      { time: 540, instruction: 'Feel abundance flowing to you from all directions. You are a magnet.' },
+      { time: 600, instruction: 'Give thanks for the abundance already in your life and what is coming.' },
+    ]
   },
-]
+];
 
-const CATEGORIES = [
-  { id: 'all', label: 'All', emoji: '✦' },
-  { id: 'morning', label: 'Morning', emoji: '🌅' },
-  { id: 'evening', label: 'Evening', emoji: '🌙' },
-  { id: 'healing', label: 'Healing', emoji: '💚' },
-  { id: 'manifestation', label: 'Manifest', emoji: '🌌' },
-  { id: 'activation', label: 'Activation', emoji: '✨' },
-]
-
-interface MeditationLog {
-  id: number
-  meditationId: string
-  duration: number
-  completedAt: string
-}
+const CATEGORIES = ['All', 'Spiritual', 'Manifestation', 'Healing', 'Love'];
 
 export default function MeditationsPage() {
-  const [logs, setLogs] = useState<MeditationLog[]>([])
-  const [category, setCategory] = useState('all')
-  const [active, setActive] = useState<string | null>(null)
-  const [elapsed, setElapsed] = useState(0)
-  const [scriptIndex, setScriptIndex] = useState(0)
-  const [completed, setCompleted] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const startTimeRef = useRef<number>(0)
+  const [selected, setSelected] = useState(MEDITATIONS[0]);
+  const [category, setCategory] = useState('All');
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const filtered = category === 'All' ? MEDITATIONS : MEDITATIONS.filter(m => m.category === category);
 
   useEffect(() => {
-    const s = localStorage.getItem(KEY)
-    if (s) setLogs(JSON.parse(s))
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [])
+    if (!running) return;
+    timerRef.current = setInterval(() => {
+      setElapsed(prev => {
+        const next = prev + 1;
+        // Update step
+        const steps = selected.steps;
+        for (let i = steps.length - 1; i >= 0; i--) {
+          if (next >= steps[i].time) { setCurrentStep(i); break; }
+        }
+        if (next >= selected.duration * 60) {
+          setRunning(false);
+          if (timerRef.current) clearInterval(timerRef.current);
+        }
+        return next;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [running, selected]);
 
-  function startMeditation(id: string) {
-    setActive(id)
-    setElapsed(0)
-    setScriptIndex(0)
-    setCompleted(false)
-    startTimeRef.current = Date.now()
-    intervalRef.current = setInterval(() => {
-      const e = Math.floor((Date.now() - startTimeRef.current) / 1000)
-      setElapsed(e)
-      const med = MEDITATIONS.find(m => m.id === id)!
-      const nextIdx = med.script.filter(s => s.time <= e).length - 1
-      setScriptIndex(Math.max(0, nextIdx))
-      if (e >= med.duration * 60) {
-        clearInterval(intervalRef.current!)
-        setCompleted(true)
-        const log: MeditationLog = { id: Date.now(), meditationId: id, duration: med.duration, completedAt: new Date().toISOString() }
-        const next = [log, ...logs]
-        setLogs(next)
-        localStorage.setItem(KEY, JSON.stringify(next))
-      }
-    }, 1000)
-  }
+  const start = () => { setElapsed(0); setCurrentStep(0); setRunning(true); };
+  const stop = () => { setRunning(false); setElapsed(0); setCurrentStep(0); };
+  const select = (m: typeof MEDITATIONS[0]) => { stop(); setSelected(m); };
 
-  function stopMeditation() {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setActive(null)
-    setCompleted(false)
-  }
-
-  function formatTime(seconds: number) {
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
-    return `${m}:${s.toString().padStart(2, '0')}`
-  }
-
-  const filtered = category === 'all' ? MEDITATIONS : MEDITATIONS.filter(m => m.category === category)
-  const activeMed = MEDITATIONS.find(m => m.id === active)
-  const totalMinutes = logs.reduce((a, l) => a + l.duration, 0)
-  const card = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' } as React.CSSProperties
-
-  if (active && activeMed) {
-    const progress = Math.min((elapsed / (activeMed.duration * 60)) * 100, 100)
-    const currentScript = activeMed.script[scriptIndex]
-    const circumference = 2 * Math.PI * 54
-    return (
-      <div style={{ maxWidth: '480px', margin: '0 auto', padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '80vh', justifyContent: 'center' }}>
-        {/* Timer ring */}
-        <div style={{ position: 'relative', width: '140px', height: '140px', marginBottom: '2rem' }}>
-          <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-            <circle cx="70" cy="70" r="54" fill="none" stroke={activeMed.color} strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress / 100)} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s linear' }} />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '0.2rem' }}>{activeMed.emoji}</div>
-            <div style={{ color: activeMed.color, fontSize: '1rem', fontWeight: 700 }}>{formatTime(elapsed)}</div>
-          </div>
-        </div>
-
-        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.5rem', textAlign: 'center', fontWeight: 400 }}>{activeMed.name}</h2>
-        <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.78rem', margin: '0 0 2rem' }}>{activeMed.duration} min · {Math.round(progress)}% complete</p>
-
-        {/* Current guidance */}
-        <div style={{ ...card, padding: '1.5rem', marginBottom: '2rem', textAlign: 'center', borderColor: `${activeMed.color}33`, minHeight: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <p style={{ color: 'rgba(220,200,255,0.85)', fontSize: '0.95rem', margin: 0, lineHeight: 1.7, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>&ldquo;{currentScript?.text}&rdquo;</p>
-        </div>
-
-        {completed ? (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✨</div>
-            <p style={{ color: '#c9a84c', fontSize: '1rem', marginBottom: '1.5rem', fontFamily: 'Cormorant Garamond, serif' }}>Meditation Complete</p>
-            <button onClick={stopMeditation} style={{ padding: '0.75rem 2rem', borderRadius: '2rem', background: `linear-gradient(135deg, ${activeMed.color}88, ${activeMed.color})`, border: 'none', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600 }}>Return ✦</button>
-          </div>
-        ) : (
-          <button onClick={stopMeditation} style={{ padding: '0.65rem 1.5rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.15)', color: 'rgba(180,160,255,0.5)', fontSize: '0.85rem', cursor: 'pointer' }}>End Session</button>
-        )}
-      </div>
-    )
-  }
+  const progress = (elapsed / (selected.duration * 60)) * 100;
+  const remaining = selected.duration * 60 - elapsed;
+  const mins = Math.floor(remaining / 60);
+  const secs = remaining % 60;
 
   return (
-    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: 'rgba(220,200,255,0.95)', margin: '0 0 0.25rem', fontWeight: 400 }}>Guided Meditations</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: 0 }}>{logs.length} sessions · {totalMinutes} minutes of practice</p>
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
-        {[
-          { label: 'Sessions', value: logs.length, emoji: '🧘', color: '#a78bfa' },
-          { label: 'Minutes', value: totalMinutes, emoji: '⏱', color: '#c9a84c' },
-          { label: 'This Week', value: logs.filter(l => new Date(l.completedAt) > new Date(Date.now() - 7*86400000)).length, emoji: '🔥', color: '#f59e0b' },
-        ].map(s => (
-          <div key={s.label} style={{ ...card, padding: '0.875rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{s.emoji}</div>
-            <div style={{ color: s.color, fontSize: '1.2rem', fontWeight: 700 }}>{s.value}</div>
-            <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
-          </div>
-        ))}
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Guided Meditations</h1>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Sacred journeys aligned with angel number frequencies</p>
       </div>
 
       {/* Category filter */}
-      <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', justifyContent: 'center' }}>
         {CATEGORIES.map(c => (
-          <button key={c.id} onClick={() => setCategory(c.id)} style={{ flexShrink: 0, padding: '0.35rem 0.75rem', borderRadius: '2rem', border: category === c.id ? '1px solid rgba(167,139,250,0.5)' : '1px solid rgba(200,180,255,0.1)', background: category === c.id ? 'rgba(167,139,250,0.15)' : 'rgba(8,6,28,0.7)', color: category === c.id ? '#a78bfa' : 'rgba(180,160,255,0.45)', fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{c.emoji} {c.label}</button>
+          <button key={c} onClick={() => setCategory(c)} style={{
+            padding: '0.35rem 0.9rem', borderRadius: '999px', cursor: 'pointer',
+            background: category === c ? '#c9a84c' : 'rgba(255,255,255,0.08)',
+            color: category === c ? '#000' : 'rgba(255,255,255,0.7)',
+            border: 'none', fontSize: '0.8rem', fontWeight: 600
+          }}>{c}</button>
         ))}
       </div>
 
-      {/* Meditation cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {filtered.map(med => {
-          const count = logs.filter(l => l.meditationId === med.id).length
-          return (
-            <div key={med.id} style={{ ...card, padding: '1.25rem', borderColor: `${med.color}22` }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem' }}>
-                <div style={{ width: '3rem', height: '3rem', borderRadius: '0.875rem', background: `${med.color}18`, border: `1px solid ${med.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>{med.emoji}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
-                    <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.95rem', fontWeight: 600 }}>{med.name}</div>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, marginLeft: '0.5rem' }}>
-                      <span style={{ padding: '0.15rem 0.5rem', borderRadius: '2rem', background: `${med.color}12`, border: `1px solid ${med.color}25`, color: med.color, fontSize: '0.65rem' }}>{med.duration} min</span>
-                      {count > 0 && <span style={{ padding: '0.15rem 0.5rem', borderRadius: '2rem', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', fontSize: '0.65rem' }}>{count}x</span>}
-                    </div>
-                  </div>
-                  <p style={{ color: 'rgba(180,160,255,0.55)', fontSize: '0.8rem', margin: '0 0 0.75rem', lineHeight: 1.5 }}>{med.description}</p>
-                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.875rem' }}>
-                    {med.benefits.map(b => <span key={b} style={{ padding: '0.15rem 0.45rem', borderRadius: '2rem', background: `${med.color}0d`, border: `1px solid ${med.color}20`, color: med.color, fontSize: '0.65rem' }}>{b}</span>)}
-                  </div>
-                  <button onClick={() => startMeditation(med.id)} style={{ width: '100%', padding: '0.65rem', borderRadius: '0.875rem', background: `linear-gradient(135deg, ${med.color}66, ${med.color}cc)`, border: 'none', color: 'white', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.03em' }}>Begin Meditation ▶</button>
-                </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '1.5rem' }}>
+        {/* Meditation List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {filtered.map(m => (
+            <button key={m.id} onClick={() => select(m)} style={{
+              background: selected.id === m.id ? `${m.color}15` : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${selected.id === m.id ? m.color + '60' : 'rgba(255,255,255,0.08)'}`,
+              borderRadius: '1rem', padding: '0.85rem 1rem',
+              cursor: 'pointer', textAlign: 'left', width: '100%'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{m.title}</div>
+                <span style={{ color: m.color, fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem' }}>{m.duration}m</span>
               </div>
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                <span style={{
+                  background: `${m.color}20`, borderRadius: '999px',
+                  padding: '0.1rem 0.5rem', color: m.color, fontSize: '0.7rem'
+                }}>{m.category}</span>
+                <span style={{
+                  background: 'rgba(255,255,255,0.06)', borderRadius: '999px',
+                  padding: '0.1rem 0.5rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem'
+                }}>{m.level}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Player */}
+        <div style={{
+          background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem',
+          border: `1px solid ${selected.color}40`, padding: '1.5rem',
+          backdropFilter: 'blur(12px)', alignSelf: 'start', position: 'sticky', top: '1rem'
+        }}>
+          <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.25rem' }}>{selected.title}</h3>
+          <p style={{ color: selected.color, fontSize: '0.8rem', marginBottom: '1rem' }}>{selected.category} · {selected.duration} min · {selected.level}</p>
+
+          {/* Numbers */}
+          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1rem' }}>
+            {selected.numbers.map(n => (
+              <span key={n} style={{
+                background: `${selected.color}20`, border: `1px solid ${selected.color}40`,
+                borderRadius: '999px', padding: '0.2rem 0.6rem',
+                color: selected.color, fontSize: '0.8rem', fontWeight: 700
+              }}>{n}</span>
+            ))}
+          </div>
+
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>{selected.description}</p>
+
+          {/* Progress */}
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{running ? 'In progress' : 'Ready'}</span>
+              <span style={{ color: selected.color, fontSize: '0.85rem', fontWeight: 700 }}>{mins}:{secs.toString().padStart(2,'0')}</span>
             </div>
-          )
-        })}
+            <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px' }}>
+              <div style={{ height: '100%', borderRadius: '3px', background: selected.color, width: `${progress}%`, transition: 'width 1s linear' }} />
+            </div>
+          </div>
+
+          {/* Current instruction */}
+          {running && (
+            <div style={{
+              background: `${selected.color}10`, borderRadius: '1rem',
+              padding: '1rem', marginBottom: '1rem',
+              border: `1px solid ${selected.color}30`,
+              minHeight: '60px'
+            }}>
+              <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', lineHeight: 1.6, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif' }}>
+                {selected.steps[currentStep]?.instruction}
+              </p>
+            </div>
+          )}
+
+          {/* Steps preview */}
+          {!running && (
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.5rem' }}>JOURNEY STEPS</p>
+              {selected.steps.slice(0,3).map((step, i) => (
+                <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', alignItems: 'flex-start' }}>
+                  <span style={{ color: selected.color, fontSize: '0.7rem', marginTop: '0.15rem', flexShrink: 0 }}>{Math.floor(step.time/60)}m</span>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', lineHeight: 1.4 }}>{step.instruction.substring(0,60)}...</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button onClick={running ? stop : start} style={{
+            width: '100%', padding: '0.75rem', borderRadius: '999px', cursor: 'pointer',
+            background: running ? 'rgba(255,255,255,0.08)' : selected.color,
+            color: running ? 'rgba(255,255,255,0.7)' : '#000',
+            border: running ? '1px solid rgba(255,255,255,0.2)' : 'none',
+            fontSize: '0.95rem', fontWeight: 700
+          }}>{running ? '⏹ End Session' : '🧘 Begin Meditation'}</button>
+        </div>
       </div>
     </div>
-  )
+  );
 }
