@@ -39,6 +39,8 @@ const TOOL_SECTIONS = [
     tools: [
       { href: '/dashboard/chakras', emoji: '⚡', name: 'Chakras', desc: 'Align your energy centers', color: '#a855f7' },
       { href: '/dashboard/gratitude', emoji: '💛', name: 'Gratitude', desc: 'Daily gratitude practice', color: '#fbbf24' },
+      { href: '/dashboard/breathwork', emoji: '🌬', name: 'Breathwork', desc: 'Guided breathing exercises', color: '#6366f1' },
+      { href: '/dashboard/moon', emoji: '🌙', name: 'Moon Phase', desc: 'Lunar calendar & rituals', color: '#c084fc' },
       { href: '/dashboard/numerology-deep', emoji: '✶', name: 'Deep Reading', desc: 'Full numerology profile', color: '#c9a84c' },
     ],
   },
