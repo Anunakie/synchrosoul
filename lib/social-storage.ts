@@ -82,6 +82,15 @@ export function toggleResonate(postId: string): void {
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
 }
 
+
+export function updatePost(postId: string, newContent: string, newAngelNumber?: string): void {
+  const posts = getPosts()
+  const post = posts.find(p => p.id === postId)
+  if (!post) return
+  post.content = newContent
+  if (newAngelNumber !== undefined) post.angelNumber = newAngelNumber
+  localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
+}
 export function deletePost(postId: string): void {
   const posts = getPosts().filter(p => p.id !== postId)
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
