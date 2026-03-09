@@ -27,13 +27,18 @@ export interface UserSocialProfile {
 
 const POSTS_KEY = 'synchrosoul_posts'
 const PROFILE_KEY = 'synchrosoul_social_profile'
+const AVATAR_IMG_KEY = 'synchrosoul_avatar_image'
 const USER_ID = 'local_user'
 
 export function getSocialProfile(): UserSocialProfile {
   if (typeof window === 'undefined') return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', avatarImage: undefined, joinedAt: new Date().toISOString() }
   const raw = localStorage.getItem(PROFILE_KEY)
-  if (raw) return JSON.parse(raw)
-  return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', avatarImage: undefined, joinedAt: new Date().toISOString() }
+  const avatarImage = localStorage.getItem(AVATAR_IMG_KEY) || undefined
+  if (raw) {
+    const profile = JSON.parse(raw)
+    return { ...profile, avatarImage }
+  }
+  return { displayName: 'Starseed', bio: '', avatarColor: '#9b59b6', avatarImage, joinedAt: new Date().toISOString() }
 }
 
 export function saveSocialProfile(profile: UserSocialProfile): void {
@@ -43,7 +48,19 @@ export function saveSocialProfile(profile: UserSocialProfile): void {
 export function getPosts(): SocialPost[] {
   if (typeof window === 'undefined') return []
   const raw = localStorage.getItem(POSTS_KEY)
-  return raw ? JSON.parse(raw) : []
+  if (!raw) return []
+  const posts: SocialPost[] = JSON.parse(raw)
+  // Always sync own posts with current avatar image
+  const avatarImage = localStorage.getItem(AVATAR_IMG_KEY) || undefined
+  let changed = false
+  posts.forEach(p => {
+    if (p.authorId === USER_ID && p.authorImage !== avatarImage) {
+      p.authorImage = avatarImage
+      changed = true
+    }
+  })
+  if (changed) localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
+  return posts
 }
 
 export function savePost(content: string, angelNumber?: string, lifePathNumber?: number): SocialPost {
