@@ -1,121 +1,160 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const PHASES = [
-  { name: 'New Moon', emoji: '🌑', energy: 'New Beginnings', color: '#1e1b4b', textColor: '#a5b4fc', ritual: 'Set intentions. Write your desires. Plant seeds of what you want to manifest.', numbers: ['111', '1111', '000'], affirmation: 'I plant seeds of infinite possibility.' },
-  { name: 'Waxing Crescent', emoji: '🌒', energy: 'Taking Action', color: '#1e3a5f', textColor: '#93c5fd', ritual: 'Take the first steps toward your intentions. Make a plan. Begin.', numbers: ['222', '1234', '333'], affirmation: 'I take inspired action toward my dreams.' },
-  { name: 'First Quarter', emoji: '🌓', energy: 'Overcoming Challenges', color: '#1a3a2a', textColor: '#86efac', ritual: 'Push through resistance. Recommit to your intentions. Adjust your approach.', numbers: ['444', '555', '777'], affirmation: 'I overcome all obstacles with grace.' },
-  { name: 'Waxing Gibbous', emoji: '🌔', energy: 'Refinement', color: '#3b2a1a', textColor: '#fcd34d', ritual: 'Refine your approach. Express gratitude for progress. Trust the process.', numbers: ['888', '333', '1212'], affirmation: 'I refine and perfect my path.' },
-  { name: 'Full Moon', emoji: '🌕', energy: 'Manifestation Peak', color: '#2a2a1a', textColor: '#fde68a', ritual: 'Celebrate what has manifested. Release what no longer serves. Charge your crystals.', numbers: ['1111', '777', '888', '999'], affirmation: 'I am in full bloom. My manifestations are complete.' },
-  { name: 'Waning Gibbous', emoji: '🌖', energy: 'Gratitude & Sharing', color: '#2a1a3b', textColor: '#c4b5fd', ritual: 'Share your gifts. Express deep gratitude. Give back to others.', numbers: ['999', '666', '333'], affirmation: 'I share my abundance with the world.' },
-  { name: 'Last Quarter', emoji: '🌗', energy: 'Release & Forgiveness', color: '#3b1a1a', textColor: '#fca5a5', ritual: 'Release resentments. Forgive yourself and others. Let go of what blocks you.', numbers: ['999', '555', '000'], affirmation: 'I release all that no longer serves my highest good.' },
-  { name: 'Waning Crescent', emoji: '🌘', energy: 'Rest & Surrender', color: '#1a1a2a', textColor: '#94a3b8', ritual: 'Rest deeply. Surrender to the divine plan. Prepare for the new cycle.', numbers: ['222', '000', '444'], affirmation: 'I rest in divine trust and surrender.' },
+const MOON_PHASES = [
+  { name: 'New Moon', emoji: '🌑', color: '#6366f1', numbers: ['111','1111'], energy: 'New beginnings, intention setting, planting seeds', ritual: 'Write 3 intentions by candlelight. Bury a crystal in soil to charge.', affirmation: 'I plant seeds of intention in fertile darkness.', avoid: 'Starting arguments, making major decisions from fear' },
+  { name: 'Waxing Crescent', emoji: '🌒', color: '#8b5cf6', numbers: ['222','333'], energy: 'Growth, momentum, taking first steps', ritual: 'Take one concrete action toward your new moon intention.', affirmation: 'I take inspired action toward my dreams.', avoid: 'Doubt and second-guessing your intentions' },
+  { name: 'First Quarter', emoji: '🌓', color: '#a78bfa', numbers: ['444','555'], energy: 'Challenges, decisions, pushing through resistance', ritual: 'Identify one obstacle and write how you will overcome it.', affirmation: 'I face challenges with courage and clarity.', avoid: 'Giving up when things get difficult' },
+  { name: 'Waxing Gibbous', emoji: '🌔', color: '#c9a84c', numbers: ['666','777'], energy: 'Refinement, patience, trust in the process', ritual: 'Review your intentions. Adjust your approach with wisdom.', affirmation: 'I trust divine timing and refine my path.', avoid: 'Forcing outcomes before they are ready' },
+  { name: 'Full Moon', emoji: '🌕', color: '#f59e0b', numbers: ['777','888','1111'], energy: 'Manifestation, illumination, peak energy, release', ritual: 'Charge crystals under moonlight. Write what you are releasing. Burn the paper safely.', affirmation: 'I release what no longer serves and receive my blessings.', avoid: 'Emotional reactivity — energy is amplified now' },
+  { name: 'Waning Gibbous', emoji: '🌖', color: '#22c55e', numbers: ['999','888'], energy: 'Gratitude, sharing, integration', ritual: 'Write 10 things you are grateful for. Share your gifts with others.', affirmation: 'I am grateful for all that I have received.', avoid: 'Hoarding energy or blessings — share them' },
+  { name: 'Last Quarter', emoji: '🌗', color: '#22d3ee', numbers: ['999','555'], energy: 'Release, forgiveness, letting go', ritual: 'Forgiveness meditation. Release one grudge or old story.', affirmation: 'I forgive freely and release the past with love.', avoid: 'Holding onto what is clearly complete' },
+  { name: 'Waning Crescent', emoji: '🌘', color: '#60a5fa', numbers: ['999','222'], energy: 'Rest, reflection, surrender, preparation', ritual: 'Rest deeply. Journal your lessons from this lunar cycle.', affirmation: 'I rest and surrender, trusting the next cycle.', avoid: 'Starting new projects — honor the need for rest' },
 ];
 
-function getMoonPhase(date: Date): number {
-  const known = new Date(2000, 0, 6);
-  const diff = (date.getTime() - known.getTime()) / (1000 * 60 * 60 * 24);
-  const cycle = 29.53059;
-  return Math.floor(((diff % cycle + cycle) % cycle) / cycle * 8) % 8;
+const MOON_SIGNS = [
+  { sign: 'Aries', emoji: '♈', color: '#ef4444', numbers: ['111','333'], energy: 'Bold action, courage, new starts' },
+  { sign: 'Taurus', emoji: '♉', color: '#22c55e', numbers: ['444','888'], energy: 'Stability, abundance, sensual pleasure' },
+  { sign: 'Gemini', emoji: '♊', color: '#f59e0b', numbers: ['333','555'], energy: 'Communication, curiosity, duality' },
+  { sign: 'Cancer', emoji: '♋', color: '#60a5fa', numbers: ['222','444'], energy: 'Emotions, home, nurturing, intuition' },
+  { sign: 'Leo', emoji: '♌', color: '#f97316', numbers: ['111','888'], energy: 'Creativity, confidence, self-expression' },
+  { sign: 'Virgo', emoji: '♍', color: '#10b981', numbers: ['444','666'], energy: 'Healing, service, purification, detail' },
+  { sign: 'Libra', emoji: '♎', color: '#a78bfa', numbers: ['222','777'], energy: 'Balance, beauty, relationships, justice' },
+  { sign: 'Scorpio', emoji: '♏', color: '#8b5cf6', numbers: ['999','555'], energy: 'Transformation, depth, power, mystery' },
+  { sign: 'Sagittarius', emoji: '♐', color: '#c9a84c', numbers: ['777','333'], energy: 'Expansion, truth, adventure, wisdom' },
+  { sign: 'Capricorn', emoji: '♑', color: '#6366f1', numbers: ['888','444'], energy: 'Ambition, structure, mastery, legacy' },
+  { sign: 'Aquarius', emoji: '♒', color: '#22d3ee', numbers: ['1111','777'], energy: 'Innovation, freedom, humanity, awakening' },
+  { sign: 'Pisces', emoji: '♓', color: '#f472b6', numbers: ['999','1212'], energy: 'Spirituality, dreams, compassion, surrender' },
+];
+
+function getMoonPhase(): { phase: typeof MOON_PHASES[0]; dayInCycle: number } {
+  const knownNew = new Date('2024-01-11').getTime();
+  const cycleLength = 29.53;
+  const now = Date.now();
+  const daysSince = (now - knownNew) / 86400000;
+  const dayInCycle = ((daysSince % cycleLength) + cycleLength) % cycleLength;
+  let phaseIdx = 0;
+  if (dayInCycle < 1.85) phaseIdx = 0;
+  else if (dayInCycle < 7.38) phaseIdx = 1;
+  else if (dayInCycle < 9.22) phaseIdx = 2;
+  else if (dayInCycle < 14.77) phaseIdx = 3;
+  else if (dayInCycle < 16.61) phaseIdx = 4;
+  else if (dayInCycle < 22.15) phaseIdx = 5;
+  else if (dayInCycle < 23.99) phaseIdx = 6;
+  else phaseIdx = 7;
+  return { phase: MOON_PHASES[phaseIdx], dayInCycle: Math.round(dayInCycle) };
 }
 
-const MOON_CALENDAR_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function getCurrentMoonSign(): typeof MOON_SIGNS[0] {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  return MOON_SIGNS[Math.floor((dayOfYear / 2.5) % 12)];
+}
 
 export default function MoonPage() {
-  const today = new Date();
-  const currentPhase = getMoonPhase(today);
-  const [selected, setSelected] = useState(currentPhase);
-
-  const phase = PHASES[selected];
-
-  // Generate next 8 phase dates (approximate)
-  const nextPhases = PHASES.map((p, i) => {
-    const daysUntil = ((i - currentPhase + 8) % 8) * (29.53 / 8);
-    const date = new Date(today.getTime() + daysUntil * 86400000);
-    return { ...p, date, daysUntil: Math.round(daysUntil), isCurrent: i === currentPhase };
-  });
+  const [tab, setTab] = useState<'today' | 'phases' | 'signs'>('today');
+  const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
+  const { phase: currentPhase, dayInCycle } = getMoonPhase();
+  const moonSign = getCurrentMoonSign();
 
   return (
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#fde68a', fontFamily: 'Cormorant Garamond, serif' }}>Moon Phases</h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Align your practice with lunar energy</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Moon Phases</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Lunar wisdom and angel number guidance</p>
       </div>
 
-      {/* Current moon hero */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(253,230,138,0.1), rgba(8,6,28,0.95))',
-        borderRadius: '1.5rem', border: '1px solid rgba(253,230,138,0.2)',
-        padding: '2rem', backdropFilter: 'blur(12px)', marginBottom: '1.25rem', textAlign: 'center'
-      }}>
-        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>Tonight</p>
-        <div style={{ fontSize: '5rem', lineHeight: 1, marginBottom: '0.5rem' }}>{PHASES[currentPhase].emoji}</div>
-        <h2 style={{ color: '#fde68a', fontSize: '1.5rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.25rem' }}>{PHASES[currentPhase].name}</h2>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>{PHASES[currentPhase].energy}</p>
-      </div>
-
-      {/* Phase selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
-        {PHASES.map((p, i) => (
-          <button key={i} onClick={() => setSelected(i)} style={{
-            background: selected === i ? 'rgba(253,230,138,0.12)' : 'rgba(8,6,28,0.88)',
-            borderRadius: '1rem', border: selected === i ? '1px solid rgba(253,230,138,0.3)' : '1px solid rgba(255,255,255,0.07)',
-            padding: '0.75rem 0.5rem', cursor: 'pointer', textAlign: 'center',
-            backdropFilter: 'blur(12px)', position: 'relative'
-          }}>
-            {i === currentPhase && <div style={{ position: 'absolute', top: '6px', right: '6px', width: '6px', height: '6px', borderRadius: '50%', background: '#fde68a' }} />}
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{p.emoji}</div>
-            <div style={{ color: selected === i ? '#fde68a' : 'rgba(255,255,255,0.4)', fontSize: '0.62rem', lineHeight: 1.3 }}>{p.name}</div>
-          </button>
+      {/* Tab nav */}
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '999px', padding: '0.25rem' }}>
+        {(['today', 'phases', 'signs'] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '0.5rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: tab === t ? 'rgba(201,168,76,0.2)' : 'transparent', border: tab === t ? '1px solid rgba(201,168,76,0.3)' : '1px solid transparent', color: tab === t ? '#c9a84c' : 'rgba(255,255,255,0.4)' }}>{t === 'today' ? 'Today' : t === 'phases' ? 'All Phases' : 'Moon Signs'}</button>
         ))}
       </div>
 
-      {/* Selected phase detail */}
-      <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.08)', padding: '1.5rem', backdropFilter: 'blur(12px)', marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>{phase.emoji}</span>
-          <div>
-            <h3 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{phase.name}</h3>
-            <p style={{ color: phase.textColor, fontSize: '0.85rem' }}>{phase.energy}</p>
+      {tab === 'today' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* Current moon */}
+          <div style={{ background: `linear-gradient(135deg, ${currentPhase.color}15, rgba(8,6,28,0.95))`, borderRadius: '1.5rem', border: `1px solid ${currentPhase.color}25`, padding: '1.75rem', backdropFilter: 'blur(12px)', textAlign: 'center' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '0.5rem' }}>{currentPhase.emoji}</div>
+            <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.4rem', fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.25rem' }}>{currentPhase.name}</h2>
+            <p style={{ color: currentPhase.color, fontSize: '0.78rem', marginBottom: '1rem' }}>Day {dayInCycle} of lunar cycle</p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', lineHeight: 1.7, marginBottom: '1rem' }}>{currentPhase.energy}</p>
+            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {currentPhase.numbers.map(n => <span key={n} style={{ background: `${currentPhase.color}15`, border: `1px solid ${currentPhase.color}25`, borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.82rem', color: currentPhase.color, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>{n}</span>)}
+            </div>
+          </div>
+
+          {/* Moon sign */}
+          <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.25rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: `${moonSign.color}15`, border: `2px solid ${moonSign.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>{moonSign.emoji}</div>
+            <div>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.2rem' }}>Moon in</p>
+              <p style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>{moonSign.sign}</p>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.78rem' }}>{moonSign.energy}</p>
+            </div>
+          </div>
+
+          {/* Today ritual */}
+          <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.25rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem', backdropFilter: 'blur(12px)' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Today’s Ritual</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', lineHeight: 1.7 }}>{currentPhase.ritual}</p>
+          </div>
+
+          {/* Affirmation */}
+          <div style={{ background: `${currentPhase.color}08`, borderRadius: '1.25rem', border: `1px solid ${currentPhase.color}15`, padding: '1.25rem', backdropFilter: 'blur(12px)', textAlign: 'center' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Moon Affirmation</p>
+            <p style={{ color: currentPhase.color, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', lineHeight: 1.7 }}>&ldquo;{currentPhase.affirmation}&rdquo;</p>
           </div>
         </div>
+      )}
 
-        <div style={{ marginBottom: '1rem' }}>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Ritual Practice</p>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', lineHeight: 1.6 }}>{phase.ritual}</p>
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Power Numbers</p>
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-            {phase.numbers.map(n => (
-              <span key={n} style={{ background: 'rgba(253,230,138,0.1)', border: '1px solid rgba(253,230,138,0.2)', borderRadius: '999px', padding: '0.2rem 0.6rem', color: '#fde68a', fontSize: '0.82rem', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{n}</span>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.875rem', borderLeft: `3px solid ${phase.textColor}` }}>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>Affirmation</p>
-          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem', fontStyle: 'italic' }}>&ldquo;{phase.affirmation}&rdquo;</p>
-        </div>
-      </div>
-
-      {/* Upcoming phases */}
-      <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.08)', padding: '1.25rem', backdropFilter: 'blur(12px)' }}>
-        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>Upcoming Phases</p>
+      {tab === 'phases' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {nextPhases.filter(p => p.daysUntil > 0).slice(0, 4).map((p, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <span style={{ fontSize: '1.5rem', width: '2rem', textAlign: 'center' }}>{p.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600 }}>{p.name}</p>
-                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>{p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+          {MOON_PHASES.map((p, i) => (
+            <div key={p.name} onClick={() => setSelectedPhase(selectedPhase === i ? null : i)} style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.25rem', border: selectedPhase === i ? `1px solid ${p.color}40` : '1px solid rgba(255,255,255,0.07)', padding: '0.875rem 1rem', backdropFilter: 'blur(12px)', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{p.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</p>
+                    {p.name === currentPhase.name && <span style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '999px', padding: '0.1rem 0.4rem', fontSize: '0.6rem', color: '#c9a84c', fontWeight: 700 }}>NOW</span>}
+                  </div>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem' }}>{p.energy.split(',')[0]}</p>
+                </div>
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem' }}>{selectedPhase === i ? '▾' : '›'}</span>
               </div>
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>in {p.daysUntil}d</span>
+              {selectedPhase === i && (
+                <div style={{ marginTop: '0.875rem', paddingTop: '0.875rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.83rem', lineHeight: 1.6 }}>{p.energy}</p>
+                  <div style={{ background: `${p.color}08`, borderRadius: '0.875rem', padding: '0.75rem', border: `1px solid ${p.color}15` }}>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem' }}>Ritual</p>
+                    <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.82rem' }}>{p.ritual}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {p.numbers.map(n => <span key={n} style={{ background: `${p.color}10`, border: `1px solid ${p.color}20`, borderRadius: '999px', padding: '0.15rem 0.6rem', fontSize: '0.72rem', color: p.color }}>{n}</span>)}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
-      </div>
+      )}
+
+      {tab === 'signs' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+          {MOON_SIGNS.map(s => (
+            <div key={s.sign} style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.25rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1rem', backdropFilter: 'blur(12px)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>{s.emoji}</span>
+                <p style={{ color: s.color, fontWeight: 700, fontSize: '0.9rem' }}>{s.sign}</p>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', lineHeight: 1.5, marginBottom: '0.5rem' }}>{s.energy}</p>
+              <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                {s.numbers.map(n => <span key={n} style={{ background: `${s.color}10`, border: `1px solid ${s.color}20`, borderRadius: '999px', padding: '0.1rem 0.4rem', fontSize: '0.62rem', color: s.color }}>{n}</span>)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
