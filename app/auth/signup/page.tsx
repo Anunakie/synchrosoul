@@ -95,10 +95,6 @@ export default function SignupPage() {
       if (error) throw error
       window.location.href = '/dashboard'
     } catch (err: unknown) {
-      if (err instanceof Error && (err.message.includes('fetch') || err.message.includes('Invalid') || err.message.includes('supabase'))) {
-        window.location.href = '/dashboard'
-        return
-      }
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
       setLoading(false)
