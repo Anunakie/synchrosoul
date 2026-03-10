@@ -68,7 +68,7 @@ export default function ProfilePage() {
   }
 
   const saveProfile = () => {
-    const updated = { ...profile, displayName: editName, bio: editBio, avatarColor: editColor }
+    const updated = { ...profile, displayName: editName || profile.displayName, bio: editBio, avatarColor: editColor }
     saveSocialProfile(updated)
     setProfile(updated)
     if (editImage) {
@@ -127,14 +127,7 @@ export default function ProfilePage() {
                   onClick={() => fileInputRef.current?.click()}
                   onMouseEnter={() => setUploadHover(true)}
                   onMouseLeave={() => setUploadHover(false)}
-                  style={{
-                    width: 80, height: 80, borderRadius: '50%',
-                    background: editImage ? 'transparent' : editColor + '33',
-                    border: '3px solid ' + editColor,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', overflow: 'hidden', position: 'relative',
-                    transition: 'opacity 0.2s'
-                  }}
+                  style={{ width: 80, height: 80, borderRadius: '50%', background: editImage ? 'transparent' : editColor + '33', border: '3px solid ' + editColor, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', transition: 'opacity 0.2s' }}
                 >
                   {editImage ? (
                     <img src={editImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: uploadHover ? 0.5 : 1 }} />
@@ -149,76 +142,64 @@ export default function ProfilePage() {
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                 <div style={{ display: 'flex', gap: '0.3rem' }}>
-                  <button onClick={() => fileInputRef.current?.click()}
-                    style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.4rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
-                    Upload
-                  </button>
+                  <button onClick={() => fileInputRef.current?.click()} style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.4rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>Upload</button>
                   {editImage && (
-                    <button onClick={removeImage}
-                      style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.2)', borderRadius: '0.4rem', color: '#e74c3c', cursor: 'pointer' }}>
-                      Remove
-                    </button>
+                    <button onClick={removeImage} style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.2)', borderRadius: '0.4rem', color: '#e74c3c', cursor: 'pointer' }}>Remove</button>
                   )}
                 </div>
               </div>
             ) : (
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{
-                  width: 72, height: 72, borderRadius: '50%',
-                  background: avatarImage ? 'transparent' : profile.avatarColor + '33',
-                  border: '3px solid ' + profile.avatarColor,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1.4rem', fontWeight: 700, color: profile.avatarColor,
-                  overflow: 'hidden'
-                }}>
-                  {avatarImage
-                    ? <img src={avatarImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : initials
-                  }
+                <div style={{ width: 72, height: 72, borderRadius: '50%', background: avatarImage ? 'transparent' : profile.avatarColor + '33', border: '3px solid ' + profile.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 700, color: profile.avatarColor, overflow: 'hidden' }}>
+                  {avatarImage ? <img src={avatarImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                 </div>
-                {/* Always-visible camera badge */}
                 <button
                   onClick={() => { setEditing(true); setTimeout(() => fileInputRef.current?.click(), 100) }}
                   title="Upload profile photo"
-                  style={{
-                    position: 'absolute', bottom: 0, right: 0,
-                    width: 24, height: 24, borderRadius: '50%',
-                    background: '#1a1a2e', border: '2px solid ' + profile.avatarColor,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', fontSize: '0.7rem', color: profile.avatarColor,
-                    lineHeight: 1
-                  }}
+                  style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: '#1a1a2e', border: '2px solid ' + profile.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.7rem', color: profile.avatarColor, lineHeight: 1 }}
                 >+</button>
               </div>
             )}
 
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               {editing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <input value={editName} onChange={e => setEditName(e.target.value)}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onInput={e => setEditName((e.target as HTMLInputElement).value)}
                     placeholder="Display name"
-                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '0.5rem', padding: '0.4rem 0.75rem', color: '#f0e6ff', fontSize: '0.9rem', outline: 'none' }}
+                    style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '0.6rem', padding: '0.55rem 0.75rem', color: '#f0e6ff', fontSize: '0.95rem', outline: 'none', WebkitAppearance: 'none' } as React.CSSProperties}
                   />
-                  <textarea value={editBio} onChange={e => setEditBio(e.target.value)}
+                  <textarea
+                    value={editBio}
+                    onChange={e => setEditBio(e.target.value)}
+                    onInput={e => setEditBio((e.target as HTMLTextAreaElement).value)}
                     placeholder="Your spiritual bio..."
-                    rows={2}
-                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '0.5rem', padding: '0.4rem 0.75rem', color: '#f0e6ff', fontSize: '0.85rem', outline: 'none', resize: 'none' }}
+                    rows={3}
+                    style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '0.6rem', padding: '0.55rem 0.75rem', color: '#f0e6ff', fontSize: '0.875rem', outline: 'none', resize: 'none', fontFamily: 'inherit', lineHeight: 1.5, WebkitAppearance: 'none' } as React.CSSProperties}
                   />
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                     {AVATAR_COLORS.map(c => (
-                      <div key={c} onClick={() => setEditColor(c)}
-                        style={{ width: 22, height: 22, borderRadius: '50%', background: c, cursor: 'pointer', border: editColor === c ? '2px solid white' : '2px solid transparent', transition: 'transform 0.15s', transform: editColor === c ? 'scale(1.2)' : 'scale(1)' }}
-                      />
+                      <div key={c} onClick={() => setEditColor(c)} style={{ width: 22, height: 22, borderRadius: '50%', background: c, cursor: 'pointer', border: editColor === c ? '2px solid white' : '2px solid transparent', transition: 'transform 0.15s', transform: editColor === c ? 'scale(1.2)' : 'scale(1)' }} />
                     ))}
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={saveProfile} style={{ flex: 1, padding: '0.4rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.5rem', color: '#c9a84c', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>Save</button>
-                    <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '0.4rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
+                    <button
+                      onClick={saveProfile}
+                      onTouchEnd={e => { e.preventDefault(); saveProfile() }}
+                      style={{ flex: 1, padding: '0.6rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.6rem', color: '#c9a84c', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600, WebkitAppearance: 'none' } as React.CSSProperties}
+                    >Save Profile</button>
+                    <button
+                      onClick={() => setEditing(false)}
+                      onTouchEnd={e => { e.preventDefault(); setEditing(false) }}
+                      style={{ flex: 1, padding: '0.6rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.6rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', cursor: 'pointer', WebkitAppearance: 'none' } as React.CSSProperties}
+                    >Cancel</button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#f0e6ff' }}>{profile.displayName}</h2>
                     <button onClick={() => setEditing(true)} style={{ background: 'none', border: 'none', color: 'rgba(220,200,255,0.58)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.1rem 0.4rem' }}>Edit</button>
                   </div>
@@ -266,10 +247,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Compose */}
+        {/* Compose — Share cosmic moment */}
         {!composing && (
-          <button onClick={() => setComposing(true)}
-            style={{ width: '100%', padding: '0.85rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(155,89,182,0.15))', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '1rem', color: '#c9a84c', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
+          <button
+            onClick={() => setComposing(true)}
+            onTouchEnd={e => { e.preventDefault(); setComposing(true) }}
+            style={{ width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(155,89,182,0.15))', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '1rem', color: '#c9a84c', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer', marginBottom: '1.5rem', letterSpacing: '0.05em', WebkitAppearance: 'none', display: 'block', boxSizing: 'border-box' } as React.CSSProperties}
+          >
             + Share a cosmic moment
           </button>
         )}
@@ -282,19 +266,27 @@ export default function ProfilePage() {
               onInput={e => setPostText((e.target as HTMLTextAreaElement).value)}
               placeholder="What are the numbers showing you today?"
               rows={4}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.12)', borderRadius: '0.75rem', padding: '0.75rem', color: '#f0e6ff', fontSize: '1rem', outline: 'none', resize: 'none', fontFamily: 'inherit', display: 'block', marginBottom: '0.75rem', WebkitAppearance: 'none' }}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.75rem', color: '#f0e6ff', fontSize: '1rem', outline: 'none', resize: 'none', fontFamily: 'inherit', display: 'block', marginBottom: '0.75rem', WebkitAppearance: 'none', lineHeight: 1.5 } as React.CSSProperties}
             />
-            <input value={postNumber} onChange={e => setPostNumber(e.target.value.replace(/[^0-9]/g, ''))}
-              placeholder="Tag an angel number (e.g. 1111)" maxLength={6}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.5rem', padding: '0.6rem 0.75rem', color: '#c9a84c', fontSize: '0.9rem', outline: 'none', display: 'block', marginBottom: '0.75rem', fontFamily: 'inherit' }}
+            <input
+              value={postNumber}
+              onChange={e => setPostNumber(e.target.value.replace(/[^0-9]/g, ''))}
+              onInput={e => setPostNumber((e.target as HTMLInputElement).value.replace(/[^0-9]/g, ''))}
+              placeholder="Tag an angel number (e.g. 1111)"
+              maxLength={6}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.6rem', padding: '0.6rem 0.75rem', color: '#c9a84c', fontSize: '0.9rem', outline: 'none', display: 'block', marginBottom: '0.75rem', fontFamily: 'inherit', WebkitAppearance: 'none' } as React.CSSProperties}
             />
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => { setComposing(false); setPostText(''); setPostNumber('') }}
-                style={{ flex: 1, padding: '0.65rem', background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.7)', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button
+                onClick={() => { setComposing(false); setPostText(''); setPostNumber('') }}
+                onTouchEnd={e => { e.preventDefault(); setComposing(false); setPostText(''); setPostNumber('') }}
+                style={{ flex: 1, padding: '0.7rem', background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: 'rgba(220,200,255,0.7)', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit', WebkitAppearance: 'none' } as React.CSSProperties}
+              >Cancel</button>
               <button
                 onClick={handlePost}
-                disabled={posting}
-                style={{ flex: 2, padding: '0.65rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(155,89,182,0.25))', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.75rem', color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: posting ? 0.5 : 1 }}>
+                onTouchEnd={e => { e.preventDefault(); if (!posting) handlePost() }}
+                style={{ flex: 2, padding: '0.7rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(155,89,182,0.25))', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.75rem', color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', WebkitAppearance: 'none', opacity: posting ? 0.6 : 1 } as React.CSSProperties}
+              >
                 {posting ? 'Posting...' : '✦ Post'}
               </button>
             </div>
@@ -304,7 +296,7 @@ export default function ProfilePage() {
         {/* Posts */}
         {posts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.5)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>*</div>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✦</div>
             <p style={{ fontSize: '0.85rem' }}>Your cosmic moments will appear here</p>
           </div>
         )}
@@ -313,10 +305,7 @@ export default function ProfilePage() {
           <div key={post.id} style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.18)', borderRadius: '1rem', padding: '1rem', marginBottom: '0.75rem', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarImage ? 'transparent' : post.authorColor + '33', border: '2px solid ' + post.authorColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: post.authorColor, flexShrink: 0, overflow: 'hidden' }}>
-                {avatarImage
-                  ? <img src={avatarImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : post.authorAvatar
-                }
+                {avatarImage ? <img src={avatarImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : post.authorAvatar}
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#f0e6ff' }}>{post.authorName}</span>
@@ -328,12 +317,15 @@ export default function ProfilePage() {
             </div>
             <p style={{ margin: '0 0 0.75rem', fontSize: '0.88rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>{post.content}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <button onClick={() => handleResonate(post.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: post.resonatedBy.includes('local_user') ? 'rgba(201,168,76,0.15)' : 'none', border: post.resonatedBy.includes('local_user') ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.25rem 0.6rem', color: post.resonatedBy.includes('local_user') ? '#c9a84c' : 'rgba(220,200,255,0.68)', fontSize: '0.75rem', cursor: 'pointer' }}>
-                * {post.resonates}
-              </button>
-              <button onClick={() => handleDelete(post.id)}
-                style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '0.72rem', cursor: 'pointer' }}>delete</button>
+              <button
+                onClick={() => handleResonate(post.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: post.resonatedBy.includes('local_user') ? 'rgba(201,168,76,0.15)' : 'none', border: post.resonatedBy.includes('local_user') ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.25rem 0.6rem', color: post.resonatedBy.includes('local_user') ? '#c9a84c' : 'rgba(220,200,255,0.68)', fontSize: '0.75rem', cursor: 'pointer' }}
+              >✦ {post.resonates}</button>
+              <button
+                onClick={() => handleDelete(post.id)}
+                onTouchEnd={e => { e.preventDefault(); handleDelete(post.id) }}
+                style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '0.72rem', cursor: 'pointer' }}
+              >delete</button>
             </div>
           </div>
         ))}
