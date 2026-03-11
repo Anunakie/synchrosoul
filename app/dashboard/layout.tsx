@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/journal', label: 'Journal', emoji: '📖' },
   { href: '/dashboard/tools', label: 'Tools', emoji: '🔮' },
   { href: '/dashboard/feed', label: 'Feed', emoji: '✧' },
+  { href: '/dashboard/messages', label: 'Messages', emoji: '💬' },
   { href: '/dashboard/profile', label: 'Profile', emoji: '◎' },
 ]
 
@@ -141,6 +142,20 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
   }, [])
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+
+  useEffect(() => {
+    const loadUnread = async () => {
+      try {
+        const { getUnreadCount } = await import('@/lib/messages')
+        const count = await getUnreadCount()
+        setUnreadMessages(count)
+      } catch {}
+    }
+    loadUnread()
+    const interval = setInterval(loadUnread, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -228,6 +243,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(5,5,16,0.92)', backdropFilter: 'blur(24px)', borderTop: '1px solid rgba(200,180,255,0.1)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', height: '4.5rem', padding: '0 0.25rem' }}>
         {NAV_ITEMS.map(item => {
           const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href)
+            const badgeCount = item.href === '/dashboard/messages' ? unreadMessages : 0
           return (
             <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', textDecoration: 'none', padding: '0.4rem 0.5rem', borderRadius: '0.75rem', transition: 'all 0.2s', background: isActive ? 'rgba(200,150,255,0.1)' : 'transparent', border: isActive ? '1px solid rgba(200,150,255,0.2)' : '1px solid transparent' }}>
               <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>{item.emoji}</span>

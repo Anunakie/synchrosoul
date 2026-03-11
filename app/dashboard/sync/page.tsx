@@ -1,6 +1,8 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { getLiveSyncMatches, LiveSyncMatch, sendSyncSignal } from '@/lib/supabase-db';
+import { getOrCreateConversation } from '@/lib/messages'
 import { getMockMatches } from '@/lib/sync-matching';
 import { getLogs, getNumerologyProfile } from '@/lib/storage';
 import { createClient } from '@/lib/supabase/client';
@@ -24,6 +26,8 @@ function SyncScoreRing({ score }: { score: number }) {
 }
 
 export default function SyncPage() {
+  const router = useRouter()
+  const [messagingId, setMessagingId] = useState<string | null>(null)
   const [matches, setMatches] = useState<LiveSyncMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -97,6 +101,18 @@ export default function SyncPage() {
     setSignaled(prev => ({ ...prev, [userId]: 'sending' }));
     const ok = await sendSyncSignal(userId, sharedNumbers, syncScore);
     setSignaled(prev => ({ ...prev, [userId]: ok ? 'sent' : 'error' }));
+  }
+
+  const handleMessage = async (match: any) => {
+    setMessagingId(match.userId)
+    const profile = await import('@/lib/storage').then(m => m.getNumerologyProfile())
+    const myName = (profile as any)?.name || (profile as any)?.displayName || 'Soul'
+    const myAvatar = typeof window !== 'undefined' ? (localStorage.getItem('synchrosoul_avatar_image') || '') : ''
+    const convId = await getOrCreateConversation(match.userId, myName, myAvatar, match.displayName, match.avatar || '')
+    setMessagingId(null)
+    if (convId) {
+      router.push('/dashboard/messages/' + match.userId + '?convId=' + convId + '&name=' + encodeURIComponent(match.displayName))
+    }
   }
 
   return (
