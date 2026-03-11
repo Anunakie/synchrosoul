@@ -84,16 +84,24 @@ export default function FeedPage() {
     try {
       const authed = await isAuthenticated();
       if (authed) {
+        // Get all community posts from Supabase
         const real = await getAllPostsFromDB(50);
-        if (real.length > 0) {
-          setPosts(real);
-          setIsReal(true);
-          setLoading(false);
-          return;
-        }
+        // Also get current user's own posts (merges Supabase + localStorage)
+        const myPosts = await getPosts();
+        const myOwnPosts = myPosts.filter(p => p.isOwn);
+        // Merge: add own posts not already in the feed (by id)
+        const realIds = new Set(real.map(p => p.id));
+        const missingOwn = myOwnPosts.filter(p => !realIds.has(p.id));
+        const merged = [...missingOwn, ...real].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setPosts(merged);
+        setIsReal(real.length > 0);
+        setLoading(false);
+        return;
       }
     } catch {}
-    // Fallback to localStorage
+    // Fallback to localStorage only
     const local = await getPosts();
     setPosts(local);
     setLoading(false);
