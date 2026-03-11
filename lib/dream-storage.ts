@@ -34,10 +34,56 @@ export async function getDreams(): Promise<DreamEntry[]> {
     const userId = await getCurrentUserId()
     if (userId) {
       const dbDreams = await getDreamsFromDB()
-      if (dbDreams.length > 0) return dbDreams
+      const localDreams = getLocalDreams()
+      // Merge: db dreams take priority, add any local-only dreams
+      const dbIds = new Set(dbDreams.map(d => d.id))
+      const localOnly = localDreams.filter(d => !dbIds.has(d.id))
+      return [...dbDreams, ...localOnly]
     }
   } catch {}
   return getLocalDreams()
+}
+
+export async function migrateLocalDreamsToSupabase(): Promise<{ migrated: number }> {
+  try {
+    const userId = await getCurrentUserId()
+    if (!userId) return { migrated: 0 }
+    const localDreams = getLocalDreams()
+    if (localDreams.length === 0) return { migrated: 0 }
+    const dbDreams = await getDreamsFromDB()
+    const dbMinutes = new Set(dbDreams.map(d => d.createdAt.slice(0, 16)))
+    let migrated = 0
+    const failed: DreamEntry[] = []
+    for (const dream of localDreams) {
+      const minute = dream.createdAt.slice(0, 16)
+      if (dbMinutes.has(minute)) continue
+      try {
+        await saveDreamToDB({
+          title: dream.title,
+          description: dream.description,
+          symbols: dream.symbols,
+          moods: dream.moods,
+          angelNumbers: dream.angelNumbers,
+          reading: dream.reading,
+        })
+        migrated++
+      } catch {
+        failed.push(dream)
+      }
+    }
+    if (migrated > 0) {
+      console.log('[SynchroSoul] Migrated', migrated, 'dreams to Supabase')
+      if (failed.length === 0) {
+        localStorage.removeItem(DREAM_KEY)
+      } else {
+        localStorage.setItem(DREAM_KEY, JSON.stringify(failed))
+      }
+    }
+    return { migrated }
+  } catch (e) {
+    console.error('[SynchroSoul] Dream migration error:', e)
+    return { migrated: 0 }
+  }
 }
 
 export async function saveDream(data: {
@@ -77,6 +123,9 @@ export async function deleteDream(id: string): Promise<void> {
     const userId = await getCurrentUserId()
     if (userId) {
       await deleteDreamFromDB(id)
+      // Also remove from localStorage if present
+      const local = getLocalDreams().filter(d => d.id !== id)
+      localStorage.setItem(DREAM_KEY, JSON.stringify(local))
       return
     }
   } catch {}

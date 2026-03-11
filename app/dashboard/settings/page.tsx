@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { setPrivacyMode, getPrivacyMode, getCurrentUserId } from '@/lib/supabase-db'
+import { syncAllToCloud } from '@/lib/storage'
 
 const DEFAULTS = {
   displayName: '',
@@ -20,6 +21,9 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [privacySaving, setPrivacySaving] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<{ logs: number; dreams: number } | null>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -67,6 +71,27 @@ export default function SettingsPage() {
        'synchrosoul_social_profile','synchrosoul_posts','synchrosoul_avatar_image'].forEach(k => localStorage.removeItem(k))
       setS(DEFAULTS)
       alert('All data cleared.')
+    }
+  }
+
+  const handleSync = async () => {
+    if (!isLoggedIn) {
+      setSyncError('Sign in to sync your data to the cloud.')
+      setTimeout(() => setSyncError(null), 3000)
+      return
+    }
+    setSyncing(true)
+    setSyncResult(null)
+    setSyncError(null)
+    try {
+      const result = await syncAllToCloud()
+      setSyncResult(result)
+      setTimeout(() => setSyncResult(null), 4000)
+    } catch {
+      setSyncError('Sync failed. Check your connection and try again.')
+      setTimeout(() => setSyncError(null), 4000)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -174,6 +199,52 @@ export default function SettingsPage() {
         <Toggle label="Show Profile to Others" desc="Let matched users see your profile" val={s.shareJournal} onChange={v => update('shareJournal', v)} />
         <Toggle label="Sound Effects" val={s.soundEnabled} onChange={v => update('soundEnabled', v)} />
         <Toggle label="Haptic Feedback" val={s.hapticEnabled} onChange={v => update('hapticEnabled', v)} />
+      </Section>
+
+      <Section title="Cloud Sync">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', lineHeight: 1.6 }}>
+            Sync your angel logs and dreams from this device to the cloud. Your data will be available on all devices when signed in.
+          </p>
+          {syncResult && (
+            <div style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: '0.75rem', padding: '0.75rem', fontSize: '0.8rem', color: '#4ade80' }}>
+              ✓ Synced {syncResult.logs} logs and {syncResult.dreams} dreams to cloud
+            </div>
+          )}
+          {syncError && (
+            <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '0.75rem', padding: '0.75rem', fontSize: '0.8rem', color: '#f87171' }}>
+              ⚠ {syncError}
+            </div>
+          )}
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.875rem',
+              border: '1px solid rgba(201,168,76,0.4)',
+              background: syncing ? 'rgba(201,168,76,0.05)' : 'rgba(201,168,76,0.12)',
+              color: syncing ? 'rgba(201,168,76,0.4)' : '#c9a84c',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              cursor: syncing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s',
+              letterSpacing: '0.05em',
+            }}
+          >
+            <span style={{ fontSize: '1rem' }}>{syncing ? '↻' : '☁'}</span>
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </button>
+          {!isLoggedIn && (
+            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.72rem', textAlign: 'center' }}>
+              Sign in to enable cloud sync
+            </p>
+          )}
+        </div>
       </Section>
 
       <Section title="Data">

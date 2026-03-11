@@ -5,6 +5,8 @@ import {
   getLogsFromDB,
   saveLogToDB,
   deleteLogFromDB,
+  upsertProfile,
+  getProfile,
 } from './supabase-db'
 
 export interface AngelLog {
@@ -50,35 +52,54 @@ function getLocalLogs(): AngelLog[] {
   }
 }
 
+// Sync status tracking
+let _syncStatus: 'idle' | 'syncing' | 'synced' | 'offline' = 'idle'
+let _syncListeners: Array<(s: typeof _syncStatus) => void> = []
+
+export function getSyncStatus() { return _syncStatus }
+export function onSyncStatusChange(fn: (s: typeof _syncStatus) => void) {
+  _syncListeners.push(fn)
+  return () => { _syncListeners = _syncListeners.filter(l => l !== fn) }
+}
+function setSyncStatus(s: typeof _syncStatus) {
+  _syncStatus = s
+  _syncListeners.forEach(l => l(s))
+}
+
 export async function getLogs(): Promise<AngelLog[]> {
   try {
     const userId = await getCurrentUserId()
     if (userId) {
+      setSyncStatus('syncing')
       const dbLogs = await getLogsFromDB()
       const localLogs = getLocalLogs()
-      // Merge: db logs take priority, add any local-only logs
+      // Merge: db logs take priority, add any local-only logs not yet synced
       const dbIds = new Set(dbLogs.map(l => l.id))
       const localOnly = localLogs.filter(l => !dbIds.has(l.id))
+      setSyncStatus('synced')
       return [...dbLogs, ...localOnly].map(enrichLog)
     }
-  } catch {}
+  } catch {
+    setSyncStatus('offline')
+  }
   return getLocalLogs().map(enrichLog)
 }
 
 // Migrate localStorage logs to Supabase (call once on login)
-export async function migrateLocalLogsToSupabase(): Promise<void> {
+export async function migrateLocalLogsToSupabase(): Promise<{ migrated: number }> {
   try {
     const userId = await getCurrentUserId()
-    if (!userId) return
+    if (!userId) return { migrated: 0 }
     const localLogs = getLocalLogs()
-    if (localLogs.length === 0) return
+    if (localLogs.length === 0) return { migrated: 0 }
     // Get existing DB log IDs to avoid duplicates
     const dbLogs = await getLogsFromDB()
-    const dbNumbers = new Set(dbLogs.map(l => l.createdAt.slice(0, 16))) // minute-level dedup
+    const dbMinutes = new Set(dbLogs.map(l => l.createdAt.slice(0, 16)))
     let migrated = 0
+    const failed: AngelLog[] = []
     for (const log of localLogs) {
       const minute = log.createdAt.slice(0, 16)
-      if (dbNumbers.has(minute)) continue // skip likely duplicate
+      if (dbMinutes.has(minute)) continue
       try {
         await saveLogToDB({
           number: log.number,
@@ -86,15 +107,23 @@ export async function migrateLocalLogsToSupabase(): Promise<void> {
           screenshotUrl: log.screenshotUrl,
         })
         migrated++
-      } catch {}
+      } catch {
+        failed.push(log)
+      }
     }
     if (migrated > 0) {
-      console.log(`[SynchroSoul] Migrated ${migrated} logs to Supabase`)
-      // Clear localStorage after successful migration
-      localStorage.removeItem(STORAGE_KEY)
+      console.log('[SynchroSoul] Migrated', migrated, 'logs to Supabase')
+      // Only keep failed ones in localStorage
+      if (failed.length === 0) {
+        localStorage.removeItem(STORAGE_KEY)
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(failed))
+      }
     }
+    return { migrated }
   } catch (e) {
-    console.error('[SynchroSoul] Migration error:', e)
+    console.error('[SynchroSoul] Log migration error:', e)
+    return { migrated: 0 }
   }
 }
 
@@ -119,11 +148,17 @@ export async function saveLog(data: {
   try {
     const userId = await getCurrentUserId()
     if (userId) {
+      setSyncStatus('syncing')
       const dbId = await saveLogToDB(data)
-      if (dbId) return { ...log, id: dbId }
+      if (dbId) {
+        setSyncStatus('synced')
+        return { ...log, id: dbId }
+      }
     }
-  } catch {}
-  // Fallback to localStorage
+  } catch {
+    setSyncStatus('offline')
+  }
+  // Fallback to localStorage (will be migrated on next login)
   const existing = getLocalLogs()
   localStorage.setItem(STORAGE_KEY, JSON.stringify([log, ...existing]))
   return log
@@ -134,6 +169,9 @@ export async function deleteLog(id: string): Promise<void> {
     const userId = await getCurrentUserId()
     if (userId) {
       await deleteLogFromDB(id)
+      // Also remove from localStorage if present
+      const local = getLocalLogs().filter(l => l.id !== id)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(local))
       return
     }
   } catch {}
@@ -183,13 +221,14 @@ function calculateStreak(logs: AngelLog[]): number {
 
 // ── Numerology Profile Storage ─────────────────────────────────────────────
 import type { NumerologyProfile } from './numerology'
-import { upsertProfile, getProfile } from './supabase-db'
 
 const NUMEROLOGY_KEY = 'synchrosoul_numerology'
 
 export async function saveNumerologyProfile(profile: NumerologyProfile): Promise<void> {
   if (typeof window === 'undefined') return
+  // Save to localStorage as cache
   localStorage.setItem(NUMEROLOGY_KEY, JSON.stringify(profile))
+  // Save to Supabase as source of truth
   try {
     const userId = await getCurrentUserId()
     if (userId) {
@@ -201,7 +240,9 @@ export async function saveNumerologyProfile(profile: NumerologyProfile): Promise
         display_name: (profile as any).name,
       })
     }
-  } catch {}
+  } catch (e) {
+    console.error('[SynchroSoul] Failed to save numerology to Supabase:', e)
+  }
 }
 
 export async function getNumerologyProfile(): Promise<NumerologyProfile | null> {
@@ -210,7 +251,7 @@ export async function getNumerologyProfile(): Promise<NumerologyProfile | null> 
     if (userId) {
       const dbProfile = await getProfile()
       if (dbProfile?.life_path) {
-        return {
+        const profile = {
           name: dbProfile.display_name ?? '',
           birthdate: dbProfile.birthdate ?? '',
           lifePath: dbProfile.life_path ?? 0,
@@ -218,7 +259,12 @@ export async function getNumerologyProfile(): Promise<NumerologyProfile | null> 
           destiny: dbProfile.destiny ?? 0,
           lifePathMeaning: '',
           lifePathColor: '#9b59b6',
-        } as NumerologyProfile
+        } as NumerologyProfile & { name: string }
+        // Update localStorage cache
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(NUMEROLOGY_KEY, JSON.stringify(profile))
+        }
+        return profile
       }
     }
   } catch {}
@@ -238,6 +284,25 @@ export function clearNumerologyProfile(): void {
 }
 
 export async function toggleShare(id: string): Promise<void> {
+  // Update localStorage
   const logs = getLocalLogs().map(l => l.id === id ? { ...l, shared: !l.shared } : l)
-  localStorage.setItem('synchrosoul_logs', JSON.stringify(logs))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs))
+  // TODO: update Supabase shared field when column is added
+}
+
+// ── Full Sync (call from settings Sync Now button) ─────────────────────────
+export async function syncAllToCloud(): Promise<{ logs: number; dreams: number }> {
+  setSyncStatus('syncing')
+  try {
+    const { migrateLocalDreamsToSupabase } = await import('./dream-storage')
+    const [logsResult, dreamsResult] = await Promise.all([
+      migrateLocalLogsToSupabase(),
+      migrateLocalDreamsToSupabase(),
+    ])
+    setSyncStatus('synced')
+    return { logs: logsResult.migrated, dreams: dreamsResult.migrated }
+  } catch (e) {
+    setSyncStatus('offline')
+    throw e
+  }
 }
