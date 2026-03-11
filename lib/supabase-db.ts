@@ -229,30 +229,34 @@ export async function getPostsFromDB(): Promise<SocialPost[]> {
   try {
     const supabase = createClient()
     const userId = await getCurrentUserId()
-    // Get all posts from non-private users
+    // Simple query - no FK join needed, author data is stored in posts table
     const { data, error } = await supabase
       .from('posts')
-      .select('*, profiles!posts_user_id_fkey(display_name, avatar_color, avatar_url, privacy_mode)')
+      .select('id, user_id, content, angel_number, author_name, author_image, resonates, created_at, is_public')
+      .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(50)
-    if (error || !data) return []
-    return data
-      .filter((row: any) => !row.profiles?.privacy_mode)
-      .map((row: any) => ({
-        id: row.id,
-        authorId: row.user_id,
-        authorName: row.author_name ?? row.profiles?.display_name ?? 'Starseed',
-        authorAvatar: row.profiles?.display_name?.charAt(0)?.toUpperCase() ?? 'S',
-        authorImage: row.author_image ?? row.profiles?.avatar_url ?? undefined,
-        authorColor: row.profiles?.avatar_color ?? '#9b59b6',
-        content: row.content,
-        angelNumber: row.angel_number ?? undefined,
-        resonates: row.resonates ?? 0,
-        resonatedBy: [],
-        createdAt: row.created_at,
-        isOwn: row.user_id === userId,
-      }))
-  } catch {
+    if (error) {
+      console.error('[SynchroSoul] getPostsFromDB error:', error.message)
+      return []
+    }
+    if (!data) return []
+    return data.map((row: any) => ({
+      id: row.id,
+      authorId: row.user_id,
+      authorName: row.author_name ?? 'Starseed',
+      authorAvatar: (row.author_name ?? 'S').charAt(0).toUpperCase(),
+      authorImage: row.author_image ?? undefined,
+      authorColor: '#9b59b6',
+      content: row.content,
+      angelNumber: row.angel_number ?? undefined,
+      resonates: row.resonates ?? 0,
+      resonatedBy: [],
+      createdAt: row.created_at,
+      isOwn: row.user_id === userId,
+    }))
+  } catch (e) {
+    console.error('[SynchroSoul] getPostsFromDB exception:', e)
     return []
   }
 }
@@ -454,14 +458,18 @@ export async function getAllPostsFromDB(limit = 50): Promise<FeedPost[]> {
 
     const { data, error } = await supabase
       .from('posts')
-      .select('id, user_id, content, angel_number, created_at, resonates, profiles!posts_user_id_fkey(display_name, avatar_color, avatar_url, life_path, privacy_mode)')
+      .select('id, user_id, content, angel_number, author_name, author_image, created_at, resonates, is_public')
+      .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    if (error || !data) return []
+    if (error) {
+      console.error('[SynchroSoul] getAllPostsFromDB error:', error.message)
+      return []
+    }
+    if (!data) return []
 
     return data
-      .filter((p: any) => !p.profiles?.privacy_mode)
       .map((p: any) => ({
         id: p.id,
         userId: p.user_id,
@@ -469,10 +477,10 @@ export async function getAllPostsFromDB(limit = 50): Promise<FeedPost[]> {
         angelNumber: p.angel_number,
         createdAt: p.created_at,
         resonates: p.resonates || 0,
-        authorName: p.profiles?.display_name || 'Starseed',
-        authorColor: p.profiles?.avatar_color || '#9b59b6',
-        authorAvatar: p.profiles?.avatar_url || null,
-        authorLifePath: p.profiles?.life_path || null,
+        authorName: p.author_name || 'Starseed',
+        authorColor: '#9b59b6',
+        authorAvatar: p.author_image || null,
+        authorLifePath: null,
         isOwn: p.user_id === myId,
       }))
   } catch (e) {
