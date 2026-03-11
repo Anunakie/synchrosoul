@@ -147,10 +147,11 @@ export default function FeedPage() {
   const [numberFilters, setNumberFilters] = useState<string[]>([])
 
   useEffect(() => {
-    const logs = getLogs()
+    ;(async () => {
+    const logs = await getLogs()
     const nums = [...new Set(logs.map((l: any) => l.number))] as string[]
     setUserNumbers(nums)
-    const ownPosts = getPosts()
+    const ownPosts = await getPosts()
     const mockPosts = getMockFeedPosts(nums)
     const all = [...ownPosts, ...mockPosts]
     const seen = new Set<string>()
@@ -159,22 +160,22 @@ export default function FeedPage() {
     setPosts(merged)
     const nums2 = [...new Set(merged.map(p => p.angelNumber).filter(Boolean))] as string[]
     setNumberFilters(nums2.slice(0, 8))
-    const numerology = getNumerologyProfile()
+    const numerology = await getNumerologyProfile()
     const lp = numerology?.lifePath ?? 1
     const matches = getMockMatches(nums, lp)
     setSyncMatches(matches)
-    setTimeout(() => setLoading(false), 600)
+    setTimeout(() => setLoading(false), 600)  })()
   }, [])
 
-  const handleResonate = (postId: string) => {
-    toggleResonate(postId)
+  const handleResonate = async (postId: string) => {
+    await toggleResonate(postId)
     setPosts(prev => prev.map(p => {
       if (p.id !== postId) return p
       const resonated = p.resonatedBy.includes('local_user')
       return { ...p, resonates: resonated ? p.resonates - 1 : p.resonates + 1, resonatedBy: resonated ? p.resonatedBy.filter(id => id !== 'local_user') : [...p.resonatedBy, 'local_user'] }
     }))
   }
-  const handleDelete = (postId: string) => { deletePost(postId); setPosts(prev => prev.filter(p => p.id !== postId)) }
+  const handleDelete = async (postId: string) => { await deletePost(postId); setPosts(prev => prev.filter(p => p.id !== postId)) }
   const handleUpdate = (postId: string, content: string, angelNumber?: string) => {
     updatePost(postId, content, angelNumber)
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, content, angelNumber } : p))

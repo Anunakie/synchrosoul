@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    ;(async () => {
     const p = getSocialProfile()
     setProfile(p)
     setEditName(p.displayName)
@@ -44,10 +45,11 @@ export default function ProfilePage() {
     const img = localStorage.getItem(AVATAR_IMG_KEY)
     setAvatarImage(img)
     setEditImage(img)
-    setPosts(getPosts())
-    setNumerology(getNumerologyProfile())
-    const logs = getLogs()
+    getPosts().then(setPosts)
+    getNumerologyProfile().then(setNumerology)
+    const logs = await getLogs()
     setUserNumbers([...new Set(logs.map((l: any) => l.number))] as string[])
+      })()
   }, [])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,8 +89,8 @@ export default function ProfilePage() {
     setPosting(true)
     try {
       await new Promise(r => setTimeout(r, 300))
-      savePost(text, postNumber.trim() || undefined, numerology?.lifePath ?? undefined)
-      setPosts(getPosts())
+      await savePost({ content: text, angelNumber: postNumber.trim() || undefined })
+      getPosts().then(setPosts)
       setPostText('')
       setPostNumber('')
       setComposing(false)
@@ -99,14 +101,14 @@ export default function ProfilePage() {
     }
   }
 
-  const handleResonate = (postId: string) => {
-    toggleResonate(postId)
-    setPosts(getPosts())
+  const handleResonate = async (postId: string) => {
+    await toggleResonate(postId)
+    getPosts().then(setPosts)
   }
 
-  const handleDelete = (postId: string) => {
+  const handleDelete = async (postId: string) => {
     deletePost(postId)
-    setPosts(getPosts())
+    getPosts().then(setPosts)
   }
 
   const initials = profile.displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)

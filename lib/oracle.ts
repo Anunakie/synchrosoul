@@ -56,8 +56,8 @@ export interface OracleReading {
   timestamp: string
 }
 
-export function askOracle(question: string): OracleReading {
-  const logs = getLogs()
+export async function askOracle(question: string): Promise<OracleReading> {
+  const logs = await getLogs()
   const recent = logs.slice(0, 10)
   const category = detectCategory(question)
   const responses = ORACLE_RESPONSES[category] || ORACLE_RESPONSES.default

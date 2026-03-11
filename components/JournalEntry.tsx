@@ -51,13 +51,13 @@ export default function JournalEntry({ log, onDelete, onToggleShare }: Props) {
     setTimeout(() => setIsSpeaking(false), ms + 500)
   }
 
-  function handleDelete() {
-    deleteLog(log.id)
+  async function handleDelete() {
+    await deleteLog(log.id)
     onDelete(log.id)
   }
 
-  function handleShare() {
-    toggleShare(log.id)
+  async function handleShare() {
+    await toggleShare(log.id)
     onToggleShare(log.id)
   }
 

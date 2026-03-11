@@ -34,8 +34,8 @@ function getWeekRange() {
   return { start, end }
 }
 
-export function generateWeeklySynthesis(): WeeklySynthesis {
-  const logs = getLogs()
+export async function generateWeeklySynthesis(): Promise<WeeklySynthesis> {
+  const logs = await getLogs()
   const { start, end } = getWeekRange()
   const weekLogs = logs.filter(l => {
     const d = new Date(l.createdAt)

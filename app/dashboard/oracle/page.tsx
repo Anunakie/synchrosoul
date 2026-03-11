@@ -29,12 +29,12 @@ export default function OraclePage() {
     setHistory(getOracleHistory());
   }, []);
 
-  const handleAsk = () => {
+  const handleAsk = async () => {
     if (!question.trim()) return;
     setLoading(true);
     setRevealed(false);
-    setTimeout(() => {
-      const result = askOracle(question);
+    setTimeout(async () => {
+      const result = await askOracle(question);
       saveOracleReading(result);
       setReading(result);
       setHistory(getOracleHistory());

@@ -1,3 +1,4 @@
+// lib/settings.ts
 
 export interface UserSettings {
   displayName: string
@@ -9,6 +10,7 @@ export interface UserSettings {
     weeklyReport: boolean
   }
   privacy: {
+    privacyMode: boolean
     showProfile: boolean
     showNumbers: boolean
     allowMatching: boolean
@@ -32,6 +34,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
     weeklyReport: true,
   },
   privacy: {
+    privacyMode: false,
     showProfile: true,
     showNumbers: true,
     allowMatching: true,
@@ -48,7 +51,14 @@ export function getSettings(): UserSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
     if (!raw) return DEFAULT_SETTINGS
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    const saved = JSON.parse(raw)
+    return {
+      ...DEFAULT_SETTINGS,
+      ...saved,
+      privacy: { ...DEFAULT_SETTINGS.privacy, ...saved.privacy },
+      notifications: { ...DEFAULT_SETTINGS.notifications, ...saved.notifications },
+      app: { ...DEFAULT_SETTINGS.app, ...saved.app },
+    }
   } catch { return DEFAULT_SETTINGS }
 }
 

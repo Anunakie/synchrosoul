@@ -125,15 +125,17 @@ export default function SyncPage() {
   const [userLifePath, setUserLifePath] = useState(7)
 
   useEffect(() => {
-    const logs = getLogs()
-    const nums = [...new Set(logs.map((l: any) => l.number))]
-    setUserNumbers(nums as string[])
-    const profile = getNumerologyProfile()
-    if (profile?.lifePath) setUserLifePath(profile.lifePath)
-    setTimeout(() => {
-      setMatches(getMockMatches(nums as string[], profile?.lifePath || 7))
-      setLoading(false)
-    }, 800)
+    ;(async () => {
+      const logs = await getLogs()
+      const nums = [...new Set(logs.map((l: any) => l.number))]
+      setUserNumbers(nums as string[])
+      const profile = await getNumerologyProfile()
+      if (profile?.lifePath) setUserLifePath(profile.lifePath)
+      setTimeout(() => {
+        setMatches(getMockMatches(nums as string[], profile?.lifePath || 7))
+        setLoading(false)
+      }, 800)
+    })()
   }, [])
 
   const filtered = matches.filter(m => {

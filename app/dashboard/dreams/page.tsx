@@ -24,12 +24,12 @@ export default function DreamsPage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    setDreams(getDreams())
+    getDreams().then(setDreams)
   }, [])
 
   useEffect(() => {
-    if (search.trim()) setDreams(searchDreams(search))
-    else setDreams(getDreams())
+    if (search.trim()) searchDreams(search).then(setDreams)
+    else getDreams().then(setDreams)
   }, [search])
 
   function toggleSymbol(key: string) {
@@ -46,7 +46,7 @@ export default function DreamsPage() {
     await new Promise(r => setTimeout(r, 700))
     const numbers = angelNumbers.split(/[,\s]+/).map(n => n.replace(/\D/g, '')).filter(Boolean)
     saveDream({ title, description, symbols: selectedSymbols, moods: selectedMoods, angelNumbers: numbers, voiceNoteUrl })
-    setDreams(getDreams())
+    getDreams().then(setDreams)
     setSaving(false)
     setSaved(true)
     setTimeout(() => {
@@ -59,7 +59,7 @@ export default function DreamsPage() {
 
   function handleDelete(id: string) {
     deleteDream(id)
-    setDreams(getDreams())
+    getDreams().then(setDreams)
   }
 
   function handleSpeak(dream: DreamEntry) {

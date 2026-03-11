@@ -2,9 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { getPrivacyMode } from '@/lib/supabase-db'
 import StarField from '@/components/StarField'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { ThemeProvider, useTheme, THEMES } from '@/lib/theme-context'
@@ -121,6 +122,15 @@ function DashboardBackground() {
 }
 
 function DashboardInner({ children }: { children: React.ReactNode }) {
+  const [privacyOn, setPrivacyOn] = useState(false)
+  useEffect(() => {
+    getPrivacyMode().then(setPrivacyOn).catch(() => {})
+    // Also check localStorage fallback
+    try {
+      const s = localStorage.getItem('synchrosoul_settings')
+      if (s) { const parsed = JSON.parse(s); if (parsed.privacyMode) setPrivacyOn(true) }
+    } catch {}
+  }, [])
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
 

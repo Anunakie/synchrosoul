@@ -27,6 +27,7 @@ export default function JournalPage() {
   const [entryThought, setEntryThought] = useState('')
   const [entryScreenshot, setEntryScreenshot] = useState<string | null>(null)
   const [entryVoiceUrl, setEntryVoiceUrl] = useState<string | null>(null)
+  const [filtered, setFiltered] = useState<AngelLog[]>([])
 
   // ── DREAM STATE ──────────────────────────────────────────────────────────
   const [dreams, setDreams] = useState<DreamEntry[]>([])
@@ -43,15 +44,19 @@ export default function JournalPage() {
 
   useEffect(() => {
     setMounted(true)
-    setLogs(getLogs())
-    setStats(getStats())
-    setDreams(getDreams())
+    getLogs().then(setLogs)
+    getStats().then(setStats)
+    getDreams().then(setDreams)
   }, [])
 
-  const filtered = useMemo(() => {
-    let result = query ? searchLogs(query) : logs
-    if (filterNumber) result = result.filter(l => l.number === filterNumber)
-    return result
+  useEffect(() => {
+    if (query) {
+      searchLogs(query).then(results => {
+        setFiltered(filterNumber ? results.filter((l: AngelLog) => l.number === filterNumber) : results)
+      })
+    } else {
+      setFiltered(filterNumber ? logs.filter(l => l.number === filterNumber) : logs)
+    }
   }, [logs, query, filterNumber])
 
   const uniqueNumbers = useMemo(() => {
@@ -77,8 +82,8 @@ export default function JournalPage() {
     return groups
   }, [filtered])
 
-  function handleDelete(id: string) { setLogs(getLogs()); setStats(getStats()) }
-  function handleToggleShare(id: string) { setLogs(getLogs()) }
+  function handleDelete(id: string) { getLogs().then(setLogs); getStats().then(setStats) }
+  function handleToggleShare(id: string) { getLogs().then(setLogs) }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -94,8 +99,8 @@ export default function JournalPage() {
     await new Promise(r => setTimeout(r, 700))
     const num = entryNumber.replace(/\D/g, '') || '111'
     saveLog({ number: num, thought: entryThought, screenshotUrl: entryScreenshot })
-    setLogs(getLogs())
-    setStats(getStats())
+    getLogs().then(setLogs)
+    getStats().then(setStats)
     setSaving(false)
     setSaved(true)
     setTimeout(() => {
@@ -114,7 +119,7 @@ export default function JournalPage() {
     await new Promise(r => setTimeout(r, 600))
     const nums = dreamNumbers.split(/[,\s]+/).map(n => n.replace(/\D/g, '')).filter(Boolean)
     saveDream({ title: dreamTitle || 'Untitled Dream', description: dreamDesc, symbols: dreamSymbols, moods: dreamMoods, angelNumbers: nums, voiceNoteUrl: dreamVoice })
-    setDreams(getDreams())
+    getDreams().then(setDreams)
     setDreamSaving(false)
     setDreamSaved(true)
     setTimeout(() => {
@@ -340,7 +345,7 @@ export default function JournalPage() {
                         <p style={{ fontSize: '0.8rem', color: 'rgba(220,200,255,0.7)', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>{dream.reading}</p>
                       </div>
                     )}
-                    <button onClick={() => { deleteDream(dream.id); setDreams(getDreams()); setExpandedDream(null) }} style={{ fontSize: '0.7rem', color: 'rgba(231,76,60,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete dream</button>
+                    <button onClick={() => { deleteDream(dream.id); getDreams().then(setDreams); setExpandedDream(null) }} style={{ fontSize: '0.7rem', color: 'rgba(231,76,60,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete dream</button>
                   </div>
                 )}
               </div>

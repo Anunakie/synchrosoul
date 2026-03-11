@@ -47,7 +47,7 @@ export default function AngelLogger({ onLogged }: Props) {
     if (!activeNumber) return
     setSaving(true)
     await new Promise(r => setTimeout(r, 600))
-    const log = saveLog({ number: activeNumber, thought, screenshotUrl: screenshot })
+    const log = await saveLog({ number: activeNumber, thought, screenshotUrl: screenshot })
     setLastLog(log)
     setStep('done')
     setSaving(false)

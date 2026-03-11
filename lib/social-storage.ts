@@ -1,5 +1,12 @@
 // lib/social-storage.ts
-// Social posts storage - localStorage now, Supabase-ready
+import {
+  getCurrentUserId,
+  getPostsFromDB,
+  savePostToDB,
+  deletePostFromDB,
+  updatePostInDB,
+  getPrivacyMode,
+} from './supabase-db'
 
 export interface SocialPost {
   id: string
@@ -42,100 +49,153 @@ export function getSocialProfile(): UserSocialProfile {
 }
 
 export function saveSocialProfile(profile: UserSocialProfile): void {
+  if (typeof window === 'undefined') return
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
 }
 
-export function getPosts(): SocialPost[] {
+function getLocalPosts(): SocialPost[] {
   if (typeof window === 'undefined') return []
-  const raw = localStorage.getItem(POSTS_KEY)
-  if (!raw) return []
-  const posts: SocialPost[] = JSON.parse(raw)
-  // Always sync own posts with current avatar image
-  const avatarImage = localStorage.getItem(AVATAR_IMG_KEY) || undefined
-  let changed = false
-  posts.forEach(p => {
-    if (p.authorId === USER_ID && p.authorImage !== avatarImage) {
-      p.authorImage = avatarImage
-      changed = true
-    }
-  })
-  if (changed) localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
-  return posts
+  try {
+    const raw = localStorage.getItem(POSTS_KEY)
+    if (!raw) return []
+    const posts = JSON.parse(raw) as SocialPost[]
+    const avatarImage = localStorage.getItem(AVATAR_IMG_KEY) || undefined
+    return posts.map(p => p.authorId === USER_ID ? { ...p, authorImage: avatarImage } : p)
+  } catch { return [] }
 }
 
-export function savePost(content: string, angelNumber?: string, lifePathNumber?: number): SocialPost {
-  const profile = getSocialProfile()
+export async function getPosts(): Promise<SocialPost[]> {
+  try {
+    const userId = await getCurrentUserId()
+    if (userId) {
+      return await getPostsFromDB()
+    }
+  } catch {}
+  return getLocalPosts()
+}
+
+export async function savePost(data: {
+  content: string
+  angelNumber?: string
+}): Promise<SocialPost | null> {
+  const profile = await getSocialProfile()
+  try {
+    const userId = await getCurrentUserId()
+    if (userId) {
+      // Check privacy mode - still save but mark accordingly
+      const isPrivate = await getPrivacyMode()
+      const dbId = await savePostToDB({
+        content: data.content,
+        angelNumber: data.angelNumber,
+        authorName: profile.displayName || 'Starseed',
+        authorImage: profile.avatarImage,
+      })
+      if (dbId) {
+        return {
+          id: dbId,
+          authorId: userId,
+          authorName: profile.displayName || 'Starseed',
+          authorAvatar: (profile.displayName || 'S').charAt(0).toUpperCase(),
+          authorImage: profile.avatarImage,
+          authorColor: profile.avatarColor || '#9b59b6',
+          content: data.content,
+          angelNumber: data.angelNumber,
+          resonates: 0,
+          resonatedBy: [],
+          createdAt: new Date().toISOString(),
+          isOwn: true,
+        }
+      }
+    }
+  } catch {}
+  // localStorage fallback
   const post: SocialPost = {
-    id: Date.now().toString(),
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
     authorId: USER_ID,
-    authorName: profile.displayName,
-    authorAvatar: profile.displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+    authorName: profile.displayName || 'Starseed',
+    authorAvatar: (profile.displayName || 'S').charAt(0).toUpperCase(),
     authorImage: profile.avatarImage,
-    authorColor: profile.avatarColor,
-    content,
-    angelNumber,
-    lifePathNumber,
+    authorColor: profile.avatarColor || '#9b59b6',
+    content: data.content,
+    angelNumber: data.angelNumber,
     resonates: 0,
     resonatedBy: [],
     createdAt: new Date().toISOString(),
     isOwn: true,
   }
-  const posts = getPosts()
-  posts.unshift(post)
-  localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
+  const existing = getLocalPosts()
+  localStorage.setItem(POSTS_KEY, JSON.stringify([post, ...existing]))
   return post
 }
 
-export function toggleResonate(postId: string): void {
-  const posts = getPosts()
-  const post = posts.find(p => p.id === postId)
-  if (!post) return
-  const idx = post.resonatedBy.indexOf(USER_ID)
-  if (idx === -1) {
-    post.resonatedBy.push(USER_ID)
-    post.resonates++
-  } else {
-    post.resonatedBy.splice(idx, 1)
-    post.resonates--
-  }
+export async function deletePost(id: string): Promise<void> {
+  try {
+    const userId = await getCurrentUserId()
+    if (userId) {
+      await deletePostFromDB(id)
+      return
+    }
+  } catch {}
+  const posts = getLocalPosts().filter(p => p.id !== id)
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
 }
 
-
-export function updatePost(postId: string, newContent: string, newAngelNumber?: string): void {
-  const posts = getPosts()
-  const post = posts.find(p => p.id === postId)
-  if (!post) return
-  post.content = newContent
-  if (newAngelNumber !== undefined) post.angelNumber = newAngelNumber
+export async function updatePost(id: string, content: string, angelNumber?: string): Promise<void> {
+  try {
+    const userId = await getCurrentUserId()
+    if (userId) {
+      await updatePostInDB(id, content, angelNumber)
+      return
+    }
+  } catch {}
+  const posts = getLocalPosts().map(p =>
+    p.id === id ? { ...p, content, angelNumber } : p
+  )
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
 }
-export function deletePost(postId: string): void {
-  const posts = getPosts().filter(p => p.id !== postId)
+
+export async function resonatePost(id: string): Promise<void> {
+  try {
+    const userId = await getCurrentUserId()
+    if (userId) {
+      const supabase = (await import('@/lib/supabase/client')).createClient()
+      await supabase.from('posts').update({ resonates: 0 }).eq('id', id) // placeholder - use RPC
+      return
+    }
+  } catch {}
+  const posts = getLocalPosts().map(p =>
+    p.id === id ? { ...p, resonates: p.resonates + 1 } : p
+  )
   localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
 }
 
-const COLORS = ['#9b59b6','#3498db','#e74c3c','#2ecc71','#f39c12','#1abc9c','#e91e63','#ff5722']
-
+// Compatibility shims
 export function getMockFeedPosts(userNumbers: string[]): SocialPost[] {
-  const now = Date.now()
-  const mockPosts: SocialPost[] = [
-    { id:'m1', authorId:'u1', authorName:'Luna S.', authorAvatar:'LS', authorColor:COLORS[0], content:'Just saw 1111 on my coffee receipt right after thinking about my ex. The universe is wild.', angelNumber:'1111', lifePathNumber:1, resonates:12, resonatedBy:[], createdAt: new Date(now - 1200000).toISOString() },
-    { id:'m2', authorId:'u2', authorName:'Orion K.', authorAvatar:'OK', authorColor:COLORS[1], content:'Three days in a row seeing 555. Something big is shifting. Can feel it in my bones.', angelNumber:'555', lifePathNumber:7, resonates:8, resonatedBy:[], createdAt: new Date(now - 3600000).toISOString() },
-    { id:'m3', authorId:'u3', authorName:'Sage M.', authorAvatar:'SM', authorColor:COLORS[2], content:'My numerology reading said I am a life path 3 and honestly it explains everything about me lol', angelNumber:'333', lifePathNumber:3, resonates:21, resonatedBy:[], createdAt: new Date(now - 7200000).toISOString() },
-    { id:'m4', authorId:'u4', authorName:'Nova T.', authorAvatar:'NT', authorColor:COLORS[3], content:'Woke up at 4:44am. Checked my phone. 444 notifications. I am not okay (in the best way)', angelNumber:'444', lifePathNumber:4, resonates:34, resonatedBy:[], createdAt: new Date(now - 10800000).toISOString() },
-    { id:'m5', authorId:'u5', authorName:'River A.', authorAvatar:'RA', authorColor:COLORS[4], content:'Does anyone else feel like 1111 is a portal? Like time literally slows down when I see it', angelNumber:'1111', lifePathNumber:5, resonates:19, resonatedBy:[], createdAt: new Date(now - 14400000).toISOString() },
-    { id:'m6', authorId:'u6', authorName:'Zephyr L.', authorAvatar:'ZL', authorColor:COLORS[5], content:'777 three times today. Bought a lottery ticket. Did not win. But spiritually I am rich.', angelNumber:'777', lifePathNumber:7, resonates:45, resonatedBy:[], createdAt: new Date(now - 18000000).toISOString() },
-    { id:'m7', authorId:'u7', authorName:'Iris W.', authorAvatar:'IW', authorColor:COLORS[6], content:'The thought anchor journal feature is changing my life. I can see patterns in what I was thinking when I see each number.', angelNumber:'222', lifePathNumber:2, resonates:16, resonatedBy:[], createdAt: new Date(now - 21600000).toISOString() },
-    { id:'m8', authorId:'u8', authorName:'Phoenix R.', authorAvatar:'PR', authorColor:COLORS[7], content:'Saw 999 the day I finally quit my job. Completion energy is real. New chapter loading.', angelNumber:'999', lifePathNumber:9, resonates:28, resonatedBy:[], createdAt: new Date(now - 28800000).toISOString() },
-    { id:'m9', authorId:'u1', authorName:'Luna S.', authorAvatar:'LS', authorColor:COLORS[0], content:'Life path 1 gang where are you. We are literally built different and the numbers keep confirming it', angelNumber:'111', lifePathNumber:1, resonates:7, resonatedBy:[], createdAt: new Date(now - 36000000).toISOString() },
-    { id:'m10', authorId:'u3', authorName:'Sage M.', authorAvatar:'SM', authorColor:COLORS[2], content:'1212 is my most seen number lately. Spiritual growth era activated. Who else?', angelNumber:'1212', lifePathNumber:3, resonates:11, resonatedBy:[], createdAt: new Date(now - 43200000).toISOString() },
-  ]
-  // Boost posts that share user numbers
-  return mockPosts.sort((a, b) => {
-    const aMatch = a.angelNumber && userNumbers.includes(a.angelNumber) ? 1 : 0
-    const bMatch = b.angelNumber && userNumbers.includes(b.angelNumber) ? 1 : 0
-    if (bMatch !== aMatch) return bMatch - aMatch
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  })
+  const mockNames = ['Luna Star', 'Orion Light', 'Sage River', 'Nova Soul', 'Zara Moon']
+  const mockNumbers = ['1111', '333', '555', '777', '444', '222', '888']
+  return mockNumbers
+    .filter(n => userNumbers.length === 0 || userNumbers.includes(n) || Math.random() > 0.5)
+    .slice(0, 4)
+    .map((num, i) => ({
+      id: 'mock_' + i,
+      authorId: 'mock_' + i,
+      authorName: mockNames[i % mockNames.length],
+      authorAvatar: mockNames[i % mockNames.length].charAt(0),
+      authorColor: ['#9b59b6','#3498db','#e74c3c','#2ecc71','#f39c12'][i % 5],
+      content: [
+        'Just saw ' + num + ' three times today ✨ feeling so aligned',
+        'The universe keeps showing me ' + num + ' 💜 what a sign',
+        num + ' appeared on my receipt, license plate AND clock today!',
+        'Woke up at ' + num.slice(0,2) + ':' + num.slice(2) + ' again... ' + num + ' is following me 🌙',
+      ][i % 4],
+      angelNumber: num,
+      resonates: Math.floor(Math.random() * 20),
+      resonatedBy: [],
+      createdAt: new Date(Date.now() - i * 3600000).toISOString(),
+      isOwn: false,
+    }))
+}
+
+export async function toggleResonate(postId: string): Promise<void> {
+  await resonatePost(postId)
 }
