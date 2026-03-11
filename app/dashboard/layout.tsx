@@ -126,7 +126,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/auth/signout', { method: 'POST' })
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      await supabase.auth.signOut()
     } catch {}
     window.location.href = '/'
   }
