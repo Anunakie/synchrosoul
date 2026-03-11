@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { getLiveSyncMatches, LiveSyncMatch } from '@/lib/supabase-db';
+import { getLiveSyncMatches, LiveSyncMatch, sendSyncSignal } from '@/lib/supabase-db';
 import { getMockMatches } from '@/lib/sync-matching';
 import { getLogs, getNumerologyProfile } from '@/lib/storage';
 import { createClient } from '@/lib/supabase/client';
@@ -31,6 +31,7 @@ export default function SyncPage() {
   const [isRealData, setIsRealData] = useState(false);
   const [userNumbers, setUserNumbers] = useState<string[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [signaled, setSignaled] = useState<Record<string, 'sending' | 'sent' | 'error'>>({});
   const numsRef = useRef<string[]>([]);
   const lpRef = useRef<number>(7);
 
@@ -90,6 +91,13 @@ export default function SyncPage() {
     if (filter === 'verified') return (m.verified || 0) >= 2;
     return true;
   });
+
+  async function handleSignal(userId: string, sharedNumbers: string[], syncScore: number) {
+    if (signaled[userId]) return;
+    setSignaled(prev => ({ ...prev, [userId]: 'sending' }));
+    const ok = await sendSyncSignal(userId, sharedNumbers, syncScore);
+    setSignaled(prev => ({ ...prev, [userId]: ok ? 'sent' : 'error' }));
+  }
 
   return (
     <div style={{ minHeight: '100vh', padding: '1.5rem 1rem 6rem', maxWidth: '600px', margin: '0 auto' }}>
@@ -204,9 +212,25 @@ export default function SyncPage() {
                     The universe is aligning your paths. ✨
                   </p>
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
-                      background: 'rgba(201,168,76,0.2)', color: '#c9a84c', fontWeight: 600,
-                      fontSize: '0.85rem', cursor: 'pointer' }}>💌 Send Sync Signal</button>
+                    <button
+                      onClick={() => handleSignal(m.userId || String(i), m.sharedNumbers, m.syncScore)}
+                      disabled={!!signaled[m.userId || String(i)]}
+                      style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
+                        background: signaled[m.userId || String(i)] === 'sent'
+                          ? 'rgba(74,222,128,0.15)'
+                          : signaled[m.userId || String(i)] === 'error'
+                          ? 'rgba(239,68,68,0.15)'
+                          : 'rgba(201,168,76,0.2)',
+                        color: signaled[m.userId || String(i)] === 'sent' ? '#4ade80'
+                          : signaled[m.userId || String(i)] === 'error' ? '#f87171' : '#c9a84c',
+                        fontWeight: 600, fontSize: '0.85rem',
+                        cursor: signaled[m.userId || String(i)] ? 'default' : 'pointer',
+                        transition: 'all 0.3s' }}>
+                      {signaled[m.userId || String(i)] === 'sending' ? '⏳ Sending...'
+                        : signaled[m.userId || String(i)] === 'sent' ? '✓ Signal Sent!'
+                        : signaled[m.userId || String(i)] === 'error' ? '✕ Failed'
+                        : '💌 Send Sync Signal'}
+                    </button>
                     <button style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
                       background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)',
                       fontSize: '0.85rem', cursor: 'pointer' }}>👁 View Profile</button>

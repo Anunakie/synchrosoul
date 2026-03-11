@@ -353,54 +353,87 @@ export interface LiveSyncMatch {
   verified: number
 }
 
+// Numerology compatibility matrix (life path harmony)
+const LP_COMPAT: Record<string, number> = {
+  '1-1':85,'1-2':70,'1-3':90,'1-4':60,'1-5':88,'1-6':65,'1-7':75,'1-8':80,'1-9':70,
+  '2-2':80,'2-3':75,'2-4':85,'2-5':65,'2-6':90,'2-7':80,'2-8':60,'2-9':85,
+  '3-3':85,'3-4':65,'3-5':90,'3-6':80,'3-7':70,'3-8':75,'3-9':88,
+  '4-4':80,'4-5':60,'4-6':85,'4-7':90,'4-8':88,'4-9':65,
+  '5-5':75,'5-6':70,'5-7':80,'5-8':85,'5-9':90,
+  '6-6':90,'6-7':75,'6-8':70,'6-9':88,
+  '7-7':85,'7-8':70,'7-9':80,
+  '8-8':80,'8-9':75,
+  '9-9':90,
+}
+function lpCompat(a: number | null, b: number | null): number {
+  if (!a || !b) return 0
+  const key = [Math.min(a,b), Math.max(a,b)].join('-')
+  return LP_COMPAT[key] || 70
+}
+
+// Master / sacred numbers get bonus weight
+const SACRED = new Set(['1111','1212','777','333','999','888','444','555','222','1010','1234','1313'])
+
 export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
   try {
     const supabase = createClient()
     const myId = await getCurrentUserId()
     if (!myId) return []
 
-    // Get my recent logs (last 48hrs)
+    // Get my recent logs (last 48hrs) with timestamps
     const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
     const { data: myLogs } = await supabase
       .from('angel_logs')
-      .select('number')
+      .select('number, created_at')
       .eq('user_id', myId)
       .gte('created_at', since48h)
-    const myNumbers = [...new Set((myLogs || []).map((l: any) => l.number as string))]
-    if (myNumbers.length === 0) return []
+    if (!myLogs || myLogs.length === 0) return []
 
-    // Step 1: Get other users logs in last 48hrs (no FK join - two-step query)
+    const myNumbers = [...new Set(myLogs.map((l: any) => l.number as string))]
+    // Map number -> timestamps for proximity scoring
+    const myTimestamps: Record<string, number[]> = {}
+    for (const l of myLogs) {
+      if (!myTimestamps[l.number]) myTimestamps[l.number] = []
+      myTimestamps[l.number].push(new Date(l.created_at).getTime())
+    }
+
+    // Get my life path for compatibility scoring
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('life_path')
+      .eq('id', myId)
+      .single()
+    const myLifePath: number | null = myProfile?.life_path || null
+
+    // Step 1: Get other users logs in last 48hrs
     const { data: otherLogs, error: logsError } = await supabase
       .from('angel_logs')
       .select('user_id, number, created_at')
       .neq('user_id', myId)
       .gte('created_at', since48h)
       .order('created_at', { ascending: false })
-      .limit(500)
+      .limit(1000)
 
     if (logsError) console.error('[SynchroSoul] getLiveSyncMatches logs error:', logsError.message)
     if (!otherLogs || otherLogs.length === 0) return []
 
-    // Get unique user IDs from logs
     const otherUserIds = [...new Set(otherLogs.map((l: any) => l.user_id as string))]
 
-    // Step 2: Fetch profiles for those users separately
+    // Step 2: Fetch profiles
     const { data: profiles } = await supabase
       .from('profiles')
       .select('id, display_name, avatar_color, avatar_url, life_path, privacy_mode')
       .in('id', otherUserIds)
 
     const profileMap: Record<string, any> = {}
-    for (const p of (profiles || [])) {
-      profileMap[p.id] = p
-    }
+    for (const p of (profiles || [])) profileMap[p.id] = p
 
-    // Group logs by user
+    // Group logs by user with full timestamps
     const userMap: Record<string, any> = {}
     for (const log of otherLogs) {
       const uid = log.user_id as string
       const profile = profileMap[uid]
-      if (profile?.privacy_mode) continue // skip private users
+      if (profile?.privacy_mode) continue
       if (!userMap[uid]) {
         userMap[uid] = {
           userId: uid,
@@ -408,28 +441,55 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
           avatarColor: profile?.avatar_color || '#9b59b6',
           avatarUrl: profile?.avatar_url || null,
           lifePath: profile?.life_path || null,
-          numbers: [],
+          logs: [],
           lastSeen: log.created_at,
         }
       }
-      userMap[uid].numbers.push(log.number)
+      userMap[uid].logs.push({ number: log.number, ts: new Date(log.created_at).getTime() })
     }
 
-    // Calculate sync scores
+    // Calculate enhanced sync scores
     const matches: LiveSyncMatch[] = []
     for (const uid of Object.keys(userMap)) {
       const u = userMap[uid]
-      const theirNumbers = [...new Set(u.numbers as string[])]
+      const theirNumbers = [...new Set(u.logs.map((l: any) => l.number as string))]
       const shared = myNumbers.filter(n => theirNumbers.includes(n))
       if (shared.length === 0) continue
 
-      // Sync score: shared numbers weight + numerology bonus
-      let score = Math.round((shared.length / Math.max(myNumbers.length, theirNumbers.length)) * 70)
-      // Bonus for master numbers
-      if (shared.some(n => ['1111','1212','777','333','999'].includes(n))) score += 15
-      // Numerology bonus
-      if (u.lifePath) score += 10
-      score = Math.min(score, 99)
+      // ── Scoring components ──────────────────────────────────────────────
+      // 1. Shared number ratio (0-40 pts)
+      const unionSize = new Set([...myNumbers, ...theirNumbers]).size
+      const sharedRatio = shared.length / unionSize
+      let score = Math.round(sharedRatio * 40)
+
+      // 2. Sacred/master number bonus (0-20 pts)
+      const sacredShared = shared.filter(n => SACRED.has(n))
+      score += Math.min(sacredShared.length * 7, 20)
+
+      // 3. Time proximity bonus (0-25 pts)
+      // For each shared number, find closest timestamp pair
+      let proximityBonus = 0
+      for (const num of shared) {
+        const myTs = myTimestamps[num] || []
+        const theirTs = u.logs.filter((l: any) => l.number === num).map((l: any) => l.ts)
+        let minDiff = Infinity
+        for (const mt of myTs) {
+          for (const tt of theirTs) {
+            minDiff = Math.min(minDiff, Math.abs(mt - tt))
+          }
+        }
+        // Within 1hr = 8pts, 6hr = 5pts, 24hr = 2pts
+        if (minDiff < 3600000) proximityBonus += 8
+        else if (minDiff < 21600000) proximityBonus += 5
+        else proximityBonus += 2
+      }
+      score += Math.min(proximityBonus, 25)
+
+      // 4. Numerology compatibility bonus (0-15 pts)
+      const compat = lpCompat(myLifePath, u.lifePath)
+      score += Math.round((compat / 100) * 15)
+
+      score = Math.max(10, Math.min(score, 99))
 
       matches.push({
         userId: uid,
@@ -441,7 +501,7 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
         syncScore: score,
         lifePath: u.lifePath,
         lastSeen: u.lastSeen,
-        verified: shared.length,
+        verified: sacredShared.length,
       })
     }
 
@@ -450,6 +510,32 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
     console.error('getLiveSyncMatches error:', e)
     return []
   }
+}
+
+// Send a sync signal (notification) to a matched user
+export async function sendSyncSignal(toUserId: string, sharedNumbers: string[], syncScore: number): Promise<boolean> {
+  try {
+    const supabase = createClient()
+    const myId = await getCurrentUserId()
+    if (!myId) return false
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', myId)
+      .single()
+    const fromName = myProfile?.display_name || 'A Starseed'
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: toUserId,
+        type: 'sync_match',
+        title: '✨ Sync Signal Received',
+        message: `${fromName} sent you a sync signal! You both logged ${sharedNumbers.slice(0,3).join(', ')} — ${syncScore}% cosmic alignment.`,
+        metadata: { fromUserId: myId, fromName, sharedNumbers, syncScore },
+        read: false,
+      })
+    return !error
+  } catch { return false }
 }
 
 // ─── Social Feed (all non-private users) ────────────────────────────────────
