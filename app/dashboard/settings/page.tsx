@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react'
 import { setPrivacyMode, getPrivacyMode, getCurrentUserId } from '@/lib/supabase-db'
 import { syncAllToCloud } from '@/lib/storage'
+import PushNotificationSettings from '@/components/PushNotificationSettings'
+
+
 
 const DEFAULTS = {
   displayName: '',
@@ -184,6 +187,8 @@ export default function SettingsPage() {
       </div>
 
       <Section title="Notifications">
+        <PushNotificationSettings />
+        <div style={{ marginTop: '1rem' }}>
         <Toggle label="Daily Reminder" desc="Morning nudge to log your numbers" val={s.dailyReminder} onChange={v => update('dailyReminder', v)} />
         <Toggle label="Streak Alerts" desc="Keep your logging streak alive" val={s.streakAlerts} onChange={v => update('streakAlerts', v)} />
         <Toggle label="Sync Alerts" desc="When someone shares your angel numbers" val={s.matchAlerts} onChange={v => update('matchAlerts', v)} />
@@ -193,6 +198,7 @@ export default function SettingsPage() {
           <input type="time" value={s.reminderTime} onChange={e => update('reminderTime', e.target.value)}
             style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: '#fff', padding: '0.3rem 0.6rem', fontSize: '0.85rem' }} />
         </div>
+      </div>
       </Section>
 
       <Section title="Community">
