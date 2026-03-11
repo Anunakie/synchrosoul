@@ -93,7 +93,7 @@ export default function SignupPage() {
         options: { data: { full_name: name, birthdate, life_path: lifePath, soul_urge: soulUrge, destiny } },
       })
       if (error) throw error
-      window.location.href = '/dashboard'
+      window.location.href = '/dashboard/onboarding'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {

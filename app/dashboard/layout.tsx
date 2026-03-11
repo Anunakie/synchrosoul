@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { getPrivacyMode } from '@/lib/supabase-db'
 import StarField from '@/components/StarField'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
+import NotificationBell from '@/components/NotificationBell'
 import { ThemeProvider, useTheme, THEMES } from '@/lib/theme-context'
 
 const NAV_ITEMS = [
@@ -214,6 +215,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       <main style={{ position: 'relative', zIndex: 1 }}>{children}</main>
 
       <ThemeSwitcher />
+      <NotificationBell />
 
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(5,5,16,0.92)', backdropFilter: 'blur(24px)', borderTop: '1px solid rgba(200,180,255,0.1)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', height: '4.5rem', padding: '0 0.25rem' }}>
         {NAV_ITEMS.map(item => {

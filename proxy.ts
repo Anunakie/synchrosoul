@@ -42,6 +42,7 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
+  const isOnboarding = request.nextUrl.pathname === '/dashboard/onboarding'
 
   if (!user && isDashboard) {
     const url = request.nextUrl.clone()
@@ -53,6 +54,17 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // New users: redirect to onboarding if not completed
+  // (onboarding page itself is excluded to avoid loop)
+  if (user && isDashboard && !isOnboarding) {
+    const onboardingDone = request.cookies.get('onboarding_complete')?.value
+    if (onboardingDone === 'false') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard/onboarding'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
