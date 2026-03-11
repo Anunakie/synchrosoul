@@ -55,10 +55,47 @@ export async function getLogs(): Promise<AngelLog[]> {
     const userId = await getCurrentUserId()
     if (userId) {
       const dbLogs = await getLogsFromDB()
-      return dbLogs.map(enrichLog)
+      const localLogs = getLocalLogs()
+      // Merge: db logs take priority, add any local-only logs
+      const dbIds = new Set(dbLogs.map(l => l.id))
+      const localOnly = localLogs.filter(l => !dbIds.has(l.id))
+      return [...dbLogs, ...localOnly].map(enrichLog)
     }
   } catch {}
   return getLocalLogs().map(enrichLog)
+}
+
+// Migrate localStorage logs to Supabase (call once on login)
+export async function migrateLocalLogsToSupabase(): Promise<void> {
+  try {
+    const userId = await getCurrentUserId()
+    if (!userId) return
+    const localLogs = getLocalLogs()
+    if (localLogs.length === 0) return
+    // Get existing DB log IDs to avoid duplicates
+    const dbLogs = await getLogsFromDB()
+    const dbNumbers = new Set(dbLogs.map(l => l.createdAt.slice(0, 16))) // minute-level dedup
+    let migrated = 0
+    for (const log of localLogs) {
+      const minute = log.createdAt.slice(0, 16)
+      if (dbNumbers.has(minute)) continue // skip likely duplicate
+      try {
+        await saveLogToDB({
+          number: log.number,
+          thought: log.thought,
+          screenshotUrl: log.screenshotUrl,
+        })
+        migrated++
+      } catch {}
+    }
+    if (migrated > 0) {
+      console.log(`[SynchroSoul] Migrated ${migrated} logs to Supabase`)
+      // Clear localStorage after successful migration
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  } catch (e) {
+    console.error('[SynchroSoul] Migration error:', e)
+  }
 }
 
 export async function saveLog(data: {

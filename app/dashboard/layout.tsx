@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { getPrivacyMode } from '@/lib/supabase-db'
+import { migrateLocalLogsToSupabase } from '@/lib/storage'
 import StarField from '@/components/StarField'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import NotificationBell from '@/components/NotificationBell'
@@ -131,6 +132,8 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       const s = localStorage.getItem('synchrosoul_settings')
       if (s) { const parsed = JSON.parse(s); if (parsed.privacyMode) setPrivacyOn(true) }
     } catch {}
+    // Migrate any localStorage angel logs to Supabase
+    migrateLocalLogsToSupabase().catch(() => {})
   }, [])
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)

@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getLiveSyncMatches, LiveSyncMatch } from '@/lib/supabase-db';
 import { getMockMatches } from '@/lib/sync-matching';
 import { getLogs, getNumerologyProfile } from '@/lib/storage';
+import { createClient } from '@/lib/supabase/client';
 
 function SyncScoreRing({ score }: { score: number }) {
   const r = 28, circ = 2 * Math.PI * r;
@@ -29,31 +30,59 @@ export default function SyncPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [isRealData, setIsRealData] = useState(false);
   const [userNumbers, setUserNumbers] = useState<string[]>([]);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const numsRef = useRef<string[]>([]);
+  const lpRef = useRef<number>(7);
+
+  async function loadMatches() {
+    try {
+      const real = await getLiveSyncMatches();
+      if (real.length > 0) {
+        setMatches(real);
+        setIsRealData(true);
+        setLastRefresh(new Date());
+        return;
+      }
+    } catch {}
+    setMatches(getMockMatches(numsRef.current, lpRef.current) as any);
+    setIsRealData(false);
+    setLastRefresh(new Date());
+  }
 
   useEffect(() => {
-    ;(async () => {
+    let channel: any = null;
+    (async () => {
       const logs = await getLogs();
       const nums = [...new Set(logs.map((l: any) => l.number))] as string[];
+      numsRef.current = nums;
       setUserNumbers(nums);
       const profile = await getNumerologyProfile();
+      lpRef.current = profile?.lifePath || 7;
 
-      // Try real Supabase data first
+      await loadMatches();
+      setLoading(false);
+
+      // Supabase Realtime — refresh when anyone logs a new number
       try {
-        const real = await getLiveSyncMatches();
-        if (real.length > 0) {
-          setMatches(real);
-          setIsRealData(true);
-          setLoading(false);
-          return;
-        }
-      } catch {}
-
-      // Fallback to mock data
-      setTimeout(() => {
-        setMatches(getMockMatches(nums, profile?.lifePath || 7) as any);
-        setLoading(false);
-      }, 800);
+        const supabase = createClient();
+        channel = supabase
+          .channel('sync-angel-logs')
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'angel_logs',
+          }, () => { loadMatches(); })
+          .subscribe();
+      } catch (e) {
+        console.error('Realtime subscription error:', e);
+      }
     })();
+
+    return () => {
+      if (channel) {
+        try { createClient().removeChannel(channel); } catch {}
+      }
+    };
   }, []);
 
   const filtered = matches.filter(m => {
@@ -64,25 +93,28 @@ export default function SyncPage() {
 
   return (
     <div style={{ minHeight: '100vh', padding: '1.5rem 1rem 6rem', maxWidth: '600px', margin: '0 auto' }}>
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🔮</div>
         <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 700, color: '#fff', margin: 0 }}>Live Sync</h1>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
           {isRealData ? '✦ Real-time cosmic connections' : '✦ Demo connections — log numbers to find real matches'}
         </p>
-        {isRealData && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem',
-            padding: '0.25rem 0.75rem', borderRadius: '999px', background: 'rgba(201,168,76,0.15)',
-            border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontSize: '0.75rem' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c9a84c',
-              boxShadow: '0 0 6px #c9a84c', animation: 'pulse 2s infinite' }} />
-            Live Data
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+          {isRealData && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.25rem 0.75rem', borderRadius: '999px', background: 'rgba(201,168,76,0.15)',
+              border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontSize: '0.75rem' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c9a84c',
+                boxShadow: '0 0 6px #c9a84c', animation: 'pulse 2s infinite' }} />
+              Live Data
+            </div>
+          )}
+          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem' }}>
+            Updated {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
       </div>
 
-      {/* Your numbers */}
       {userNumbers.length > 0 && (
         <div style={{ background: 'rgba(8,6,28,0.7)', border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '16px', padding: '1rem', marginBottom: '1.5rem', backdropFilter: 'blur(12px)' }}>
@@ -97,7 +129,6 @@ export default function SyncPage() {
         </div>
       )}
 
-      {/* Filters */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
         {[['all','All Matches'],['high','High Sync (80%+)'],['verified','Verified']].map(([val, label]) => (
           <button key={val} onClick={() => setFilter(val)}
@@ -110,7 +141,6 @@ export default function SyncPage() {
         ))}
       </div>
 
-      {/* Matches */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem 0' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'spin 2s linear infinite' }}>✦</div>
@@ -133,7 +163,6 @@ export default function SyncPage() {
                 borderRadius: '20px', padding: '1.25rem', cursor: 'pointer',
                 backdropFilter: 'blur(12px)', transition: 'all 0.3s ease' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                {/* Avatar */}
                 <div style={{ width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0,
                   background: m.avatarUrl ? 'transparent' : (m.avatarColor || '#9b59b6'),
                   border: '2px solid rgba(255,255,255,0.15)',
@@ -143,7 +172,6 @@ export default function SyncPage() {
                     ? <img src={m.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : '✨'}
                 </div>
-                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <span style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>{m.displayName}</span>
@@ -166,11 +194,9 @@ export default function SyncPage() {
                     )}
                   </div>
                 </div>
-                {/* Score ring */}
                 <SyncScoreRing score={m.syncScore} />
               </div>
 
-              {/* Expanded */}
               {expanded === (m.userId || String(i)) && (
                 <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                   <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>

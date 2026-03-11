@@ -369,22 +369,38 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
     const myNumbers = [...new Set((myLogs || []).map((l: any) => l.number as string))]
     if (myNumbers.length === 0) return []
 
-    // Get other users' logs in last 48hrs (excluding me, excluding private)
-    const { data: otherLogs } = await supabase
+    // Step 1: Get other users logs in last 48hrs (no FK join - two-step query)
+    const { data: otherLogs, error: logsError } = await supabase
       .from('angel_logs')
-      .select('user_id, number, created_at, profiles!angel_logs_user_id_fkey(display_name, avatar_color, avatar_url, life_path, privacy_mode)')
+      .select('user_id, number, created_at')
       .neq('user_id', myId)
       .gte('created_at', since48h)
       .order('created_at', { ascending: false })
+      .limit(500)
 
+    if (logsError) console.error('[SynchroSoul] getLiveSyncMatches logs error:', logsError.message)
     if (!otherLogs || otherLogs.length === 0) return []
 
-    // Group by user
+    // Get unique user IDs from logs
+    const otherUserIds = [...new Set(otherLogs.map((l: any) => l.user_id as string))]
+
+    // Step 2: Fetch profiles for those users separately
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_color, avatar_url, life_path, privacy_mode')
+      .in('id', otherUserIds)
+
+    const profileMap: Record<string, any> = {}
+    for (const p of (profiles || [])) {
+      profileMap[p.id] = p
+    }
+
+    // Group logs by user
     const userMap: Record<string, any> = {}
     for (const log of otherLogs) {
-      const profile = (log as any).profiles
-      if (profile?.privacy_mode) continue // skip private users
       const uid = log.user_id as string
+      const profile = profileMap[uid]
+      if (profile?.privacy_mode) continue // skip private users
       if (!userMap[uid]) {
         userMap[uid] = {
           userId: uid,
