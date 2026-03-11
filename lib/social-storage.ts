@@ -68,7 +68,27 @@ export async function getPosts(): Promise<SocialPost[]> {
   try {
     const userId = await getCurrentUserId()
     if (userId) {
-      return await getPostsFromDB()
+      // Get posts from Supabase
+      const dbPosts = await getPostsFromDB()
+      // Also get any localStorage posts (in case DB save failed)
+      const localPosts = getLocalPosts()
+      // Merge: add local posts that aren't already in DB (by content+time proximity)
+      const dbIds = new Set(dbPosts.map(p => p.id))
+      const localOnly = localPosts.filter(p => !dbIds.has(p.id) && p.isOwn)
+      // Try to migrate local-only posts to DB in background
+      if (localOnly.length > 0) {
+        localOnly.forEach(async (p) => {
+          try {
+            const dbId = await savePostToDB({ content: p.content, angelNumber: p.angelNumber, authorName: p.authorName, authorImage: p.authorImage })
+            if (dbId) {
+              // Remove from localStorage now that it's in DB
+              const remaining = getLocalPosts().filter(lp => lp.id !== p.id)
+              localStorage.setItem(POSTS_KEY, JSON.stringify(remaining))
+            }
+          } catch {}
+        })
+      }
+      return [...dbPosts, ...localOnly].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     }
   } catch {}
   return getLocalPosts()

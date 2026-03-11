@@ -281,9 +281,14 @@ export async function savePostToDB(data: {
       })
       .select('id')
       .single()
-    if (error || !row) return null
+    if (error) {
+      console.error('[SynchroSoul] savePostToDB error:', error.message, error.details, error.hint)
+      return null
+    }
+    if (!row) return null
     return row.id
-  } catch {
+  } catch (e) {
+    console.error('[SynchroSoul] savePostToDB exception:', e)
     return null
   }
 }
