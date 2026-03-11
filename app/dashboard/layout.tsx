@@ -38,6 +38,7 @@ const MORE_SECTIONS = [
       { href: '/dashboard/oracle', label: 'Oracle', emoji: '✦' },
       { href: '/dashboard/tarot', label: 'Tarot', emoji: '🃏' },
       { href: '/dashboard/dictionary', label: 'Dictionary', emoji: '📚' },
+      { href: '/dashboard/saved-readings', label: 'Saved', emoji: '🔖' },
       { href: '/dashboard/moon', label: 'Moon Phases', emoji: '🌙' },
     ]
   },

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import SaveReadingButton from '@/components/SaveReadingButton';
 
 const majorArcana = [
   { num: 0, name: 'The Fool', emoji: '🌟', upright: 'New beginnings, innocence, spontaneity, free spirit', reversed: 'Recklessness, risk-taking, holding back', angelNumber: '000', element: 'Air', color: '#ffd700', desc: 'The Fool represents the start of a new journey. Pure potential, unlimited possibility, and the courage to leap into the unknown with faith.' },

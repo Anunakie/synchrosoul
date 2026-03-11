@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import SaveReadingButton from '@/components/SaveReadingButton';
 import { askOracle, getOracleHistory, saveOracleReading, OracleReading } from '@/lib/oracle';
 
 const SUGGESTED_QUESTIONS = [
