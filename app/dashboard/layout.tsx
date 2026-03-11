@@ -65,6 +65,7 @@ const MORE_SECTIONS = [
     color: '#4ade80',
     items: [
       { href: '/dashboard/healing-hub', label: 'Healing Hub', emoji: '🌿' },
+      { href: '/dashboard/healers', label: 'Find a Healer', emoji: '🙌' },
       { href: '/dashboard/meditations', label: 'Meditations', emoji: '🧘' },
       { href: '/dashboard/breathwork', label: 'Breathwork', emoji: '💨' },
       { href: '/dashboard/solfeggio', label: 'Solfeggio', emoji: '🎵' },

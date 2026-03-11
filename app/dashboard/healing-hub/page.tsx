@@ -98,6 +98,18 @@ export default function HealingHubPage() {
         <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Your complete spiritual wellness sanctuary</p>
       </div>
 
+      {/* Find a Local Healer Banner */}
+      <Link href="/dashboard/healers" style={{ textDecoration: 'none', display: 'block', marginBottom: '1.5rem' }}>
+        <div style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(167,139,250,0.1))', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '1.5rem', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', backdropFilter: 'blur(12px)' }}>
+          <div style={{ fontSize: '2.5rem', flexShrink: 0 }}>🙌</div>
+          <div style={{ flex: 1 }}>
+            <p style={{ color: '#c9a84c', fontWeight: 700, fontSize: '1rem', fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.2rem' }}>Find a Local Healer</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem' }}>Connect with Reiki masters, naturopathic physicians, sound healers & more near you</p>
+          </div>
+          <div style={{ flexShrink: 0, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '999px', padding: '0.4rem 0.875rem', color: '#c9a84c', fontSize: '0.75rem', fontWeight: 700 }}>Browse →</div>
+        </div>
+      </Link>
+
       {/* Personalized recommendation */}
       {topNumber && HEALING_NUMBERS[topNumber] && (
         <div style={{ background: 'linear-gradient(135deg, rgba(34,211,238,0.1), rgba(8,6,28,0.95))', borderRadius: '1.5rem', border: '1px solid rgba(34,211,238,0.2)', padding: '1.25rem', marginBottom: '1.25rem', backdropFilter: 'blur(12px)' }}>
