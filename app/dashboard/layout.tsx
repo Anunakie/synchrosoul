@@ -124,6 +124,13 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/auth/signout', { method: 'POST' })
+    } catch {}
+    window.location.href = '/'
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'transparent', paddingBottom: '5rem', position: 'relative' }}>
       <DashboardBackground />
@@ -213,6 +220,22 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
           <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☰</span>
           <span style={{ fontSize: '0.55rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: moreOpen ? 'rgba(220,180,255,0.9)' : 'rgba(200,180,255,0.35)', fontWeight: moreOpen ? 600 : 400 }}>More</span>
         </button>
+      {/* Logout button */}
+      <button
+        onClick={handleLogout}
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: '0.2rem', background: 'none', border: 'none', cursor: 'pointer',
+          padding: '0.4rem 0.5rem', borderRadius: '0.75rem',
+          transition: 'all 0.2s',
+          color: 'rgba(255,100,100,0.5)',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,100,100,0.9)')}
+        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,100,100,0.5)')}
+      >
+        <span style={{ fontSize: '1.1rem' }}>⏻</span>
+        <span style={{ fontSize: '0.55rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Logout</span>
+      </button>
       </nav>
     </div>
   )
