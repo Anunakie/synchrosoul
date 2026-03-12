@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { getSocialProfile, saveSocialProfile, getPosts, savePost, deletePost, toggleResonate, UserSocialProfile, SocialPost } from '@/lib/social-storage'
+import { getSocialProfile, saveSocialProfile, getPosts, savePost, deletePost, updatePost, toggleResonate, UserSocialProfile, SocialPost } from '@/lib/social-storage'
+import { loadFullProfile, saveFullProfile, getCurrentUserId } from '@/lib/supabase-db'
 import { getNumerologyProfile } from '@/lib/storage'
 import { getLogs } from '@/lib/storage'
 import { LIFE_PATH_DATA } from '@/lib/numerology'
@@ -33,23 +34,94 @@ export default function ProfilePage() {
   const [postNumber, setPostNumber] = useState('')
   const [posting, setPosting] = useState(false)
   const [uploadHover, setUploadHover] = useState(false)
+  const [syncing, setSyncing] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     ;(async () => {
-    const p = getSocialProfile()
-    setProfile(p)
-    setEditName(p.displayName)
-    setEditBio(p.bio)
-    setEditColor(p.avatarColor)
-    const img = localStorage.getItem(AVATAR_IMG_KEY)
-    setAvatarImage(img)
-    setEditImage(img)
-    getPosts().then(setPosts)
-    getNumerologyProfile().then(setNumerology)
-    const logs = await getLogs()
-    setUserNumbers([...new Set(logs.map((l: any) => l.number))] as string[])
-      })()
+      setSyncing(true)
+      try {
+        const userId = await getCurrentUserId()
+        if (userId) {
+          // Load from Supabase first (cross-device source of truth)
+          const cloudProfile = await loadFullProfile()
+          if (cloudProfile) {
+            const p: UserSocialProfile = {
+              displayName: cloudProfile.displayName,
+              bio: cloudProfile.bio,
+              avatarColor: cloudProfile.avatarColor,
+              avatarImage: cloudProfile.avatarImage || undefined,
+              joinedAt: new Date().toISOString(),
+            }
+            setProfile(p)
+            setEditName(p.displayName)
+            setEditBio(p.bio)
+            setEditColor(p.avatarColor)
+            saveSocialProfile(p)
+            const cloudAvatar = cloudProfile.avatarImage
+            const localAvatar = localStorage.getItem(AVATAR_IMG_KEY)
+            const avatar = cloudAvatar || localAvatar
+            setAvatarImage(avatar)
+            setEditImage(avatar)
+            if (cloudAvatar && cloudAvatar !== localAvatar) {
+              localStorage.setItem(AVATAR_IMG_KEY, cloudAvatar)
+            }
+            if (cloudProfile.lifePath) {
+              setNumerology({ lifePath: cloudProfile.lifePath, soulUrge: cloudProfile.soulUrge, destiny: cloudProfile.destiny })
+            } else {
+              getNumerologyProfile().then(n => { if (n) setNumerology(n) })
+            }
+          } else {
+            // No cloud profile yet - use localStorage and push to cloud
+            const p = getSocialProfile()
+            setProfile(p)
+            setEditName(p.displayName)
+            setEditBio(p.bio)
+            setEditColor(p.avatarColor)
+            const img = localStorage.getItem(AVATAR_IMG_KEY)
+            setAvatarImage(img)
+            setEditImage(img)
+            const numProfile = await getNumerologyProfile()
+            if (numProfile) setNumerology(numProfile)
+            // Push to Supabase
+            await saveFullProfile({
+              displayName: p.displayName,
+              bio: p.bio,
+              avatarColor: p.avatarColor,
+              avatarImage: img,
+              lifePath: numProfile?.lifePath || null,
+              soulUrge: numProfile?.soulUrge || null,
+              destiny: numProfile?.destiny || null,
+            })
+          }
+        } else {
+          const p = getSocialProfile()
+          setProfile(p)
+          setEditName(p.displayName)
+          setEditBio(p.bio)
+          setEditColor(p.avatarColor)
+          const img = localStorage.getItem(AVATAR_IMG_KEY)
+          setAvatarImage(img)
+          setEditImage(img)
+          getNumerologyProfile().then(n => { if (n) setNumerology(n) })
+        }
+      } catch (e) {
+        console.error('Profile load error:', e)
+        const p = getSocialProfile()
+        setProfile(p)
+        setEditName(p.displayName)
+        setEditBio(p.bio)
+        setEditColor(p.avatarColor)
+        const img = localStorage.getItem(AVATAR_IMG_KEY)
+        setAvatarImage(img)
+        setEditImage(img)
+      } finally {
+        setSyncing(false)
+      }
+      getPosts().then(setPosts)
+      const logs = await getLogs()
+      setUserNumbers([...new Set(logs.map((l: any) => l.number))] as string[])
+    })()
   }, [])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,8 +141,9 @@ export default function ProfilePage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     const updated = { ...profile, displayName: editName || profile.displayName, bio: editBio, avatarColor: editColor }
+    // Save to localStorage
     saveSocialProfile(updated)
     setProfile(updated)
     if (editImage) {
@@ -81,6 +154,21 @@ export default function ProfilePage() {
       setAvatarImage(null)
     }
     setEditing(false)
+    // Save to Supabase for cross-device sync
+    try {
+      const numProfile = await getNumerologyProfile()
+      await saveFullProfile({
+        displayName: updated.displayName,
+        bio: updated.bio,
+        avatarColor: updated.avatarColor,
+        avatarImage: editImage || null,
+        lifePath: numProfile?.lifePath || null,
+        soulUrge: numProfile?.soulUrge || null,
+        destiny: numProfile?.destiny || null,
+      })
+    } catch (e) {
+      console.error('Failed to sync profile to cloud:', e)
+    }
   }
 
   const handlePost = async () => {

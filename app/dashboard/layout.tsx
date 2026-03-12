@@ -143,6 +143,16 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
     // Migrate any localStorage angel logs to Supabase
     migrateLocalLogsToSupabase().catch(() => {})
     migrateLocalDreamsToSupabase().catch(() => {})
+    // Auto-sync subscription on every dashboard load (fixes cross-device subscription issues)
+    fetch('/api/stripe/sync-subscription', { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.tier && data.tier !== 'free') {
+          localStorage.setItem('synchrosoul_subscription_tier', data.tier)
+          localStorage.setItem('synchrosoul_subscription_status', data.status || 'active')
+        }
+      })
+      .catch(() => {})
   }, [])
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)

@@ -650,3 +650,69 @@ export async function markAllNotificationsRead(): Promise<void> {
     await supabase.from('notifications').update({ read: true }).eq('user_id', myId)
   } catch {}
 }
+
+
+// ── Profile Sync (full profile save/load) ─────────────────────────────────
+export async function saveFullProfile(data: {
+  displayName: string
+  bio: string
+  avatarColor: string
+  avatarImage?: string | null  // base64 or null
+  lifePath?: number | null
+  soulUrge?: number | null
+  destiny?: number | null
+  birthdate?: string | null
+}): Promise<boolean> {
+  try {
+    const supabase = createClient()
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+    const updates: any = {
+      id: userId,
+      display_name: data.displayName,
+      bio: data.bio,
+      avatar_color: data.avatarColor,
+    }
+    if (data.avatarImage !== undefined) updates.avatar_url = data.avatarImage
+    if (data.lifePath !== undefined) updates.life_path = data.lifePath
+    if (data.soulUrge !== undefined) updates.soul_urge = data.soulUrge
+    if (data.destiny !== undefined) updates.destiny = data.destiny
+    if (data.birthdate !== undefined) updates.birthdate = data.birthdate
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(updates, { onConflict: 'id' })
+    if (error) console.error('[SynchroSoul] saveFullProfile error:', error.message)
+    return !error
+  } catch (e) {
+    console.error('[SynchroSoul] saveFullProfile exception:', e)
+    return false
+  }
+}
+
+export async function loadFullProfile(): Promise<{
+  displayName: string
+  bio: string
+  avatarColor: string
+  avatarImage: string | null
+  lifePath: number | null
+  soulUrge: number | null
+  destiny: number | null
+  birthdate: string | null
+} | null> {
+  try {
+    const profile = await getProfile()
+    if (!profile) return null
+    return {
+      displayName: profile.display_name || 'Starseed',
+      bio: profile.bio || '',
+      avatarColor: profile.avatar_color || '#9b59b6',
+      avatarImage: profile.avatar_url || null,
+      lifePath: profile.life_path || null,
+      soulUrge: profile.soul_urge || null,
+      destiny: profile.destiny || null,
+      birthdate: profile.birthdate || null,
+    }
+  } catch {
+    return null
+  }
+}
