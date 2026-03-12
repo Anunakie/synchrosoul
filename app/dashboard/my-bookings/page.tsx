@@ -1,97 +1,144 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { getUserBookings, HealerBooking } from '@/lib/healer-bookings';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
-const STATUS_CONFIG = {
-  pending:   { label: 'Pending',   color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',   border: 'rgba(245,158,11,0.25)' },
-  confirmed: { label: 'Confirmed', color: '#4ade80', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.25)' },
-  declined:  { label: 'Declined',  color: '#f87171', bg: 'rgba(248,113,113,0.1)',  border: 'rgba(248,113,113,0.25)' },
-  completed: { label: 'Completed', color: '#a78bfa', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.25)' },
+interface Booking {
+  id: string;
+  healer_name: string;
+  healer_modality: string;
+  session_type: string;
+  preferred_date: string;
+  preferred_time: string;
+  message: string;
+  status: string;
+  payment_status: string;
+  price_usd: number;
+  platform_fee_usd: number;
+  created_at: string;
+}
+
+const statusColors: Record<string, string> = {
+  pending: '#c9a84c',
+  confirmed: '#4caf50',
+  declined: '#f44336',
+  completed: '#9c27b0',
+};
+
+const paymentColors: Record<string, string> = {
+  unpaid: '#888',
+  paid: '#4caf50',
+  failed: '#f44336',
+  refunded: '#c9a84c',
 };
 
 export default function MyBookingsPage() {
-  const [bookings, setBookings] = useState<HealerBooking[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
+  const [paymentMsg, setPaymentMsg] = useState('');
 
   useEffect(() => {
-    getUserBookings().then(b => { setBookings(b); setLoading(false); });
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') setPaymentMsg('Payment successful! Your session is confirmed. ✨');
+    if (params.get('payment') === 'cancelled') setPaymentMsg('Payment was cancelled.');
+    loadBookings();
   }, []);
 
-  const filtered = filter === 'all' ? bookings : bookings.filter(b => b.status === filter);
+  async function loadBookings() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { data } = await supabase
+      .from('healer_bookings')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    setBookings(data || []);
+    setLoading(false);
+  }
 
   return (
-    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📅</div>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: 'rgba(220,200,255,0.95)', marginBottom: '0.25rem' }}>My Bookings</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem' }}>Your healing session requests</p>
-      </div>
+    <div style={{ maxWidth: 700, margin: '0 auto', padding: '2rem 1rem' }}>
+      <h1 style={{ color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', marginBottom: '0.5rem' }}>
+        ✨ My Healing Sessions
+      </h1>
+      <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem' }}>Your booked sessions with healers</p>
 
-      {/* Filter chips */}
-      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-        {(['all', 'pending', 'confirmed', 'completed'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ flexShrink: 0, padding: '0.35rem 0.875rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', background: filter === f ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.04)', color: filter === f ? 'rgba(220,200,255,0.9)' : 'rgba(180,160,255,0.45)', fontSize: '0.75rem', fontWeight: filter === f ? 600 : 400, textTransform: 'capitalize' }}>{f}</button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(180,160,255,0.4)', fontSize: '0.85rem' }}>Loading bookings...</div>
-      ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
-          <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>No bookings yet. Find a healer aligned with your energy.</p>
-          <Link href="/dashboard/healers" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', borderRadius: '0.875rem', color: 'white', fontSize: '0.875rem', fontWeight: 500, padding: '0.75rem 1.5rem', textDecoration: 'none' }}>Find a Healer ✨</Link>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {filtered.map(booking => {
-            const sc = STATUS_CONFIG[booking.status];
-            return (
-              <div key={booking.id} style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.1)', borderRadius: '1.25rem', padding: '1.25rem', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
-                  <div>
-                    <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1rem', fontWeight: 500, marginBottom: '0.2rem' }}>{booking.healerName}</div>
-                    <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.78rem' }}>{booking.healerModality}</div>
-                  </div>
-                  <span style={{ fontSize: '0.7rem', background: sc.bg, border: '1px solid ' + sc.border, borderRadius: '9999px', padding: '0.2rem 0.625rem', color: sc.color, flexShrink: 0 }}>{sc.label}</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.875rem' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.625rem', padding: '0.5rem 0.75rem' }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(180,160,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Date</div>
-                    <div style={{ fontSize: '0.82rem', color: 'rgba(210,190,255,0.8)' }}>{new Date(booking.preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.625rem', padding: '0.5rem 0.75rem' }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(180,160,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Time</div>
-                    <div style={{ fontSize: '0.82rem', color: 'rgba(210,190,255,0.8)' }}>{booking.preferredTime}</div>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.625rem', padding: '0.5rem 0.75rem' }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(180,160,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Session</div>
-                    <div style={{ fontSize: '0.82rem', color: 'rgba(210,190,255,0.8)', textTransform: 'capitalize' }}>{booking.sessionType}</div>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '0.625rem', padding: '0.5rem 0.75rem' }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(180,160,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Booked</div>
-                    <div style={{ fontSize: '0.82rem', color: 'rgba(210,190,255,0.8)' }}>{new Date(booking.createdAt).toLocaleDateString()}</div>
-                  </div>
-                </div>
-                {booking.message && (
-                  <div style={{ background: 'rgba(167,139,250,0.05)', border: '1px solid rgba(167,139,250,0.1)', borderRadius: '0.625rem', padding: '0.625rem 0.875rem' }}>
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(180,160,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.3rem' }}>Your message</div>
-                    <p style={{ color: 'rgba(200,180,255,0.7)', fontSize: '0.8rem', lineHeight: 1.5, margin: 0 }}>{booking.message}</p>
-                  </div>
-                )}
-                {booking.status === 'pending' && (
-                  <p style={{ color: 'rgba(245,158,11,0.6)', fontSize: '0.72rem', marginTop: '0.75rem', textAlign: 'center' }}>⏳ Awaiting healer confirmation</p>
-                )}
-                {booking.status === 'confirmed' && (
-                  <p style={{ color: 'rgba(74,222,128,0.7)', fontSize: '0.72rem', marginTop: '0.75rem', textAlign: 'center' }}>✨ Your session is confirmed! Check your email for details.</p>
-                )}
-              </div>
-            );
-          })}
+      {paymentMsg && (
+        <div style={{
+          background: paymentMsg.includes('successful') ? 'rgba(76,175,80,0.15)' : 'rgba(244,67,54,0.15)',
+          border: '1px solid ' + (paymentMsg.includes('successful') ? '#4caf50' : '#f44336'),
+          borderRadius: 12, padding: '1rem', marginBottom: '1.5rem', color: '#fff'
+        }}>
+          {paymentMsg}
         </div>
       )}
+
+      {loading && <p style={{ color: 'rgba(255,255,255,0.5)' }}>Loading your sessions...</p>}
+
+      {!loading && bookings.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
+          <p>No healing sessions booked yet.</p>
+          <a href="/dashboard/healers" style={{ color: '#c9a84c', textDecoration: 'none' }}>Find a Healer &rarr;</a>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {bookings.map((bk) => (
+          <div key={bk.id} style={{
+            background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(201,168,76,0.2)',
+            borderRadius: 16, padding: '1.5rem', backdropFilter: 'blur(12px)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h3 style={{ color: '#fff', margin: 0, fontSize: '1.1rem' }}>{bk.healer_name}</h3>
+                <p style={{ color: 'rgba(255,255,255,0.5)', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>{bk.healer_modality}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{
+                  background: (statusColors[bk.status] || '#888') + '22',
+                  color: statusColors[bk.status] || '#888',
+                  border: '1px solid ' + (statusColors[bk.status] || '#888') + '44',
+                  borderRadius: 20, padding: '0.2rem 0.75rem', fontSize: '0.75rem', fontWeight: 600
+                }}>{bk.status.toUpperCase()}</span>
+                <span style={{
+                  background: (paymentColors[bk.payment_status || 'unpaid'] || '#888') + '22',
+                  color: paymentColors[bk.payment_status || 'unpaid'] || '#888',
+                  border: '1px solid ' + (paymentColors[bk.payment_status || 'unpaid'] || '#888') + '44',
+                  borderRadius: 20, padding: '0.2rem 0.75rem', fontSize: '0.75rem', fontWeight: 600
+                }}>{(bk.payment_status || 'unpaid').toUpperCase()}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginTop: '1rem' }}>
+              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.2rem' }}>SESSION TYPE</div>
+                <div style={{ color: '#fff', fontSize: '0.9rem' }}>{bk.session_type === 'virtual' ? '💻 Virtual' : '🌿 In-Person'}</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.2rem' }}>DATE</div>
+                <div style={{ color: '#fff', fontSize: '0.9rem' }}>{bk.preferred_date}</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginBottom: '0.2rem' }}>TIME</div>
+                <div style={{ color: '#fff', fontSize: '0.9rem' }}>{bk.preferred_time}</div>
+              </div>
+              {bk.price_usd && (
+                <div style={{ background: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid rgba(201,168,76,0.2)' }}>
+                  <div style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.7rem', marginBottom: '0.2rem' }}>AMOUNT PAID</div>
+                  <div style={{ color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700 }}>${bk.price_usd?.toFixed(2)}</div>
+                </div>
+              )}
+            </div>
+
+            {bk.message && (
+              <div style={{ marginTop: '0.75rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                &ldquo;{bk.message}&rdquo;
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

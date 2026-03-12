@@ -79,24 +79,57 @@ function BookingModal({ healer, onClose }: { healer: HealerProfile; onClose: () 
     setDate(tomorrow.toISOString().split('T')[0]);
   }, []);
 
+  // Parse price from healer priceRange string e.g. "$60-120/hr" -> avg
+  const parsePrice = (priceRange: string): number => {
+    const nums = (priceRange || '').match(/\d+/g);
+    if (!nums) return 80;
+    if (nums.length >= 2) return Math.round((parseInt(nums[0]) + parseInt(nums[1])) / 2);
+    return parseInt(nums[0]) || 80;
+  };
+  const sessionPrice = parsePrice(healer.priceRange || '$80/hr');
+  const platformFee = Math.round(sessionPrice * 0.12 * 100) / 100;
+  const healerReceives = Math.round((sessionPrice - platformFee) * 100) / 100;
+
   const handleSubmit = async () => {
     if (!date || !time || !name || !email) return;
     setSubmitting(true);
     try {
-      await createBooking({
-        healerId: healer.id,
-        healerName: healer.name,
-        healerModality: healer.modalities[0] || 'Healing',
-        userName: name,
-        userEmail: email,
-        sessionType,
-        preferredDate: date,
-        preferredTime: time,
-        message,
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          healerId: healer.id,
+          healerName: healer.name,
+          sessionType,
+          preferredDate: date,
+          preferredTime: time,
+          message,
+          priceUSD: sessionPrice,
+        }),
       });
-      setSuccess(true);
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.error === 'Healer has not connected Stripe yet') {
+        // Fallback: save booking without payment
+        await createBooking({
+          healerId: healer.id,
+          healerName: healer.name,
+          healerModality: healer.modalities[0] || 'Healing',
+          userName: name,
+          userEmail: email,
+          sessionType,
+          preferredDate: date,
+          preferredTime: time,
+          message,
+        });
+        setSuccess(true);
+      } else {
+        throw new Error(data.error || 'Checkout failed');
+      }
     } catch (e) {
       console.error(e);
+      alert('Something went wrong. Please try again.');
     }
     setSubmitting(false);
   };
@@ -173,21 +206,29 @@ function BookingModal({ healer, onClose }: { healer: HealerProfile; onClose: () 
               <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Share what you're seeking healing for, any angel numbers you've been seeing, or questions you have..." rows={3} style={{ ...inputStyle, resize: 'none', lineHeight: 1.5 }} />
             </div>
 
-            {/* Price note */}
-            <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.75rem', padding: '0.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>💰</span>
-              <div>
-                <p style={{ color: '#c9a84c', fontSize: '0.78rem', fontWeight: 600 }}>{healer.priceRange}</p>
-                <p style={{ color: 'rgba(180,160,255,0.45)', fontSize: '0.7rem' }}>Payment arranged directly with healer after confirmation</p>
+            {/* Price breakdown */}
+            <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '0.875rem 1rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem' }}>Session fee</span>
+                <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 700 }}>${sessionPrice}.00</span>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(201,168,76,0.15)', marginBottom: '0.5rem' }}>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>Platform fee (12%)</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>-${platformFee.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#c9a84c', fontSize: '0.78rem', fontWeight: 600 }}>Healer receives</span>
+                <span style={{ color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700 }}>${healerReceives.toFixed(2)}</span>
+              </div>
+              <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.65rem', marginTop: '0.5rem' }}>🔒 Secure payment via Stripe. You will be redirected to complete payment.</p>
             </div>
 
             <button
               onClick={handleSubmit}
               disabled={submitting || !date || !time || !name || !email}
-              style={{ width: '100%', background: (!date || !time || !name || !email) ? 'rgba(167,139,250,0.15)' : 'linear-gradient(135deg, #7c3aed, #a78bfa)', border: 'none', borderRadius: '0.875rem', color: (!date || !time || !name || !email) ? 'rgba(180,160,255,0.4)' : 'white', fontSize: '0.9rem', fontWeight: 500, padding: '0.875rem', cursor: (!date || !time || !name || !email) ? 'not-allowed' : 'pointer' }}
+              style={{ width: '100%', background: (!date || !time || !name || !email) ? 'rgba(167,139,250,0.15)' : 'linear-gradient(135deg, #5469d4, #7c3aed)', border: 'none', borderRadius: '0.875rem', color: (!date || !time || !name || !email) ? 'rgba(180,160,255,0.4)' : 'white', fontSize: '0.9rem', fontWeight: 600, padding: '0.875rem', cursor: (!date || !time || !name || !email) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
             >
-              {submitting ? 'Sending Request...' : 'Send Booking Request ✨'}
+              {submitting ? '⏳ Redirecting to payment...' : `💳 Book & Pay $${sessionPrice}.00`}
             </button>
           </>
         )}
@@ -249,9 +290,9 @@ function HealerCard({ healer, userLifePath }: { healer: HealerProfile; userLifeP
         <div style={{ paddingLeft: '1.25rem', paddingRight: '1.25rem', paddingBottom: '0.875rem' }}>
           <button
             onClick={() => setShowBooking(true)}
-            style={{ width: '100%', background: 'linear-gradient(135deg, rgba(124,58,237,0.5), rgba(167,139,250,0.4))', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '0.875rem', color: 'rgba(220,200,255,0.95)', fontSize: '0.875rem', fontWeight: 600, padding: '0.75rem', cursor: 'pointer', letterSpacing: '0.02em' }}
+            style={{ width: '100%', background: 'linear-gradient(135deg, rgba(84,105,212,0.6), rgba(124,58,237,0.5))', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '0.875rem', color: 'rgba(220,200,255,0.95)', fontSize: '0.875rem', fontWeight: 600, padding: '0.75rem', cursor: 'pointer', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
           >
-            📅 Book a Session
+            💳 Book &amp; Pay · {healer.priceRange}
           </button>
         </div>
 
