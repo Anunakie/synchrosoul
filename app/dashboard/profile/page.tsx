@@ -46,9 +46,13 @@ export default function ProfilePage() {
           // Load from Supabase first (cross-device source of truth)
           const cloudProfile = await loadFullProfile()
           if (cloudProfile) {
+            // Merge: use localStorage bio as fallback if cloud bio is empty
+            const localSocialProfile = getSocialProfile()
+            const mergedBio = cloudProfile.bio || localSocialProfile.bio || ''
+            const mergedName = cloudProfile.displayName !== 'Starseed' ? cloudProfile.displayName : (localSocialProfile.displayName || cloudProfile.displayName)
             const p: UserSocialProfile = {
-              displayName: cloudProfile.displayName,
-              bio: cloudProfile.bio,
+              displayName: mergedName,
+              bio: mergedBio,
               avatarColor: cloudProfile.avatarColor,
               avatarImage: cloudProfile.avatarImage || undefined,
               joinedAt: new Date().toISOString(),
@@ -65,6 +69,18 @@ export default function ProfilePage() {
             setEditImage(avatar)
             if (cloudAvatar && cloudAvatar !== localAvatar) {
               localStorage.setItem(AVATAR_IMG_KEY, cloudAvatar)
+            }
+            // If cloud bio was empty but localStorage had one, push merged profile to Supabase
+            if (!cloudProfile.bio && mergedBio) {
+              saveFullProfile({
+                displayName: mergedName,
+                bio: mergedBio,
+                avatarColor: p.avatarColor,
+                avatarImage: avatar,
+                lifePath: cloudProfile.lifePath,
+                soulUrge: cloudProfile.soulUrge,
+                destiny: cloudProfile.destiny,
+              }).catch(console.error)
             }
             if (cloudProfile.lifePath) {
               setNumerology({ lifePath: cloudProfile.lifePath, soulUrge: cloudProfile.soulUrge, destiny: cloudProfile.destiny })
