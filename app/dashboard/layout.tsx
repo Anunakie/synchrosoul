@@ -106,6 +106,7 @@ const MORE_SECTIONS = [
       { href: '/dashboard/onboarding', label: 'Setup', emoji: '✦' },
       { href: '/dashboard/settings', label: 'Settings', emoji: '⚙️' },
       { href: '/dashboard/upgrade', label: 'Upgrade', emoji: '⭐' },
+  { href: '/dashboard/referrals', label: 'Referrals', emoji: '🌟' },
     ]
   },
 ]

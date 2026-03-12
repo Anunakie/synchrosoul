@@ -93,6 +93,24 @@ export default function SignupPage() {
         options: { data: { full_name: name, birthdate, life_path: lifePath, soul_urge: soulUrge, destiny } },
       })
       if (error) throw error
+      // Track referral if user came via referral link
+      const { data: { user } } = await supabase.auth.getUser()
+      const refCode = localStorage.getItem('synchrosoul_referral_code')
+      if (refCode && user) {
+        try {
+          await fetch('/api/referrals/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              referralCode: refCode,
+              referredUserId: user.id,
+              referredEmail: email,
+              referredName: name || 'Starseed',
+            }),
+          })
+          localStorage.removeItem('synchrosoul_referral_code')
+        } catch {}
+      }
       window.location.href = '/dashboard/onboarding'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign up failed')

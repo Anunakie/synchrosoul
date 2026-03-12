@@ -382,6 +382,7 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
 
     // Get my recent logs (last 48hrs) with timestamps
     const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const { data: myLogs } = await supabase
       .from('angel_logs')
       .select('number, created_at')
@@ -415,9 +416,21 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
       .limit(1000)
 
     if (logsError) console.error('[SynchroSoul] getLiveSyncMatches logs error:', logsError.message)
-    if (!otherLogs || otherLogs.length === 0) return []
+    // If no 48hr matches, extend to 7 days
+    let resolvedLogs = otherLogs || []
+    if (resolvedLogs.length === 0) {
+      const { data: extendedLogs } = await supabase
+        .from('angel_logs')
+        .select('user_id, number, created_at')
+        .neq('user_id', myId)
+        .gte('created_at', since7d)
+        .order('created_at', { ascending: false })
+        .limit(500)
+      resolvedLogs = extendedLogs || []
+    }
+    if (resolvedLogs.length === 0) return []
 
-    const otherUserIds = [...new Set(otherLogs.map((l: any) => l.user_id as string))]
+    const otherUserIds = [...new Set(resolvedLogs.map((l: any) => l.user_id as string))]
 
     // Step 2: Fetch profiles
     const { data: profiles } = await supabase
@@ -430,7 +443,7 @@ export async function getLiveSyncMatches(): Promise<LiveSyncMatch[]> {
 
     // Group logs by user with full timestamps
     const userMap: Record<string, any> = {}
-    for (const log of otherLogs) {
+    for (const log of resolvedLogs) {
       const uid = log.user_id as string
       const profile = profileMap[uid]
       if (profile?.privacy_mode) continue
