@@ -260,6 +260,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden', flexShrink: 0 }}>
           <Link href="/dashboard/notifications" style={{ width: '1.9rem', height: '1.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(200,180,255,0.06)', border: '1px solid rgba(200,180,255,0.1)', textDecoration: 'none', fontSize: '0.85rem', flexShrink: 0 }}>🔔</Link>
+          {privacyOn && (
+            <Link href="/dashboard/settings" title="Private Mode is ON" style={{ width: '1.9rem', height: '1.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(180,100,255,0.2)', border: '1px solid rgba(180,100,255,0.5)', textDecoration: 'none', fontSize: '0.85rem', flexShrink: 0 }}>🔒</Link>
+          )}
           <SubscriptionBadge />
         </div>
       </header>
