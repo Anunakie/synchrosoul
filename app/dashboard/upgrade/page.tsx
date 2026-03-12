@@ -10,7 +10,7 @@ const PLANS = [
     price: 'Free',
     priceMonthly: 0,
     color: '#a78bfa',
-    emoji: '\u2726',
+    emoji: '✦',
     description: 'Begin your angel number journey',
     features: [
       'Angel number logger (unlimited)',
@@ -31,7 +31,7 @@ const PLANS = [
     price: '$6.99',
     priceMonthly: 6.99,
     color: '#c9a84c',
-    emoji: '\u2728',
+    emoji: '✨',
     description: 'Deepen your cosmic practice',
     badge: 'Most Popular',
     features: [
@@ -93,7 +93,7 @@ export default function UpgradePage() {
         setSub(newSub)
         saveSubscriptionTierLocally(data.tier as import('@/lib/subscription').SubscriptionTier)
         if (showMessage) {
-          setMessage({ type: 'success', text: `\u2728 Access restored! You are now on the ${data.tier === 'twin-flame' ? 'Twin Flame' : 'Mystic'} plan. Refresh any locked pages to unlock features.` })
+          setMessage({ type: 'success', text: `✨ Access restored! You are now on the ${data.tier === 'twin-flame' ? 'Twin Flame' : 'Mystic'} plan. Refresh any locked pages to unlock features.` })
         }
       } else if (showMessage) {
         setMessage({ type: 'info', text: data.message || 'No active subscription found in Stripe. If you just subscribed, please wait a moment and try again.' })
@@ -110,7 +110,7 @@ export default function UpgradePage() {
     const params = new URLSearchParams(window.location.search)
     if (params.get('success') === 'true') {
       const plan = params.get('plan') || 'premium'
-      setMessage({ type: 'info', text: `\u23f3 Activating your ${plan === 'twin-flame' ? 'Twin Flame' : 'Mystic'} plan... please wait.` })
+      setMessage({ type: 'info', text: `⏳ Activating your ${plan === 'twin-flame' ? 'Twin Flame' : 'Mystic'} plan... please wait.` })
       window.history.replaceState({}, '', '/dashboard/upgrade')
       // Auto-sync after a short delay to let Stripe process
       setTimeout(() => syncSubscription(true), 2000)
@@ -171,7 +171,7 @@ export default function UpgradePage() {
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '1100px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>\u2728</div>
+        <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>✨</div>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>
           Choose Your Cosmic Path
         </h1>
@@ -186,7 +186,7 @@ export default function UpgradePage() {
               background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
               borderRadius: '12px', padding: '0.75rem 1.5rem', color: '#c9a84c',
             }}>
-              <strong>Current Plan:</strong> {sub.tier === 'twin-flame' ? '\U0001f525 Twin Flame' : '\u2728 Mystic'}
+              <strong>Current Plan:</strong> {sub.tier === 'twin-flame' ? '\U0001f525 Twin Flame' : '✨ Mystic'}
               {sub.status === 'trialing' && ' (Free Trial)'}
               {sub.currentPeriodEnd && (
                 <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.85rem' }}>
@@ -219,7 +219,7 @@ export default function UpgradePage() {
                 cursor: syncing ? 'wait' : 'pointer', fontSize: '0.9rem', fontWeight: 600,
               }}
             >
-              {syncing ? '\u23f3 Syncing with Stripe...' : '\U0001f504 Restore My Access'}
+              {syncing ? '⏳ Syncing with Stripe...' : '\U0001f504 Restore My Access'}
             </button>
           </div>
         )}
@@ -241,7 +241,7 @@ export default function UpgradePage() {
                   background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)',
                   borderRadius: '8px', padding: '0.4rem 1rem', color: '#4ade80',
                   textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600,
-                }}>\u2192 Go to Dashboard</a>
+                }}>→ Go to Dashboard</a>
               </div>
             )}
           </div>
@@ -279,7 +279,7 @@ export default function UpgradePage() {
                   background: plan.color, color: '#000', fontSize: '0.7rem', fontWeight: 700,
                   padding: '0.25rem 0.75rem', borderRadius: '999px',
                 }}>
-                  \u2713 Active
+                  ✓ Active
                 </div>
               )}
               <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{plan.emoji}</div>
@@ -303,7 +303,7 @@ export default function UpgradePage() {
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {plan.features.map((f, i) => (
                   <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                    <span style={{ color: plan.color, flexShrink: 0, marginTop: '0.1rem' }}>\u2713</span>
+                    <span style={{ color: plan.color, flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
                     {f}
                   </li>
                 ))}
@@ -320,7 +320,7 @@ export default function UpgradePage() {
                   opacity: isLoading ? 0.7 : 1,
                 }}
               >
-                {isLoading ? 'Redirecting to Stripe...' : isCurrent ? '\u2713 Current Plan' : plan.cta}
+                {isLoading ? 'Redirecting to Stripe...' : isCurrent ? '✓ Current Plan' : plan.cta}
               </button>
             </div>
           )
