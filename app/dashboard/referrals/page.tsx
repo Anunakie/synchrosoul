@@ -1,11 +1,15 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getMyReferralStats, getReferralLink, type ReferralStats } from "@/lib/referrals"
+import { getMyReferralStats, getReferralLink, updateReferralCode, type ReferralStats } from "@/lib/referrals"
 
 export default function ReferralsPage() {
   const [stats, setStats] = useState<ReferralStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [editingCode, setEditingCode] = useState(false)
+  const [newCode, setNewCode] = useState("")
+  const [codeStatus, setCodeStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null)
+  const [savingCode, setSavingCode] = useState(false)
 
   useEffect(() => {
     getMyReferralStats().then(s => {
@@ -19,6 +23,23 @@ export default function ReferralsPage() {
     navigator.clipboard.writeText(getReferralLink(stats.code))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSaveCode = async () => {
+    if (!newCode.trim()) return
+    setSavingCode(true)
+    setCodeStatus(null)
+    const result = await updateReferralCode(newCode)
+    setSavingCode(false)
+    if (result.success) {
+      setCodeStatus({ type: "success", msg: "Your referral code has been updated!" })
+      setEditingCode(false)
+      const s = await getMyReferralStats()
+      setStats(s)
+      setNewCode("")
+    } else {
+      setCodeStatus({ type: "error", msg: result.error || "Failed to update code" })
+    }
   }
 
   const card = (style?: React.CSSProperties) => ({
@@ -77,6 +98,65 @@ export default function ReferralsPage() {
         </div>
       </div>
 
+      {/* Custom referral code editor */}
+      <div style={card({ marginBottom: "1.5rem", border: "1px solid rgba(150,100,255,0.3)" })}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+          <h2 style={{ color: "#e8d5b7", fontSize: "1rem", fontWeight: 600, margin: 0 }}>✏️ Customize Your Code</h2>
+          {!editingCode && (
+            <button
+              onClick={() => { setEditingCode(true); setNewCode(stats?.code || ""); setCodeStatus(null) }}
+              style={{ background: "rgba(150,100,255,0.15)", color: "#b89aff", border: "1px solid rgba(150,100,255,0.3)", padding: "0.35rem 1rem", borderRadius: "50px", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {!editingCode ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div style={{ background: "rgba(150,100,255,0.08)", border: "1px solid rgba(150,100,255,0.25)", borderRadius: "8px", padding: "0.5rem 1rem", fontFamily: "monospace", fontSize: "1.1rem", color: "#b89aff", fontWeight: 700, letterSpacing: "0.05em" }}>
+              {stats?.code || "—"}
+            </div>
+            <span style={{ color: "rgba(232,213,183,0.45)", fontSize: "0.8rem" }}>tap Edit to personalize</span>
+          </div>
+        ) : (
+          <div>
+            <p style={{ color: "rgba(232,213,183,0.55)", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
+              Choose something meaningful — your name, spirit animal, or angel number. Letters, numbers &amp; hyphens only.
+            </p>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+              <input
+                type="text"
+                value={newCode}
+                onChange={e => setNewCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))}
+                onInput={e => setNewCode((e.target as HTMLInputElement).value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))}
+                placeholder="e.g. STARSEED or ANGEL-1111"
+                maxLength={20}
+                style={{ flex: 1, minWidth: "160px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(150,100,255,0.4)", borderRadius: "10px", padding: "0.6rem 1rem", color: "#e8d5b7", fontSize: "1rem", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.05em", outline: "none", boxSizing: "border-box" }}
+              />
+              <button
+                onClick={handleSaveCode}
+                disabled={savingCode || !newCode.trim()}
+                style={{ background: savingCode ? "rgba(150,100,255,0.2)" : "linear-gradient(135deg, #9664ff, #b89aff)", color: "#050510", border: "none", padding: "0.6rem 1.25rem", borderRadius: "50px", fontWeight: 700, cursor: savingCode ? "not-allowed" : "pointer", fontSize: "0.9rem", opacity: !newCode.trim() ? 0.5 : 1 }}
+              >
+                {savingCode ? "Saving..." : "Save"}
+              </button>
+              <button
+                onClick={() => { setEditingCode(false); setNewCode(""); setCodeStatus(null) }}
+                style={{ background: "rgba(255,255,255,0.05)", color: "rgba(232,213,183,0.6)", border: "1px solid rgba(255,255,255,0.1)", padding: "0.6rem 1rem", borderRadius: "50px", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}
+              >
+                Cancel
+              </button>
+            </div>
+            {codeStatus && (
+              <div style={{ padding: "0.5rem 0.75rem", borderRadius: "8px", fontSize: "0.85rem", background: codeStatus.type === "success" ? "rgba(100,200,100,0.1)" : "rgba(255,80,80,0.1)", color: codeStatus.type === "success" ? "#6dc86d" : "#ff8080", border: `1px solid ${codeStatus.type === "success" ? "rgba(100,200,100,0.3)" : "rgba(255,80,80,0.3)"}` }}>
+                {codeStatus.type === "success" ? "✓ " : "✗ "}{codeStatus.msg}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Commission info */}
       <div style={card({ marginBottom: "1.5rem", background: "rgba(201,168,76,0.06)" })}>
         <h2 style={{ color: "#c9a84c", fontSize: "1rem", marginBottom: "0.75rem", fontWeight: 600 }}>How It Works</h2>
@@ -121,7 +201,7 @@ export default function ReferralsPage() {
                     {r.status === "subscribed" ? "Subscribed" : "Signed Up"}
                   </span>
                   {r.monthlyCommission > 0 && (
-                    <span style={{ color: "#c9a84c", fontWeight: 700, fontSize: "0.85rem" }}>${r.monthlyCommission.toFixed(2)}/mo</span>
+                    <span style={{ color: "#c9a84c", fontWeight: 700, fontSize: "0.85rem" }}>$${r.monthlyCommission.toFixed(2)}/mo</span>
                   )}
                 </div>
               </div>

@@ -180,3 +180,40 @@ export function clearStoredReferralCode(): void {
     localStorage.removeItem("synchrosoul_referral_code")
   }
 }
+
+
+// Update user's referral code to a custom one
+export async function updateReferralCode(newCode: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Validate format: 3-20 chars, alphanumeric + hyphens only
+    const clean = newCode.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '')
+    if (clean.length < 3) return { success: false, error: 'Code must be at least 3 characters' }
+    if (clean.length > 20) return { success: false, error: 'Code must be 20 characters or less' }
+    if (!/^[A-Z0-9][A-Z0-9-]*[A-Z0-9]$/.test(clean)) return { success: false, error: 'Use letters, numbers, and hyphens only' }
+
+    const supabase = createClient()
+    const userId = await getCurrentUserId()
+    if (!userId) return { success: false, error: 'Not logged in' }
+
+    // Check uniqueness
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('referral_code', clean)
+      .neq('id', userId)
+      .single()
+
+    if (existing) return { success: false, error: 'That code is already taken — try another!' }
+
+    // Update
+    const { error } = await supabase
+      .from('profiles')
+      .update({ referral_code: clean })
+      .eq('id', userId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e: unknown) {
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
+  }
+}
