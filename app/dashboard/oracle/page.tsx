@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect } from 'react';
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { askOracle, getOracleHistory, saveOracleReading, OracleReading } from '@/lib/oracle';
@@ -18,7 +19,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   career: '💼', love: '💕', decision: '⚖️', health: '🌿', default: '✨'
 };
 
-export default function OraclePage() {
+function OraclePageInner() {
   const [question, setQuestion] = useState('');
   const [reading, setReading] = useState<OracleReading | null>(null);
   const [history, setHistory] = useState<OracleReading[]>([]);
@@ -236,4 +237,12 @@ export default function OraclePage() {
       )}
     </div>
   );
+}
+
+export default function OraclePage() {
+  return (
+    <FeatureGate feature="oracle-unlimited" requiredTier="mystic">
+      <OraclePageInner />
+    </FeatureGate>
+  )
 }

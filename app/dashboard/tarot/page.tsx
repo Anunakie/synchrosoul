@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import { useState } from 'react';
 import SaveReadingButton from '@/components/SaveReadingButton';
 
@@ -27,7 +28,7 @@ const majorArcana = [
   { num: 21, name: 'The World', emoji: '🌍', upright: 'Completion, integration, accomplishment, travel', reversed: 'Seeking personal closure, short-cuts, delays', angelNumber: '2121', element: 'Earth', color: '#c9a84c', desc: 'The World celebrates total completion and mastery. You have come full circle. Everything you sought is now yours. Dance in the joy of wholeness.' },
 ];
 
-export default function TarotPage() {
+function TarotPageInner() {
   const [drawn, setDrawn] = useState<typeof majorArcana[0] | null>(null);
   const [reversed, setReversed] = useState(false);
   const [flipped, setFlipped] = useState(false);
@@ -105,4 +106,13 @@ export default function TarotPage() {
       )}
     </div>
   );
+}
+
+
+export default function TarotPage() {
+  return (
+    <FeatureGate feature="tarot-full" requiredTier="mystic">
+      <TarotPageInner />
+    </FeatureGate>
+  )
 }

@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { useState } from 'react';
 
@@ -81,7 +82,7 @@ function getCompat(a: number, b: number) {
   return compatMatrix[key1] || { score: 75, desc: 'A unique and powerful connection with great potential.', challenge: 'Navigate differences with open communication.' };
 }
 
-export default function CompatibilityPage() {
+function CompatibilityPageInner() {
   const [dob1, setDob1] = useState('');
   const [dob2, setDob2] = useState('');
   const [name1, setName1] = useState('');
@@ -150,4 +151,13 @@ export default function CompatibilityPage() {
       })()}
     </div>
   );
+}
+
+
+export default function CompatibilityPage() {
+  return (
+    <FeatureGate feature="soul-twin-radar" requiredTier="mystic">
+      <CompatibilityPageInner />
+    </FeatureGate>
+  )
 }

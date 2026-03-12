@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect } from 'react';
 import SaveReadingButton from '@/components/SaveReadingButton';
 
@@ -25,7 +26,7 @@ const MEANINGS: Record<number, { title: string; color: string; desc: string; sha
   33: { title: 'The Master Teacher', color: '#f472b6', desc: 'Master number. The highest vibration of love, healing, and teaching.', shadow: 'Self-sacrifice, taking on others’ pain', gift: 'Healing through unconditional love' },
 };
 
-export default function NumerologyDeepPage() {
+function NumerologyDeepPageInner() {
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
   const [results, setResults] = useState<Record<string, number> | null>(null);
@@ -105,4 +106,12 @@ export default function NumerologyDeepPage() {
       )}
     </div>
   );
+}
+
+export default function NumerologyDeepPage() {
+  return (
+    <FeatureGate feature="full-numerology" requiredTier="mystic">
+      <NumerologyDeepPageInner />
+    </FeatureGate>
+  )
 }

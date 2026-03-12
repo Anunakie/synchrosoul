@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -46,7 +47,7 @@ function getTier(score: number): { label: string; color: string } {
   return { label: 'Soul Student', color: '#4ade80' };
 }
 
-export default function SoulTwinPage() {
+function SoulTwinPageInner() {
   const [tab, setTab] = useState<'matches' | 'signs'>('matches');
   const [matches, setMatches] = useState<SoulMatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -263,4 +264,13 @@ export default function SoulTwinPage() {
       )}
     </div>
   );
+}
+
+
+export default function SoulTwinPage() {
+  return (
+    <FeatureGate feature="soul-twin-radar" requiredTier="mystic">
+      <SoulTwinPageInner />
+    </FeatureGate>
+  )
 }

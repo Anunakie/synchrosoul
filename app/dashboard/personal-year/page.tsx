@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { useState, useEffect } from 'react';
 
@@ -19,7 +20,7 @@ const YEARS: Record<number, { title: string; color: string; theme: string; focus
   9: { title: 'Year of Completion', color: '#6366f1', theme: 'Release, completion, forgiveness, humanitarian service', focus: 'Endings, forgiveness, giving back, preparing for new cycle', avoid: 'Starting major new projects, holding onto what is done', angel: '999', months: ['Identify what to release','Begin letting go','Forgive and heal','Serve others','Clear old debts','Midpoint release ceremony','Deepen compassion','Complete unfinished business','Final harvest','Deep clearing','Prepare for rebirth','Celebrate the full cycle'] },
 };
 
-export default function PersonalYearPage() {
+function PersonalYearPageInner() {
   const [dob, setDob] = useState('');
   const [result, setResult] = useState<{ year: number; month: number } | null>(null);
 
@@ -82,4 +83,12 @@ export default function PersonalYearPage() {
       )}
     </div>
   );
+}
+
+export default function PersonalYearPage() {
+  return (
+    <FeatureGate feature="full-numerology" requiredTier="mystic">
+      <PersonalYearPageInner />
+    </FeatureGate>
+  )
 }

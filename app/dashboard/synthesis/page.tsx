@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect } from 'react';
 
 const angelMeanings: Record<string, { title: string; color: string; theme: string }> = {
@@ -43,7 +44,7 @@ function generateSynthesis(logs: any[], profile: any) {
   return { title: dominantData.title + ' Week', body, numbers: top3, color: dominantData.color };
 }
 
-export default function SynthesisPage() {
+function SynthesisPageInner() {
   const [logs, setLogs] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [period, setPeriod] = useState<'week'|'month'>('week');
@@ -157,4 +158,13 @@ export default function SynthesisPage() {
       )}
     </div>
   );
+}
+
+
+export default function SynthesisPage() {
+  return (
+    <FeatureGate feature="weekly-synthesis" requiredTier="mystic">
+      <SynthesisPageInner />
+    </FeatureGate>
+  )
 }

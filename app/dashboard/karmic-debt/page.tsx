@@ -1,4 +1,5 @@
 'use client';
+import FeatureGate from '@/components/FeatureGate'
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { useState, useEffect } from 'react';
 
@@ -14,7 +15,7 @@ const reduce = (n: number): number => {
   return reduce(n.toString().split('').reduce((a, c) => a + parseInt(c), 0));
 };
 
-export default function KarmicDebtPage() {
+function KarmicDebtPageInner() {
   const [dob, setDob] = useState('');
   const [name, setName] = useState('');
   const [debts, setDebts] = useState<number[]>([]);
@@ -94,4 +95,12 @@ export default function KarmicDebtPage() {
       )}
     </div>
   );
+}
+
+export default function KarmicDebtPage() {
+  return (
+    <FeatureGate feature="full-numerology" requiredTier="mystic">
+      <KarmicDebtPageInner />
+    </FeatureGate>
+  )
 }
