@@ -263,7 +263,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main style={{ position: 'relative', zIndex: 1 }}>{children}</main>
+      <main style={{ position: 'relative', zIndex: 1, overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>{children}</main>
 
       <ThemeSwitcher />
       <NotificationBell />

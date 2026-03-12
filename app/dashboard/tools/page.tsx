@@ -91,7 +91,7 @@ export default function ToolsPage() {
   const totalTools = TOOL_SECTIONS.reduce((a,s)=>a+s.tools.length,0)
 
   return (
-    <div style={{maxWidth:'600px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
+    <div style={{maxWidth:'600px',margin:'0 auto',padding:'1.5rem 1rem 2rem',width:'100%',boxSizing:'border-box',overflowX:'hidden'}}>
       <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Cosmic Toolkit</h1>
       <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.75rem'}}>{totalTools} tools for your spiritual journey</p>
 
