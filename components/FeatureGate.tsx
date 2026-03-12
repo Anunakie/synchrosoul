@@ -1,8 +1,7 @@
-
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { getSubscriptionStatus, hasFeature, SubscriptionTier } from '@/lib/subscription'
+import { getSubscriptionStatus, hasFeature, saveSubscriptionTierLocally, SubscriptionTier } from '@/lib/subscription'
 
 interface FeatureGateProps {
   feature: string
@@ -31,7 +30,10 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
       const res = await fetch('/api/stripe/sync-subscription', { method: 'POST' })
       const data = await res.json()
       if (data.tier && data.tier !== 'free') {
-        setSyncMsg({ type: 'success', text: `\u2728 Access restored! Reloading...` })
+        // Save to localStorage so it persists even without DB columns
+        saveSubscriptionTierLocally(data.tier as SubscriptionTier)
+        setTier(data.tier as SubscriptionTier)
+        setSyncMsg({ type: 'success', text: `Access restored! You are on the ${data.tier} plan. Reloading...` })
         setTimeout(() => window.location.reload(), 1200)
       } else {
         setSyncMsg({ type: 'info', text: data.message || 'No active subscription found. Please subscribe below.' })
@@ -46,7 +48,7 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1.5rem', animation: 'pulse 1.5s infinite' }}>\u2726</div>
+        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1.5rem' }}>...</div>
       </div>
     )
   }
@@ -57,7 +59,7 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
 
   if (fallback) return <>{fallback}</>
 
-  const tierLabel = requiredTier === 'twin-flame' ? '\U0001f525 Twin Flame' : '\u2728 Mystic'
+  const tierLabel = requiredTier === 'twin-flame' ? 'Twin Flame' : 'Mystic'
   const tierColor = requiredTier === 'twin-flame' ? '#f472b6' : '#c9a84c'
   const tierPrice = requiredTier === 'twin-flame' ? '$9.99' : '$6.99'
 
@@ -79,7 +81,7 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
         boxShadow: `0 0 60px ${tierColor}22`,
       }}>
         <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-          {requiredTier === 'twin-flame' ? '\U0001f525' : '\u2728'}
+          {requiredTier === 'twin-flame' ? '🔥' : '✨'}
         </div>
         <div style={{
           display: 'inline-block', background: `${tierColor}22`,
@@ -97,7 +99,6 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
           Start your 7-day free trial and explore the full cosmic experience.
         </p>
 
-        {/* Sync message */}
         {syncMsg && (() => {
           const c = msgColors[syncMsg.type]
           return (
@@ -118,10 +119,9 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
             borderRadius: '12px', color: '#fff', fontWeight: 700,
             fontSize: '1rem', textDecoration: 'none',
           }}>
-            Start Free Trial \u2014 {tierPrice}/mo after
+            Start Free Trial — {tierPrice}/mo after
           </Link>
 
-          {/* Restore access for users who already paid */}
           <button
             onClick={handleRestore}
             disabled={syncing}
@@ -134,14 +134,14 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
               cursor: syncing ? 'wait' : 'pointer',
             }}
           >
-            {syncing ? '\u23f3 Checking Stripe...' : '\U0001f504 Already subscribed? Restore Access'}
+            {syncing ? 'Checking Stripe...' : 'Already subscribed? Restore Access'}
           </button>
 
           <Link href="/dashboard" style={{
             display: 'block', padding: '0.75rem',
             color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem', textDecoration: 'none',
           }}>
-            \u2190 Back to Dashboard
+            Back to Dashboard
           </Link>
         </div>
       </div>
@@ -149,7 +149,6 @@ export default function FeatureGate({ feature, requiredTier = 'mystic', children
   )
 }
 
-// Inline lock badge for nav items / cards
 export function FeatureLockBadge({ requiredTier = 'mystic' }: { requiredTier?: 'mystic' | 'twin-flame' }) {
   const color = requiredTier === 'twin-flame' ? '#f472b6' : '#c9a84c'
   return (
@@ -159,7 +158,7 @@ export function FeatureLockBadge({ requiredTier = 'mystic' }: { requiredTier?: '
       borderRadius: '999px', padding: '0.1rem 0.4rem',
       fontSize: '0.6rem', color, fontWeight: 700, marginLeft: '0.3rem',
     }}>
-      {requiredTier === 'twin-flame' ? '\U0001f525' : '\u2728'}
+      {requiredTier === 'twin-flame' ? '🔥' : '✨'}
     </span>
   )
 }

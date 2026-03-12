@@ -1,4 +1,3 @@
-
 import { createClient } from '@/lib/supabase/client'
 
 export type SubscriptionTier = 'free' | 'mystic' | 'twin-flame'
@@ -29,27 +28,68 @@ export function hasFeature(tier: SubscriptionTier, feature: string): boolean {
   return features.includes(feature)
 }
 
+const LS_TIER_KEY = 'synchrosoul_subscription_tier'
+const LS_TIER_EXPIRY_KEY = 'synchrosoul_subscription_tier_expiry'
+
+export function saveSubscriptionTierLocally(tier: SubscriptionTier) {
+  if (typeof window === 'undefined') return
+  const expiry = Date.now() + 24 * 60 * 60 * 1000
+  localStorage.setItem(LS_TIER_KEY, tier)
+  localStorage.setItem(LS_TIER_EXPIRY_KEY, String(expiry))
+}
+
+export function getLocalSubscriptionTier(): SubscriptionTier | null {
+  if (typeof window === 'undefined') return null
+  const expiry = localStorage.getItem(LS_TIER_EXPIRY_KEY)
+  if (expiry && Date.now() > Number(expiry)) {
+    localStorage.removeItem(LS_TIER_KEY)
+    localStorage.removeItem(LS_TIER_EXPIRY_KEY)
+    return null
+  }
+  return localStorage.getItem(LS_TIER_KEY) as SubscriptionTier | null
+}
+
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { tier: 'free', status: null, currentPeriodEnd: null, cancelAtPeriodEnd: false }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier, subscription_status, subscription_period_end, subscription_cancel_at_period_end')
-      .eq('id', user.id)
-      .single()
+    // Try DB first
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_tier, subscription_status, subscription_period_end, subscription_cancel_at_period_end')
+        .eq('id', user.id)
+        .single()
 
-    if (!profile) return { tier: 'free', status: null, currentPeriodEnd: null, cancelAtPeriodEnd: false }
-
-    return {
-      tier: (profile.subscription_tier as SubscriptionTier) || 'free',
-      status: profile.subscription_status || null,
-      currentPeriodEnd: profile.subscription_period_end || null,
-      cancelAtPeriodEnd: profile.subscription_cancel_at_period_end || false,
+      if (profile?.subscription_tier && profile.subscription_tier !== 'free') {
+        saveSubscriptionTierLocally(profile.subscription_tier as SubscriptionTier)
+        return {
+          tier: (profile.subscription_tier as SubscriptionTier),
+          status: profile.subscription_status || null,
+          currentPeriodEnd: profile.subscription_period_end || null,
+          cancelAtPeriodEnd: profile.subscription_cancel_at_period_end || false,
+        }
+      }
+    } catch {
+      // DB columns may not exist yet
     }
-  } catch {
+
+    // Fallback: localStorage cache
+    const localTier = getLocalSubscriptionTier()
+    if (localTier && localTier !== 'free') {
+      return { tier: localTier, status: 'trialing', currentPeriodEnd: null, cancelAtPeriodEnd: false }
+    }
+
     return { tier: 'free', status: null, currentPeriodEnd: null, cancelAtPeriodEnd: false }
+  } catch {
+    const localTier = getLocalSubscriptionTier()
+    return {
+      tier: localTier || 'free',
+      status: localTier ? 'trialing' : null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+    }
   }
 }

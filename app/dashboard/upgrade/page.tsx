@@ -1,7 +1,7 @@
 
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { getSubscriptionStatus, SubscriptionStatus } from '@/lib/subscription'
+import { getSubscriptionStatus, saveSubscriptionTierLocally, SubscriptionStatus } from '@/lib/subscription'
 
 const PLANS = [
   {
@@ -91,6 +91,7 @@ export default function UpgradePage() {
         // Reload subscription status
         const newSub = await getSubscriptionStatus()
         setSub(newSub)
+        saveSubscriptionTierLocally(data.tier as import('@/lib/subscription').SubscriptionTier)
         if (showMessage) {
           setMessage({ type: 'success', text: `\u2728 Access restored! You are now on the ${data.tier === 'twin-flame' ? 'Twin Flame' : 'Mystic'} plan. Refresh any locked pages to unlock features.` })
         }
