@@ -56,7 +56,7 @@ const PLANS = [
     price: '$9.99',
     priceMonthly: 9.99,
     color: '#f472b6',
-    emoji: '\U0001f525',
+    emoji: '🔥',
     description: 'The complete spiritual companion',
     features: [
       'Everything in Mystic',
@@ -186,7 +186,7 @@ export default function UpgradePage() {
               background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
               borderRadius: '12px', padding: '0.75rem 1.5rem', color: '#c9a84c',
             }}>
-              <strong>Current Plan:</strong> {sub.tier === 'twin-flame' ? '\U0001f525 Twin Flame' : '✨ Mystic'}
+              <strong>Current Plan:</strong> {sub.tier === 'twin-flame' ? '🔥 Twin Flame' : '✨ Mystic'}
               {sub.status === 'trialing' && ' (Free Trial)'}
               {sub.currentPeriodEnd && (
                 <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.85rem' }}>
@@ -199,7 +199,7 @@ export default function UpgradePage() {
               borderRadius: '12px', padding: '0.75rem 1.5rem', color: '#fff',
               cursor: 'pointer', fontSize: '0.9rem',
             }}>
-              {portalLoading ? 'Opening...' : '\U0001f4cb Manage Billing'}
+              {portalLoading ? 'Opening...' : '📋 Manage Billing'}
             </button>
           </div>
         )}
@@ -219,7 +219,7 @@ export default function UpgradePage() {
                 cursor: syncing ? 'wait' : 'pointer', fontSize: '0.9rem', fontWeight: 600,
               }}
             >
-              {syncing ? '⏳ Syncing with Stripe...' : '\U0001f504 Restore My Access'}
+              {syncing ? '⏳ Syncing with Stripe...' : '🔄 Restore My Access'}
             </button>
           </div>
         )}
@@ -330,10 +330,10 @@ export default function UpgradePage() {
       {/* Trust badges */}
       <div style={{ textAlign: 'center', marginTop: '3rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-          <span>\U0001f512 Secure payments via Stripe</span>
-          <span>\U0001f504 Cancel anytime</span>
-          <span>\U0001f31f 7-day free trial</span>
-          <span>\U0001f4b3 No hidden fees</span>
+          <span>🔒 Secure payments via Stripe</span>
+          <span>🔄 Cancel anytime</span>
+          <span>🌟 7-day free trial</span>
+          <span>💳 No hidden fees</span>
         </div>
         <p>Questions? Email us at hello@synchrosoul.app</p>
       </div>
