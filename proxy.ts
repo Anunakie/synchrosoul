@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
   // (onboarding page itself is excluded to avoid loop)
   if (user && isDashboard && !isOnboarding) {
     const onboardingDone = request.cookies.get('onboarding_complete')?.value
-    if (onboardingDone === 'false') {
+    if (onboardingDone !== 'true') {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard/onboarding'
       return NextResponse.redirect(url)
