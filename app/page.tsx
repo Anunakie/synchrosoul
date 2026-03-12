@@ -419,6 +419,126 @@ export default function HomePage() {
         </div>
       </section>
 
+
+      {/* ── SEO: ANGEL NUMBERS GUIDE ─────────────────────────────────────── */}
+      <section style={{
+        padding: '5rem 2rem', maxWidth: '1100px', margin: '0 auto',
+        position: 'relative', zIndex: 10,
+      }}>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: 'clamp(2rem, 4vw, 3rem)',
+          color: 'rgba(220,200,255,0.85)', textAlign: 'center',
+          fontWeight: 300, marginBottom: '1rem',
+        }}>What Are Angel Numbers?</h2>
+        <p style={{
+          textAlign: 'center', color: 'rgba(180,150,255,0.65)',
+          fontSize: '1.05rem', lineHeight: 1.8, maxWidth: '700px',
+          margin: '0 auto 3.5rem', fontFamily: 'Inter, sans-serif',
+        }}>
+          Angel numbers are repeating number sequences — like 1111, 555, or 333 — that carry
+          spiritual meaning and divine guidance. When you notice the same numbers repeatedly,
+          the universe may be sending you a message.
+        </p>
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1.25rem',
+        }}>
+          {[
+            { num: '1111', title: 'New Beginnings', color: 'rgba(201,168,76,0.8)', desc: 'A portal is opening. Your thoughts are manifesting rapidly. Stay positive and aligned with your highest self.' },
+            { num: '222', title: 'Divine Balance', color: 'rgba(150,200,255,0.8)', desc: 'Trust the process. You are exactly where you need to be. Partnerships and harmony are highlighted.' },
+            { num: '333', title: 'Ascended Masters', color: 'rgba(200,150,255,0.8)', desc: 'You are surrounded by divine support. Your creativity and self-expression are being amplified.' },
+            { num: '444', title: 'Angelic Protection', color: 'rgba(150,255,200,0.8)', desc: 'Your angels are near. You are safe, supported, and on the right path. Build your foundations.' },
+            { num: '555', title: 'Major Change', color: 'rgba(255,180,100,0.8)', desc: 'Transformation is coming. Release what no longer serves you and embrace the new chapter unfolding.' },
+            { num: '777', title: 'Spiritual Awakening', color: 'rgba(255,150,200,0.8)', desc: 'You are in deep alignment with the universe. Luck, wisdom, and spiritual growth surround you.' },
+            { num: '888', title: 'Infinite Abundance', color: 'rgba(255,220,100,0.8)', desc: 'Financial and spiritual abundance flows to you. The cycle of giving and receiving is in perfect balance.' },
+            { num: '999', title: 'Divine Completion', color: 'rgba(200,180,255,0.8)', desc: 'A major chapter is closing. Release the old with gratitude and prepare for your next soul mission.' },
+          ].map(({ num, title, color, desc }) => (
+            <article key={num} style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(200,180,255,0.08)',
+              borderRadius: '16px', padding: '1.5rem',
+              backdropFilter: 'blur(10px)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <span style={{
+                  fontFamily: 'Cormorant Garamond, serif',
+                  fontSize: '1.6rem', color, letterSpacing: '0.1em',
+                }}>{num}</span>
+                <h3 style={{
+                  fontFamily: 'Cormorant Garamond, serif',
+                  fontSize: '1.1rem', color: 'rgba(220,200,255,0.8)',
+                  fontWeight: 400, margin: 0,
+                }}>{title}</h3>
+              </div>
+              <p style={{
+                color: 'rgba(180,160,255,0.55)', fontSize: '0.85rem',
+                lineHeight: 1.7, margin: 0, fontFamily: 'Inter, sans-serif',
+              }}>{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── SEO: FAQ ─────────────────────────────────────────────────────── */}
+      <section style={{
+        padding: '4rem 2rem 5rem', maxWidth: '800px', margin: '0 auto',
+        position: 'relative', zIndex: 10,
+      }}>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
+          color: 'rgba(220,200,255,0.85)', textAlign: 'center',
+          fontWeight: 300, marginBottom: '2.5rem',
+        }}>Frequently Asked Questions</h2>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {[
+            {
+              q: 'How does SynchroSoul match people using angel numbers?',
+              a: 'When you log an angel number, SynchroSoul compares it with numbers logged by other users in the past 24-48 hours. A Sync Score is calculated based on shared numbers, numerology compatibility (Life Path, Soul Urge), and timing proximity — creating meaningful cosmic connections.'
+            },
+            {
+              q: 'What is a Life Path number in numerology?',
+              a: 'Your Life Path number is calculated from your birthdate by reducing all digits to a single number (or master number 11, 22, 33). It reveals your core personality, strengths, and life purpose. SynchroSoul calculates yours automatically when you sign up.'
+            },
+            {
+              q: 'Is SynchroSoul free to use?',
+              a: 'Yes! SynchroSoul is free to join. You can log angel numbers, keep a thought anchor journal, view your numerology profile, and browse sync matches at no cost. Premium Mystic and Twin Flame tiers unlock AI Oracle readings, deep numerology reports, and advanced matching features.'
+            },
+            {
+              q: 'What is a Truth Score and Angel Approved badge?',
+              a: 'When you upload a screenshot of the angel number you saw (a clock, license plate, receipt, etc.), SynchroSoul awards your entry an Angel Approved badge and increases your Truth Score. This adds authenticity to your logs and boosts your visibility in sync matching.'
+            },
+            {
+              q: 'Can I use SynchroSoul on my phone?',
+              a: 'Yes! SynchroSoul is a Progressive Web App (PWA). On iPhone, open it in Safari and tap Share → Add to Home Screen. On Android, open in Chrome and tap Install App. It works like a native app with offline support.'
+            },
+            {
+              q: 'What is the Thought Anchor Journal?',
+              a: 'The Thought Anchor Journal lets you record what you were thinking or feeling the moment you saw an angel number. Over time, patterns emerge — revealing what the universe is responding to in your life. All entries are private unless you choose to share them.'
+            },
+          ].map(({ q, a }, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.025)',
+              border: '1px solid rgba(200,180,255,0.07)',
+              borderRadius: '12px', padding: '1.5rem',
+            }}>
+              <h3 style={{
+                fontFamily: 'Cormorant Garamond, serif',
+                fontSize: '1.15rem', color: 'rgba(220,200,255,0.85)',
+                fontWeight: 400, margin: '0 0 0.75rem',
+              }}>{q}</h3>
+              <p style={{
+                color: 'rgba(180,160,255,0.6)', fontSize: '0.9rem',
+                lineHeight: 1.75, margin: 0, fontFamily: 'Inter, sans-serif',
+              }}>{a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer style={{
         borderTop: '1px solid rgba(200,180,255,0.06)',

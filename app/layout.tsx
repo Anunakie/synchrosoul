@@ -1,39 +1,87 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://synchrosoul.com'
+
 export const metadata: Metadata = {
-  title: 'SynchroSoul — Angel Number Dating',
-  description: 'Match with souls seeing the same angel numbers as you. Discover your cosmic connections.',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'SynchroSoul — Angel Number Dating & Spiritual Matching App',
+    template: '%s | SynchroSoul',
+  },
+  description: 'Match with souls seeing the same angel numbers as you. Log 1111, 555, 333 and connect with people on your cosmic frequency. Free numerology readings, dream journal, and spiritual matching.',
+  keywords: [
+    'angel numbers', 'angel number dating', 'spiritual dating app', 'numerology app',
+    '1111 meaning', '555 meaning', '333 meaning', '444 meaning', '777 meaning',
+    'twin flame', 'soul mate', 'spiritual connection', 'numerology dating',
+    'angel number matching', 'cosmic connection', 'life path number', 'soul urge number',
+    'spiritual journal', 'angel number journal', 'synchronicity', 'manifestation app',
+    'numerology calculator', 'angel number tracker', 'spiritual community'
+  ],
+  authors: [{ name: 'SynchroSoul', url: siteUrl }],
+  creator: 'SynchroSoul',
+  publisher: 'SynchroSoul',
+  category: 'Lifestyle',
+  classification: 'Spiritual Dating & Numerology',
   manifest: '/manifest.json',
+  alternates: {
+    canonical: siteUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName: 'SynchroSoul',
+    title: 'SynchroSoul — Angel Number Dating & Spiritual Matching',
+    description: 'Log the angel numbers you see. Match with souls on your cosmic frequency. Discover your numerology profile and connect with people seeing 1111, 555, 333 at the same time as you.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SynchroSoul — Angel Number Dating App',
+        type: 'image/png',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@synchrosoul',
+    creator: '@synchrosoul',
+    title: 'SynchroSoul — Angel Number Dating',
+    description: 'Match with souls seeing the same angel numbers. Log 1111, 555, 333 and find your cosmic connection.',
+    images: ['/og-image.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'SynchroSoul',
-    startupImage: [
-      { url: '/icon-512.png', media: '(device-width: 390px) and (device-height: 844px)' },
-    ],
-  },
-  openGraph: {
-    title: 'SynchroSoul — Angel Number Dating',
-    description: 'Match with souls seeing the same angel numbers as you.',
-    type: 'website',
-    images: [{ url: '/icon-512.png', width: 512, height: 512, alt: 'SynchroSoul' }],
-  },
-  twitter: {
-    card: 'summary',
-    title: 'SynchroSoul',
-    description: 'Angel number dating app — match with souls on your frequency',
-    images: ['/icon-512.png'],
   },
   icons: {
-    icon: '/icon-192.png',
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
     apple: [
       { url: '/icon-192.png', sizes: '192x192' },
       { url: '/icon-512.png', sizes: '512x512' },
     ],
     shortcut: '/icon-192.png',
   },
-  keywords: ['angel numbers', 'numerology', 'spiritual dating', 'soul mate', 'twin flame', '1111', '555', '333'],
+  verification: {
+    // google: 'your-google-verification-code', // Add after Google Search Console setup
+  },
 }
 
 export const viewport: Viewport = {
@@ -46,6 +94,56 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        "url": siteUrl,
+        "name": "SynchroSoul",
+        "description": "Angel Number Dating & Spiritual Matching App",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": `${siteUrl}/dashboard/dictionary?q={search_term_string}`
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        "name": "SynchroSoul",
+        "url": siteUrl,
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${siteUrl}/icon-512.png`,
+          "width": 512,
+          "height": 512
+        },
+        "sameAs": [
+          "https://twitter.com/synchrosoul",
+          "https://instagram.com/synchrosoul"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "SynchroSoul",
+        "operatingSystem": "Web, iOS, Android",
+        "applicationCategory": "LifestyleApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Log angel numbers, get numerology readings, and match with souls on your cosmic frequency.",
+        "url": siteUrl
+      }
+    ]
+  }
+
   return (
     <html lang="en">
       <head>
@@ -62,9 +160,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
-        <link rel="apple-touch-startup-image" href="/icon-512.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
-      <body style={{ background: '#050510', minHeight: '100vh', overflowX: 'hidden' }}>
+      <body style={{ background: "#050510", minHeight: "100vh", overflowX: "hidden" }}>
         {children}
       </body>
     </html>
