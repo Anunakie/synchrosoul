@@ -105,13 +105,13 @@ export default function ToolsPage() {
           </div>
 
           {/* Tools grid */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.4rem'}}>
+          <div className='tools-grid' style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:'0.4rem',width:'100%',boxSizing:'border-box'}}>
             {section.tools.map(tool=>(
               <Link key={tool.href} href={tool.href} style={{textDecoration:'none'}}>
                 <div style={{...card,padding:'0.875rem',display:'flex',alignItems:'flex-start',gap:'0.625rem',cursor:'pointer',transition:'all 0.2s',borderColor:'rgba(200,180,255,0.07)'}}>
                   <div style={{width:'34px',height:'34px',borderRadius:'0.625rem',background:section.color+'12',border:'1px solid '+section.color+'20',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1rem',flexShrink:0}}>{tool.emoji}</div>
                   <div style={{minWidth:0}}>
-                    <div style={{color:'rgba(220,200,255,0.82)',fontSize:'0.82rem',fontWeight:600,marginBottom:'0.15rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{tool.name}</div>
+                    <div style={{color:'rgba(220,200,255,0.82)',fontSize:'0.82rem',fontWeight:600,marginBottom:'0.15rem',overflow:'hidden',textOverflow:'ellipsis',wordBreak:'break-word'}}>{tool.name}</div>
                     <div style={{color:'rgba(180,160,255,0.38)',fontSize:'0.68rem',lineHeight:1.4,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{tool.desc}</div>
                   </div>
                 </div>

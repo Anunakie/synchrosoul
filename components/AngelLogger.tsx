@@ -117,8 +117,8 @@ export default function AngelLogger({ onLogged }: Props) {
     return (
       <div style={{
         background: 'rgba(10,8,30,0.85)', border: '1px solid rgba(200,180,255,0.2)',
-        borderRadius: '1.5rem', padding: '2rem', backdropFilter: 'blur(20px)',
-        position: 'relative', zIndex: 10,
+        borderRadius: '1.5rem', padding: '1.5rem 1rem', backdropFilter: 'blur(20px)',
+        position: 'relative', zIndex: 10, overflowX: 'hidden' as const,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
           <button onClick={() => setStep('pick')} style={{
@@ -208,8 +208,8 @@ export default function AngelLogger({ onLogged }: Props) {
   return (
     <div style={{
       background: 'rgba(10,8,30,0.85)', border: '1px solid rgba(200,180,255,0.15)',
-      borderRadius: '1.5rem', padding: '2rem', backdropFilter: 'blur(20px)',
-      position: 'relative', zIndex: 10,
+      borderRadius: '1.5rem', padding: '1.5rem 1rem', backdropFilter: 'blur(20px)',
+      position: 'relative', zIndex: 10, overflowX: 'hidden' as const,
     }}>
       <h2 style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.5rem', textAlign: 'center', marginBottom: '0.25rem', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>
         What did you see?
@@ -217,13 +217,13 @@ export default function AngelLogger({ onLogged }: Props) {
       <p style={{ textAlign: 'center', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.35)', marginBottom: '2rem' }}>
         Tap a number or enter your own
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.375rem', marginBottom: '1.5rem' }}>
         {QUICK_NUMBERS.map(num => {
           const m = getAngelMeaning(num)
           const isSelected = selected === num
           return (
             <button key={num} onClick={() => handleQuickPick(num)} style={{
-              borderRadius: '0.75rem', padding: '0.875rem 0.5rem', textAlign: 'center',
+              borderRadius: '0.75rem', padding: '0.75rem 0.25rem', textAlign: 'center',
               cursor: 'pointer',
               background: isSelected ? m.color + '25' : 'rgba(255,255,255,0.05)',
               border: `1px solid ${isSelected ? m.color + '77' : 'rgba(200,180,255,0.15)'}`,

@@ -78,7 +78,7 @@ export default function DashboardPage() {
   const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
 
   return (
-    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.25rem 1rem 2rem'}}>
+    <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.25rem 1rem 2rem',overflowX:'hidden',boxSizing:'border-box' as const}}>
 
       {/* Greeting */}
       <div style={{marginBottom:'1.25rem'}}>
@@ -127,12 +127,12 @@ export default function DashboardPage() {
       {/* Quick Tools */}
       <div style={{marginBottom:'1.25rem'}}>
         <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>Quick Access</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'0.4rem'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:'0.3rem',overflowX:'hidden'}}>
           {QUICK_TOOLS.map(tool=>(
             <Link key={tool.href} href={tool.href} style={{textDecoration:'none'}}>
-              <div style={{...card,padding:'0.75rem 0.25rem',textAlign:'center',cursor:'pointer',transition:'all 0.2s'}}>
+              <div style={{...card,padding:'0.6rem 0.15rem',textAlign:'center',cursor:'pointer',transition:'all 0.2s'}}>
                 <div style={{fontSize:'1.2rem',marginBottom:'0.25rem'}}>{tool.emoji}</div>
-                <div style={{color:tool.color,fontSize:'0.6rem',textTransform:'uppercase',letterSpacing:'0.06em'}}>{tool.label}</div>
+                <div style={{color:tool.color,fontSize:'0.55rem',textTransform:'uppercase',letterSpacing:'0.04em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tool.label}</div>
               </div>
             </Link>
           ))}
