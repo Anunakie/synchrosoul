@@ -12,6 +12,7 @@ import CloudSyncStatus from '@/components/CloudSyncStatus'
 import StarField from '@/components/StarField'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import NotificationBell from '@/components/NotificationBell'
+import SubscriptionBadge from '@/components/SubscriptionBadge'
 import InstallPrompt from '@/components/InstallPrompt'
 import { ThemeProvider, useTheme, THEMES } from '@/lib/theme-context'
 
@@ -233,6 +234,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Link href="/dashboard/search" style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(200,180,255,0.06)', border: '1px solid rgba(200,180,255,0.1)', textDecoration: 'none', fontSize: '0.9rem' }}>🔍</Link><Link href="/dashboard/notifications" style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(200,180,255,0.06)', border: '1px solid rgba(200,180,255,0.1)', textDecoration: 'none', fontSize: '0.9rem' }}>🔔</Link>
+          <SubscriptionBadge />
           <CloudSyncStatus />
           <Link href="/auth/login" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.3)', textDecoration: 'none', padding: '0.35rem 0.875rem', borderRadius: '9999px', border: '1px solid rgba(200,180,255,0.12)' }}>Sign In</Link>
         </div>

@@ -1,10 +1,11 @@
+
 'use client'
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { getSubscriptionStatus, SubscriptionStatus } from '@/lib/subscription'
 
 const PLANS = [
   {
-    id: 'seeker',
+    id: 'free',
     name: 'Seeker',
     price: 'Free',
     priceMonthly: 0,
@@ -16,15 +17,13 @@ const PLANS = [
       'Thought Anchor Journal',
       'Dream Journal',
       'Basic numerology (Life Path)',
-      'Angel Number Dictionary (29 numbers)',
+      'Angel Number Dictionary',
       'Gratitude practice',
       'Vision Board (6 items)',
       'Cosmic Feed & profile',
       '3 background themes',
     ],
-    locked: [],
     cta: 'Current Plan',
-    current: true,
   },
   {
     id: 'mystic',
@@ -49,9 +48,7 @@ const PLANS = [
       'Streak rewards & badges (30)',
       'Export journal as PDF',
     ],
-    locked: [],
     cta: 'Start 7-Day Free Trial',
-    current: false,
   },
   {
     id: 'twin-flame',
@@ -74,121 +71,213 @@ const PLANS = [
       'Early access to new features',
       'Direct support from founders',
     ],
-    locked: [],
     cta: 'Start 7-Day Free Trial',
-    current: false,
   },
 ]
 
-const FEATURE_HIGHLIGHTS = [
-  { emoji:'📋', title:'Weekly Cosmic Synthesis', desc:'Every Sunday, receive a personalized report combining your logged numbers, numerology transits, moon phase, and angel messages into one beautiful cosmic overview.', plan:'Mystic' },
-  { emoji:'👥', title:'Soul Twin Radar', desc:'Advanced matching algorithm finds souls seeing the same numbers as you, with compatibility scores based on numerology overlap, timing, and number harmony.', plan:'Mystic' },
-  { emoji:'🤖', title:'AI Angel Advisor', desc:'Ask your personal AI guide anything — angel number meanings, relationship guidance, life decisions. Powered by your unique numerology profile.', plan:'Twin Flame' },
-  { emoji:'📖', title:'Shared Journal Peek', desc:'With mutual consent, share one journal entry with a soul match. A sacred window into each other’s spiritual journey.', plan:'Twin Flame' },
-  { emoji:'⭕', title:'Private Angel Circles', desc:'Create your own private circle for your spiritual community, family, or friend group. Invite-only sacred space.', plan:'Twin Flame' },
-  { emoji:'🔮', title:'Unlimited Oracle Readings', desc:'Channel messages from your guides anytime. Each reading is personalized to your current angel numbers and numerology cycle.', plan:'Mystic' },
-]
-
 export default function UpgradePage() {
-  const [billing, setBilling] = useState<'monthly'|'yearly'>('monthly')
-  const [selectedPlan, setSelectedPlan] = useState<string|null>(null)
+  const [sub, setSub] = useState<SubscriptionStatus | null>(null)
+  const [loading, setLoading] = useState<string | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
+  useEffect(() => {
+    getSubscriptionStatus().then(setSub)
+    // Check URL params for success/cancel
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('success') === 'true') {
+      const plan = params.get('plan') || 'premium'
+      setMessage({ type: 'success', text: `Welcome to ${plan === 'twin-flame' ? 'Twin Flame' : 'Mystic'}! Your 7-day free trial has started. ✨` })
+      window.history.replaceState({}, '', '/dashboard/upgrade')
+    } else if (params.get('canceled') === 'true') {
+      setMessage({ type: 'error', text: 'Checkout was canceled. Your plan has not changed.' })
+      window.history.replaceState({}, '', '/dashboard/upgrade')
+    }
+  }, [])
+
+  const handleUpgrade = async (planId: string) => {
+    if (planId === 'free') return
+    setLoading(planId)
+    try {
+      const res = await fetch('/api/stripe/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId, returnUrl: window.location.origin }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to start checkout. Please try again.' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Network error. Please try again.' })
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const handlePortal = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnUrl: window.location.origin + '/dashboard/upgrade' }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else setMessage({ type: 'error', text: data.error || 'Could not open billing portal.' })
+    } catch {
+      setMessage({ type: 'error', text: 'Network error. Please try again.' })
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
+  const currentTier = sub?.tier || 'free'
 
   return (
-    <div style={{maxWidth:'600px',margin:'0 auto',padding:'1.5rem 1rem 2rem'}}>
+    <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '1100px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{textAlign:'center',marginBottom:'2rem'}}>
-        <div style={{fontSize:'2rem',marginBottom:'0.5rem'}}>✦</div>
-        <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'2rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.5rem',fontWeight:400}}>Unlock Your Full Cosmic Potential</h1>
-        <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.88rem',margin:'0 0 1.25rem',lineHeight:1.6}}>The universe is sending you signs. Get the tools to decode them fully.</p>
-
-        {/* Billing toggle */}
-        <div style={{display:'inline-flex',background:'rgba(200,180,255,0.05)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'9999px',padding:'0.25rem',gap:'0.25rem'}}>
-          <button onClick={()=>setBilling('monthly')} style={{padding:'0.35rem 1rem',borderRadius:'9999px',border:'none',background:billing==='monthly'?'rgba(167,139,250,0.2)':'transparent',color:billing==='monthly'?'#a78bfa':'rgba(180,160,255,0.4)',fontSize:'0.78rem',cursor:'pointer',transition:'all 0.2s'}}>Monthly</button>
-          <button onClick={()=>setBilling('yearly')} style={{padding:'0.35rem 1rem',borderRadius:'9999px',border:'none',background:billing==='yearly'?'rgba(167,139,250,0.2)':'transparent',color:billing==='yearly'?'#a78bfa':'rgba(180,160,255,0.4)',fontSize:'0.78rem',cursor:'pointer',transition:'all 0.2s',display:'flex',alignItems:'center',gap:'0.35rem'}}>
-            Yearly <span style={{background:'rgba(74,222,128,0.15)',border:'1px solid rgba(74,222,128,0.2)',color:'#4ade80',fontSize:'0.62rem',padding:'0.1rem 0.35rem',borderRadius:'9999px'}}>Save 30%</span>
-          </button>
-        </div>
+      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>✨</div>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>
+          Choose Your Cosmic Path
+        </h1>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.1rem' }}>
+          Unlock deeper spiritual tools and real-time soul connections
+        </p>
+        {sub && sub.tier !== 'free' && (
+          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{
+              background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
+              borderRadius: '12px', padding: '0.75rem 1.5rem', color: '#c9a84c',
+            }}>
+              <strong>Current Plan:</strong> {sub.tier === 'twin-flame' ? '🔥 Twin Flame' : '✨ Mystic'}
+              {sub.status === 'trialing' && ' (Free Trial)'}
+              {sub.currentPeriodEnd && (
+                <span style={{ marginLeft: '0.5rem', opacity: 0.7, fontSize: '0.85rem' }}>
+                  {sub.cancelAtPeriodEnd ? 'Cancels' : 'Renews'} {new Date(sub.currentPeriodEnd).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            <button onClick={handlePortal} disabled={portalLoading} style={{
+              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '12px', padding: '0.75rem 1.5rem', color: '#fff',
+              cursor: 'pointer', fontSize: '0.9rem',
+            }}>
+              {portalLoading ? 'Opening...' : '📋 Manage Billing'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Plans */}
-      <div style={{display:'flex',flexDirection:'column',gap:'0.875rem',marginBottom:'2rem'}}>
-        {PLANS.map(plan=>{
-          const yearlyPrice = plan.priceMonthly > 0 ? (plan.priceMonthly * 12 * 0.7 / 12).toFixed(2) : '0'
-          const displayPrice = billing==='yearly' && plan.priceMonthly > 0 ? '$'+yearlyPrice : plan.price
-          const isSelected = selectedPlan === plan.id
+      {/* Message banner */}
+      {message && (
+        <div style={{
+          background: message.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+          border: `1px solid ${message.type === 'success' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+          borderRadius: '12px', padding: '1rem 1.5rem', marginBottom: '2rem',
+          color: message.type === 'success' ? '#4ade80' : '#f87171', textAlign: 'center',
+        }}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Plan cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        {PLANS.map((plan) => {
+          const isCurrent = currentTier === plan.id
+          const isUpgrade = plan.priceMonthly > 0 && !isCurrent
+          const isLoading = loading === plan.id
 
           return (
-            <div key={plan.id} onClick={()=>!plan.current&&setSelectedPlan(plan.id)}
-              style={{...card,padding:'1.25rem',borderColor:isSelected?plan.color+'40':plan.current?plan.color+'20':'rgba(200,180,255,0.08)',background:isSelected?'linear-gradient(135deg,'+plan.color+'08,rgba(8,6,28,0.95))':plan.current?'rgba(8,6,28,0.88)':'rgba(8,6,28,0.88)',cursor:plan.current?'default':'pointer',transition:'all 0.2s',position:'relative',overflow:'hidden'}}>
-
+            <div key={plan.id} style={{
+              background: 'rgba(8,6,28,0.85)',
+              border: `2px solid ${isCurrent ? plan.color : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: '20px', padding: '2rem',
+              position: 'relative', backdropFilter: 'blur(20px)',
+              boxShadow: isCurrent ? `0 0 30px ${plan.color}33` : 'none',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}>
               {plan.badge && (
-                <div style={{position:'absolute',top:'1rem',right:'1rem',background:'linear-gradient(135deg,'+plan.color+','+plan.color+'aa)',color:'white',fontSize:'0.62rem',fontWeight:700,padding:'0.2rem 0.5rem',borderRadius:'9999px',textTransform:'uppercase',letterSpacing:'0.08em'}}>{plan.badge}</div>
+                <div style={{
+                  position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)',
+                  background: `linear-gradient(135deg, ${plan.color}, #f472b6)`,
+                  color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                  padding: '0.25rem 1rem', borderRadius: '999px', whiteSpace: 'nowrap',
+                }}>
+                  {plan.badge}
+                </div>
+              )}
+              {isCurrent && (
+                <div style={{
+                  position: 'absolute', top: '-12px', right: '1.5rem',
+                  background: plan.color, color: '#000', fontSize: '0.7rem', fontWeight: 700,
+                  padding: '0.25rem 0.75rem', borderRadius: '999px',
+                }}>
+                  ✓ Active
+                </div>
               )}
 
-              <div style={{display:'flex',alignItems:'flex-start',gap:'0.875rem',marginBottom:'0.875rem'}}>
-                <div style={{width:'44px',height:'44px',borderRadius:'0.875rem',background:plan.color+'12',border:'1px solid '+plan.color+'20',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.3rem',flexShrink:0}}>{plan.emoji}</div>
-                <div style={{flex:1}}>
-                  <div style={{display:'flex',alignItems:'baseline',gap:'0.5rem',marginBottom:'0.15rem'}}>
-                    <span style={{color:'rgba(220,200,255,0.9)',fontSize:'1rem',fontWeight:700}}>{plan.name}</span>
-                    <span style={{color:plan.color,fontSize:'1.2rem',fontWeight:700}}>{displayPrice}</span>
-                    {plan.priceMonthly > 0 && <span style={{color:'rgba(180,160,255,0.35)',fontSize:'0.72rem'}}>/mo</span>}
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{plan.emoji}</div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: plan.color, marginBottom: '0.25rem' }}>
+                {plan.name}
+              </h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                {plan.description}
+              </p>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{plan.price}</span>
+                {plan.priceMonthly > 0 && (
+                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>/month</span>
+                )}
+                {plan.priceMonthly > 0 && (
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                    7-day free trial, then billed monthly
                   </div>
-                  <div style={{color:'rgba(180,160,255,0.45)',fontSize:'0.78rem'}}>{plan.description}</div>
-                </div>
-              </div>
-
-              <div style={{display:'flex',flexDirection:'column',gap:'0.3rem',marginBottom:'1rem'}}>
-                {plan.features.slice(0,plan.current?5:6).map((f,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.5rem'}}>
-                    <span style={{color:plan.color,fontSize:'0.75rem',marginTop:'0.1rem',flexShrink:0}}>✓</span>
-                    <span style={{color:'rgba(200,180,255,0.6)',fontSize:'0.78rem',lineHeight:1.4}}>{f}</span>
-                  </div>
-                ))}
-                {plan.features.length > 6 && (
-                  <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.72rem',marginTop:'0.15rem'}}>+{plan.features.length-6} more features</div>
                 )}
               </div>
 
-              <button style={{width:'100%',padding:'0.625rem',borderRadius:'0.875rem',border:plan.current?'1px solid rgba(200,180,255,0.12)':'none',background:plan.current?'transparent':isSelected?'linear-gradient(135deg,'+plan.color+','+plan.color+'bb)':'linear-gradient(135deg,'+plan.color+'60,'+plan.color+'40)',color:plan.current?'rgba(180,160,255,0.4)':isSelected?'white':'rgba(220,200,255,0.8)',fontSize:'0.85rem',fontWeight:600,cursor:plan.current?'default':'pointer'}}>
-                {plan.current ? 'Current Plan' : plan.cta}
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {plan.features.map((f, i) => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
+                    <span style={{ color: plan.color, flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => isUpgrade ? handleUpgrade(plan.id) : undefined}
+                disabled={isCurrent || isLoading}
+                style={{
+                  width: '100%', padding: '0.9rem',
+                  background: isCurrent ? 'rgba(255,255,255,0.05)' : `linear-gradient(135deg, ${plan.color}, ${plan.id === 'twin-flame' ? '#fb923c' : '#a78bfa'})`,
+                  border: isCurrent ? `1px solid ${plan.color}` : 'none',
+                  borderRadius: '12px', color: isCurrent ? plan.color : '#fff',
+                  fontWeight: 700, fontSize: '1rem', cursor: isCurrent ? 'default' : 'pointer',
+                  opacity: isLoading ? 0.7 : 1, transition: 'opacity 0.2s',
+                }}
+              >
+                {isLoading ? 'Redirecting to Stripe...' : isCurrent ? '✓ Current Plan' : plan.cta}
               </button>
             </div>
           )
         })}
       </div>
 
-      {/* Feature highlights */}
-      <div style={{marginBottom:'2rem'}}>
-        <h2 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.3rem',color:'rgba(220,200,255,0.8)',margin:'0 0 1rem',fontWeight:400,textAlign:'center'}}>What You Unlock</h2>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem'}}>
-          {FEATURE_HIGHLIGHTS.map((f,i)=>(
-            <div key={i} style={{...card,padding:'0.875rem'}}>
-              <div style={{fontSize:'1.3rem',marginBottom:'0.35rem'}}>{f.emoji}</div>
-              <div style={{color:'rgba(220,200,255,0.8)',fontSize:'0.82rem',fontWeight:600,marginBottom:'0.25rem'}}>{f.title}</div>
-              <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.7rem',lineHeight:1.5,marginBottom:'0.4rem'}}>{f.desc}</div>
-              <span style={{fontSize:'0.62rem',padding:'0.15rem 0.4rem',borderRadius:'9999px',background:f.plan==='Twin Flame'?'rgba(244,114,182,0.1)':'rgba(201,168,76,0.1)',border:f.plan==='Twin Flame'?'1px solid rgba(244,114,182,0.2)':'1px solid rgba(201,168,76,0.2)',color:f.plan==='Twin Flame'?'#f472b6':'#c9a84c'}}>{f.plan}</span>
-            </div>
-          ))}
+      {/* Trust badges */}
+      <div style={{ textAlign: 'center', marginTop: '3rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <span>🔒 Secure payments via Stripe</span>
+          <span>🔄 Cancel anytime</span>
+          <span>🌟 7-day free trial</span>
+          <span>💳 No hidden fees</span>
         </div>
+        <p>Questions? Email us at hello@synchrosoul.app</p>
       </div>
-
-      {/* Trust signals */}
-      <div style={{...card,padding:'1.25rem',textAlign:'center',marginBottom:'1.25rem'}}>
-        <div style={{color:'rgba(180,160,255,0.4)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.875rem'}}>Our Promise</div>
-        <div style={{display:'flex',justifyContent:'space-around',gap:'0.5rem'}}>
-          {[['🔒','Secure','Your data is always private'],['↩️','Cancel anytime','No questions asked'],['7','Day free trial','Try before you commit']].map(([e,t,d])=>(
-            <div key={t as string} style={{flex:1}}>
-              <div style={{fontSize:'1.3rem',marginBottom:'0.25rem'}}>{e}</div>
-              <div style={{color:'rgba(220,200,255,0.7)',fontSize:'0.75rem',fontWeight:600,marginBottom:'0.15rem'}}>{t}</div>
-              <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',lineHeight:1.4}}>{d}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <p style={{color:'rgba(180,160,255,0.25)',fontSize:'0.72rem',textAlign:'center'}}>Payments processed securely via Stripe. Cancel anytime from settings.</p>
     </div>
   )
 }
