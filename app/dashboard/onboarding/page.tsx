@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { calcLifePath, calcSoulUrge, calcDestiny, getLifePathData } from '@/lib/numerology';
-import { upsertProfile } from '@/lib/supabase-db';
+import { upsertProfile, getProfile } from '@/lib/supabase-db';
 import { saveNumerologyProfile } from '@/lib/storage';
 import { requestNotificationPermission, scheduleDailyReminder, savePushSettings } from '@/lib/push-notifications';
 import StarField from '@/components/StarField';
@@ -103,10 +103,21 @@ export default function OnboardingPage() {
   const [numbersActive, setNumbersActive] = useState(false);
 
   useEffect(() => {
-    // Check if already completed
-    const done = document.cookie.includes('onboarding_complete=true');
-    if (done) { router.push('/dashboard'); return; }
-    setTimeout(() => setVisible(true), 100);
+    // Check if already completed (cookie first for speed, then Supabase for cross-device)
+    const cookieDone = document.cookie.includes('onboarding_complete=true');
+    if (cookieDone) { router.push('/dashboard'); return; }
+    // Check Supabase profile for cross-device sync
+    getProfile().then((profile) => {
+      if (profile && (profile as any).onboarding_complete) {
+        // Set cookie so future checks are instant
+        document.cookie = 'onboarding_complete=true; path=/; max-age=31536000';
+        router.push('/dashboard');
+        return;
+      }
+      setTimeout(() => setVisible(true), 100);
+    }).catch(() => {
+      setTimeout(() => setVisible(true), 100);
+    });
   }, [router]);
 
   useEffect(() => {

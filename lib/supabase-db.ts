@@ -34,6 +34,7 @@ export interface SupabaseProfile {
   destiny: number | null
   birthdate: string | null
   privacy_mode: boolean
+  onboarding_complete: boolean
   created_at: string
 }
 
