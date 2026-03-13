@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import MusicPlayer from '@/components/MusicPlayer'
 
 const FREQUENCIES = [
   { hz: 174, name: 'Foundation', color: '#ef4444', emoji: '🔴', chakra: 'Root', numbers: ['444','111'], benefit: 'Pain relief, security, grounding', description: 'The lowest Solfeggio frequency acts as a natural anesthetic. It relieves pain and stress, giving organs a sense of security and love, encouraging them to do their best work.', affirmation: 'I am safe, grounded, and supported by the earth.' },
@@ -117,6 +118,11 @@ export default function SolfeggioPage() {
 
       <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem', backdropFilter: 'blur(12px)', textAlign: 'center' }}>
         <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', lineHeight: 1.7 }}>Use headphones for best results. Find a quiet space, close your eyes, and breathe deeply while the frequency plays. Set an intention before each session.</p>
+      </div>
+    
+      {/* Sacred Sounds */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <MusicPlayer defaultCategory="meditation" title="Meditation Sounds" />
       </div>
     </div>
   );

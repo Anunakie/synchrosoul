@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import MusicPlayer from '@/components/MusicPlayer'
 
 const affirmationSets: Record<string, { title: string; color: string; emoji: string; affirmations: string[] }> = {
   abundance: { title: 'Abundance', color: '#c9a84c', emoji: '✨', affirmations: ['I am a magnet for miracles and abundance', 'Money flows to me easily and effortlessly', 'I deserve all the wealth and prosperity the universe offers', 'My income is constantly increasing', 'I am open to receiving abundance in all its forms', 'The universe always provides for my needs and desires', 'I attract opportunities that create financial freedom', 'Abundance is my natural state of being'] },
@@ -93,6 +94,11 @@ export default function AffirmationsPage() {
           ))}
         </div>
       )}
+    
+      {/* Sacred Sounds */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <MusicPlayer defaultCategory="uplifting" title="Uplifting Sounds" />
+      </div>
     </div>
   );
 }

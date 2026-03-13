@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import MusicPlayer from '@/components/MusicPlayer'
 
 const KEY = 'synchrosoul_vision_board'
 
@@ -164,6 +165,11 @@ export default function VisionBoardPage() {
           <div style={{fontSize:'0.78rem',marginTop:'0.35rem'}}>Add intentions, affirmations, and sacred numbers</div>
         </div>
       )}
+    
+      {/* Sacred Sounds */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <MusicPlayer defaultCategory="all" title="Sacred Sounds" />
+      </div>
     </div>
   )
 }

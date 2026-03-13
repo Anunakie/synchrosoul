@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import MusicPlayer from '@/components/MusicPlayer'
 
 const RITUALS = [
   { id: 'new-moon', title: 'New Moon Intention Setting', icon: '🌑', color: '#6366f1',
@@ -214,6 +215,11 @@ export default function RitualsPage() {
             ))}
           </div>
         </div>
+      </div>
+    
+      {/* Sacred Sounds */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <MusicPlayer defaultCategory="healing" title="Ritual Ambience" />
       </div>
     </div>
   );
