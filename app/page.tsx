@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import StarField from '@/components/StarField'
+import StickyNav from '@/components/StickyNav'
 
 export default function HomePage() {
   return (
     <main style={{ background: '#050510', color: '#fff', fontFamily: 'inherit', overflowX: 'hidden' }}>
       <StarField />
+      <StickyNav />
 
       {/* ── NAV ─────────────────────────────────────────────────────────── */}
       <nav style={{
@@ -532,6 +534,78 @@ export default function HomePage() {
                 lineHeight: 1.7, margin: 0, fontFamily: 'Inter, sans-serif',
               }}>{desc}</p>
             </article>
+          ))}
+        </div>
+      </section>
+
+
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
+      <section style={{
+        padding: '4rem 2rem 3rem', maxWidth: '900px', margin: '0 auto',
+        position: 'relative', zIndex: 10,
+      }}>
+        <p style={{
+          textAlign: 'center', fontSize: '0.7rem', letterSpacing: '0.2em',
+          textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)',
+          marginBottom: '0.75rem',
+        }}>Soul Stories</p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
+          color: 'rgba(220,200,255,0.85)', textAlign: 'center',
+          fontWeight: 300, marginBottom: '2.5rem',
+        }}>What the Universe Brought Together</h2>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1.5rem',
+        }}>
+          {[
+            {
+              quote: "I logged 1111 three times in one day. SynchroSoul showed me someone who logged it at the exact same minute. We've been talking every day since. It feels fated.",
+              name: 'Luna M.',
+              detail: 'Life Path 7 • Logged 1111',
+              color: 'rgba(180,140,255,0.15)',
+              border: 'rgba(180,140,255,0.2)',
+            },
+            {
+              quote: "The Thought Anchor Journal changed how I see synchronicities. I started noticing patterns in what I was thinking every time 444 appeared. Mind-blowing.",
+              name: 'Sage R.',
+              detail: 'Life Path 4 • Logged 444',
+              color: 'rgba(201,168,76,0.1)',
+              border: 'rgba(201,168,76,0.2)',
+            },
+            {
+              quote: "I was skeptical at first. Then I matched with someone who saw 333 the same morning I did, and we share the same Soul Urge number. Coincidence? I think not.",
+              name: 'River K.',
+              detail: 'Life Path 3 • Logged 333',
+              color: 'rgba(100,200,255,0.08)',
+              border: 'rgba(100,200,255,0.15)',
+            },
+          ].map(({ quote, name, detail, color, border }, i) => (
+            <div key={i} style={{
+              background: color,
+              border: `1px solid ${border}`,
+              borderRadius: '16px',
+              padding: '1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}>
+              <p style={{
+                color: 'rgba(220,200,255,0.8)',
+                fontSize: '0.95rem',
+                lineHeight: 1.8,
+                fontFamily: 'Cormorant Garamond, serif',
+                fontStyle: 'italic',
+                margin: 0,
+              }}>&ldquo;{quote}&rdquo;</p>
+              <div>
+                <p style={{ color: 'rgba(201,168,76,0.9)', fontSize: '0.85rem', fontWeight: 600, margin: '0 0 0.2rem' }}>{name}</p>
+                <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', letterSpacing: '0.05em', margin: 0 }}>{detail}</p>
+              </div>
+            </div>
           ))}
         </div>
       </section>
