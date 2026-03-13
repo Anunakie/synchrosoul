@@ -6,57 +6,88 @@ interface Track {
   id: string
   title: string
   artist: string
+  category: string
   url: string
 }
 
 const TRACKS: Track[] = [
-  { id: 'dunes', title: 'Dunes', artist: 'Valante', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Dunes%20-%20Valante.mp3' },
-  { id: 'ebb', title: 'Ebb', artist: 'Bomull', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_ebb%20-%20bomull.mp3' },
-  { id: 'fjalldrommar', title: 'Fjalldrommar', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Fjalldrommar%20-%20Center%20of%20Attention.mp3' },
-  { id: 'havsdrommar', title: 'Havsdrommar', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Havsdrommar%20-%20Center%20of%20Attention.mp3' },
-  { id: 'nattdrommar', title: 'Nattdrommar', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Nattdrommar%20-%20Center%20of%20Attention.mp3' },
-  { id: 'gilded', title: 'Gilded Stillness', artist: 'DEX 1200', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Gilded%20Stillness%20-%20DEX%201200.mp3' },
-  { id: 'lush', title: 'Lush Infinity', artist: 'DEX 1200', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Lush%20Infinity%20-%20DEX%201200.mp3' },
-  { id: 'songfjord', title: 'Songfjord', artist: 'DEX 1200', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Songfjord%20-%20DEX%201200.mp3' },
-  { id: 'slowdancing', title: 'Slow Dancing on Water', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Slow%20Dancing%20on%20Water%20-%20Center%20of%20Attention.mp3' },
-  { id: 'stillpoint', title: 'Stillpoint', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Stillpoint%20-%20Center%20of%20Attention.mp3' },
-  { id: 'stateofmed', title: 'State of Meditation', artist: 'Elm Lake', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_State%20of%20Meditation%20-%20Elm%20Lake.mp3' },
-  { id: 'mindstream', title: 'Mindstream', artist: 'Amber Glow', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Mindstream%20-%20Amber%20Glow.mp3' },
-  { id: 'enlightened', title: 'Enlightened Drift', artist: 'Amber Glow', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Enlightened%20Drift%20-%20Amber%20Glow.mp3' },
-  { id: 'sonzai', title: 'Sonzai', artist: 'Valante', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Sonzai%20-%20Valante.mp3' },
-  { id: 'grounded', title: 'Grounded', artist: 'Hanna Lindgren', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Grounded%20-%20Hanna%20Lindgren.mp3' },
-  { id: 'thawing', title: 'Thawing', artist: 'Shuta Yasukochi', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Thawing%20-%20Shuta%20Yasukochi.mp3' },
-  { id: 'healingtides', title: 'Healing Tides', artist: 'Amber Glow', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Healing%20Tides%20-%20Amber%20Glow.mp3' },
-  { id: 'justbreathe', title: 'Just Breathe', artist: 'Amber Glow', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Just%20Breathe%20-%20Amber%20Glow.mp3' },
-  { id: 'stilllove', title: 'Still Love', artist: 'Hanna Lindgren', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Still%20Love%20-%20Hanna%20Lindgren.mp3' },
-  { id: 'bliss', title: 'Bliss', artist: 'Harbours & Oceans', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Bliss%20-%20Harbours%20%26%20Oceans.mp3' },
-  { id: 'blossom', title: 'Blossom', artist: 'Luwaks', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Blossom%20-%20Luwaks.mp3' },
-  { id: 'carried', title: 'Carried by Current', artist: 'Valante', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Carried%20by%20Current%20-%20Valante.mp3' },
-  { id: 'meadow', title: 'Meadow Waves', artist: 'Rand Aldo', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Meadow%20Waves%20-%20Rand%20Aldo.mp3' },
-  { id: 'birds', title: 'Birds of Lydia', artist: 'Rand Aldo', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Birds%20of%20Lydia%20-%20Rand%20Aldo.mp3' },
-  { id: 'birdsong', title: 'Birdsong by the River', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Birdsong%20by%20the%20River%20-%20Center%20of%20Attention.mp3' },
-  { id: 'greenembrace', title: 'A Green Embrace', artist: 'Rand Aldo', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_A%20Green%20Embrace%20-%20Rand%20Aldo.mp3' },
-  { id: 'deepspace', title: 'Deep Space Garden', artist: 'Rand Aldo', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Deep%20Space%20Garden%20-%20Rand%20Aldo.mp3' },
-  { id: 'crowned', title: 'Crowned With Spirit', artist: 'Valante', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Crowned%20With%20Spirit%20-%20Valante.mp3' },
-  { id: 'daretodream', title: 'Dare to Dream', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Dare%20to%20Dream%20-%20Center%20of%20Attention.mp3' },
-  { id: 'smallhope', title: 'A Small Hope', artist: 'Center of Attention', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_A%20Small%20Hope%20-%20Center%20of%20Attention.mp3' },
-  { id: 'tangled', title: 'Tangled Reflections', artist: 'Luba Hilman', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Tangled%20Reflections%20-%20Luba%20Hilman.mp3' }
+  { id: 'dunes', title: 'Dunes', artist: 'Valante', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Dunes%20-%20Valante.mp3' },
+  { id: 'ebb', title: 'Ebb', artist: 'Bomull', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_ebb%20-%20bomull.mp3' },
+  { id: 'fjalldrommar', title: 'Fjalldrommar', artist: 'Center of Attention', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Fjalldrommar%20-%20Center%20of%20Attention.mp3' },
+  { id: 'havsdrommar', title: 'Havsdrommar', artist: 'Center of Attention', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Havsdrommar%20-%20Center%20of%20Attention.mp3' },
+  { id: 'nattdrommar', title: 'Nattdrommar', artist: 'Center of Attention', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Nattdrommar%20-%20Center%20of%20Attention.mp3' },
+  { id: 'gilded', title: 'Gilded Stillness', artist: 'DEX 1200', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Gilded%20Stillness%20-%20DEX%201200.mp3' },
+  { id: 'lush', title: 'Lush Infinity', artist: 'DEX 1200', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Lush%20Infinity%20-%20DEX%201200.mp3' },
+  { id: 'songfjord', title: 'Songfjord', artist: 'DEX 1200', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Songfjord%20-%20DEX%201200.mp3' },
+  { id: 'slowdancing', title: 'Slow Dancing on Water', artist: 'Center of Attention', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Slow%20Dancing%20on%20Water%20-%20Center%20of%20Attention.mp3' },
+  { id: 'stillpoint', title: 'Stillpoint', artist: 'Center of Attention', category: 'sleep', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Stillpoint%20-%20Center%20of%20Attention.mp3' },
+  { id: 'stateofmed', title: 'State of Meditation', artist: 'Elm Lake', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_State%20of%20Meditation%20-%20Elm%20Lake.mp3' },
+  { id: 'mindstream', title: 'Mindstream', artist: 'Amber Glow', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Mindstream%20-%20Amber%20Glow.mp3' },
+  { id: 'enlightened', title: 'Enlightened Drift', artist: 'Amber Glow', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Enlightened%20Drift%20-%20Amber%20Glow.mp3' },
+  { id: 'sonzai', title: 'Sonzai', artist: 'Valante', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Sonzai%20-%20Valante.mp3' },
+  { id: 'grounded', title: 'Grounded', artist: 'Hanna Lindgren', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Grounded%20-%20Hanna%20Lindgren.mp3' },
+  { id: 'thawing', title: 'Thawing', artist: 'Shuta Yasukochi', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Thawing%20-%20Shuta%20Yasukochi.mp3' },
+  { id: 'tangled', title: 'Tangled Reflections', artist: 'Luba Hilman', category: 'meditation', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Tangled%20Reflections%20-%20Luba%20Hilman.mp3' },
+  { id: 'meadow', title: 'Meadow Waves', artist: 'Rand Aldo', category: 'nature', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Meadow%20Waves%20-%20Rand%20Aldo.mp3' },
+  { id: 'birds', title: 'Birds of Lydia', artist: 'Rand Aldo', category: 'nature', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Birds%20of%20Lydia%20-%20Rand%20Aldo.mp3' },
+  { id: 'birdsong', title: 'Birdsong by the River', artist: 'Center of Attention', category: 'nature', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Birdsong%20by%20the%20River%20-%20Center%20of%20Attention.mp3' },
+  { id: 'greenembrace', title: 'A Green Embrace', artist: 'Rand Aldo', category: 'nature', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_A%20Green%20Embrace%20-%20Rand%20Aldo.mp3' },
+  { id: 'deepspace', title: 'Deep Space Garden', artist: 'Rand Aldo', category: 'nature', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Deep%20Space%20Garden%20-%20Rand%20Aldo.mp3' },
+  { id: 'healingtides', title: 'Healing Tides', artist: 'Amber Glow', category: 'healing', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Healing%20Tides%20-%20Amber%20Glow.mp3' },
+  { id: 'justbreathe', title: 'Just Breathe', artist: 'Amber Glow', category: 'healing', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Just%20Breathe%20-%20Amber%20Glow.mp3' },
+  { id: 'stilllove', title: 'Still Love', artist: 'Hanna Lindgren', category: 'healing', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Still%20Love%20-%20Hanna%20Lindgren.mp3' },
+  { id: 'bliss', title: 'Bliss', artist: 'Harbours & Oceans', category: 'healing', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Bliss%20-%20Harbours%20%26%20Oceans.mp3' },
+  { id: 'blossom', title: 'Blossom', artist: 'Luwaks', category: 'healing', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Blossom%20-%20Luwaks.mp3' },
+  { id: 'carried', title: 'Carried by Current', artist: 'Valante', category: 'healing', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Carried%20by%20Current%20-%20Valante.mp3' },
+  { id: 'crowned', title: 'Crowned With Spirit', artist: 'Valante', category: 'uplifting', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Crowned%20With%20Spirit%20-%20Valante.mp3' },
+  { id: 'daretodream', title: 'Dare to Dream', artist: 'Center of Attention', category: 'uplifting', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_Dare%20to%20Dream%20-%20Center%20of%20Attention.mp3' },
+  { id: 'smallhope', title: 'A Small Hope', artist: 'Center of Attention', category: 'uplifting', url: 'https://btopllnsyslhjictcznm.supabase.co/storage/v1/object/public/sleep-sounds/ES_A%20Small%20Hope%20-%20Center%20of%20Attention.mp3' }
 ]
+
+const PLAYLIST_KEY = 'synchrosoul_music_playlist'
+
+const CAT_EMOJI: Record<string, string> = {
+  sleep: '🌙', meditation: '🧘', healing: '💚',
+  nature: '🌿', uplifting: '🌟'
+}
 
 export default function SleepSounds() {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [playAll, setPlayAll] = useState(false)
   const [volume, setVolume] = useState(0.7)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [search, setSearch] = useState('')
+  const [playlist, setPlaylist] = useState<string[]>([])
+  const [showPlaylist, setShowPlaylist] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const playAllRef = useRef(false)
+  const currentTrackRef = useRef<Track | null>(null)
 
-  const filtered = TRACKS.filter(t =>
-    t.title.toLowerCase().includes(search.toLowerCase()) ||
-    t.artist.toLowerCase().includes(search.toLowerCase())
-  )
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PLAYLIST_KEY)
+      if (saved) setPlaylist(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  const togglePlaylist = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPlaylist(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      try { localStorage.setItem(PLAYLIST_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [])
+
+  const displayedTracks = showPlaylist
+    ? TRACKS.filter(t => playlist.includes(t.id))
+    : TRACKS.filter(t =>
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        t.artist.toLowerCase().includes(search.toLowerCase())
+      )
 
   const stopProgress = useCallback(() => {
     if (progressRef.current) { clearInterval(progressRef.current); progressRef.current = null }
@@ -72,12 +103,25 @@ export default function SleepSounds() {
     }, 500)
   }, [stopProgress])
 
-  const playTrack = useCallback((track: Track) => {
+  const playTrack = useCallback((track: Track, isPlayAllMode = false) => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = '' }
     const audio = new Audio(track.url)
     audio.volume = volume
-    audio.loop = true
+    audio.loop = !isPlayAllMode
     audioRef.current = audio
+    currentTrackRef.current = track
+
+    audio.addEventListener('ended', () => {
+      if (playAllRef.current) {
+        const allTracks = TRACKS
+        const cur = currentTrackRef.current
+        if (!cur) return
+        const idx = allTracks.findIndex(t => t.id === cur.id)
+        const next = allTracks[(idx + 1) % allTracks.length]
+        if (next) playTrack(next, true)
+      }
+    })
+
     audio.play().then(() => {
       setCurrentTrack(track)
       setIsPlaying(true)
@@ -88,31 +132,43 @@ export default function SleepSounds() {
   const togglePlay = useCallback(() => {
     if (!audioRef.current) return
     if (isPlaying) {
-      audioRef.current.pause()
-      setIsPlaying(false)
-      stopProgress()
+      audioRef.current.pause(); setIsPlaying(false); stopProgress()
     } else {
-      audioRef.current.play()
-      setIsPlaying(true)
-      startProgress()
+      audioRef.current.play(); setIsPlaying(true); startProgress()
     }
   }, [isPlaying, startProgress, stopProgress])
 
   const stopAll = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; audioRef.current = null }
     stopProgress()
-    setCurrentTrack(null)
-    setIsPlaying(false)
-    setProgress(0)
-    setDuration(0)
+    setCurrentTrack(null); setIsPlaying(false); setProgress(0); setDuration(0)
   }, [stopProgress])
 
   const nextTrack = useCallback(() => {
-    if (!currentTrack) return
-    const idx = filtered.findIndex(t => t.id === currentTrack.id)
-    const next = filtered[(idx + 1) % filtered.length]
-    if (next) playTrack(next)
-  }, [currentTrack, filtered, playTrack])
+    const cur = currentTrackRef.current
+    if (!cur) return
+    const idx = TRACKS.findIndex(t => t.id === cur.id)
+    playTrack(TRACKS[(idx + 1) % TRACKS.length], playAllRef.current)
+  }, [playTrack])
+
+  const prevTrack = useCallback(() => {
+    const cur = currentTrackRef.current
+    if (!cur) return
+    const idx = TRACKS.findIndex(t => t.id === cur.id)
+    playTrack(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length], playAllRef.current)
+  }, [playTrack])
+
+  const handlePlayAll = useCallback(() => {
+    const next = !playAll
+    setPlayAll(next)
+    playAllRef.current = next
+    if (next) {
+      const start = currentTrackRef.current || TRACKS[0]
+      playTrack(start, true)
+    } else {
+      if (audioRef.current) audioRef.current.loop = true
+    }
+  }, [playAll, playTrack])
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
@@ -128,6 +184,35 @@ export default function SleepSounds() {
   return (
     <FeatureGate feature="sleep_sounds">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* Controls row */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Play All */}
+          <button onClick={handlePlayAll} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+            borderRadius: 20, border: '1px solid',
+            borderColor: playAll ? '#c9a84c' : 'rgba(255,255,255,0.2)',
+            background: playAll ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)',
+            color: playAll ? '#c9a84c' : 'rgba(255,255,255,0.7)',
+            cursor: 'pointer', fontSize: 13, fontWeight: 600
+          }}>
+            <span>{playAll ? '🔁' : '▶▶'}</span>
+            <span>{playAll ? 'Playing All' : 'Play All'}</span>
+          </button>
+          {/* My Playlist toggle */}
+          <button onClick={() => setShowPlaylist(p => !p)} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+            borderRadius: 20, border: '1px solid',
+            borderColor: showPlaylist ? '#e879a0' : 'rgba(255,255,255,0.2)',
+            background: showPlaylist ? 'rgba(232,121,160,0.2)' : 'rgba(255,255,255,0.05)',
+            color: showPlaylist ? '#e879a0' : 'rgba(255,255,255,0.7)',
+            cursor: 'pointer', fontSize: 13
+          }}>
+            <span>♥</span>
+            <span>My Playlist {playlist.length > 0 ? `(${playlist.length})` : ''}</span>
+          </button>
+        </div>
+
         {/* Now playing */}
         {currentTrack && (
           <div style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '12px 16px' }}>
@@ -136,10 +221,14 @@ export default function SleepSounds() {
                 {isPlaying ? '🎵' : '🎶'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentTrack.title}</div>
+                <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentTrack.title}
+                  {playAll && <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '1px 6px', borderRadius: 10 }}>🔁 Auto</span>}
+                </div>
                 <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{currentTrack.artist}</div>
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button onClick={prevTrack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 18 }}>⏮</button>
                 <button onClick={togglePlay} style={{ background: 'rgba(201,168,76,0.3)', border: '1px solid rgba(201,168,76,0.5)', borderRadius: '50%', width: 40, height: 40, color: '#c9a84c', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {isPlaying ? '⏸' : '▶'}
                 </button>
@@ -165,37 +254,59 @@ export default function SleepSounds() {
           </div>
         )}
 
-        {/* Search */}
-        <input
-          type="text" placeholder="🔍 Search tracks..."
-          value={search} onChange={e => setSearch(e.target.value)}
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px', color: 'white', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box' }}
-        />
+        {/* Search (only when not showing playlist) */}
+        {!showPlaylist && (
+          <input
+            type="text" placeholder="🔍 Search tracks..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px', color: 'white', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+          />
+        )}
+
+        {/* Empty playlist */}
+        {showPlaylist && playlist.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '24px 16px', color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>♥</div>
+            <div style={{ fontSize: 13 }}>No saved tracks yet</div>
+            <div style={{ fontSize: 11, marginTop: 4 }}>Tap ♡ on any track to save it here</div>
+          </div>
+        )}
 
         {/* Track list */}
         <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {filtered.map(track => (
-            <button
-              key={track.id}
-              onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                background: currentTrack?.id === track.id ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
-                border: '1px solid',
-                borderColor: currentTrack?.id === track.id ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.08)',
-                borderRadius: 10, cursor: 'pointer', textAlign: 'left', width: '100%'
-              }}
-            >
-              <span style={{ fontSize: 20, minWidth: 24, textAlign: 'center' }}>
-                {currentTrack?.id === track.id && isPlaying ? '⏸' : '▶'}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{track.artist}</div>
-              </div>
-            </button>
+          {displayedTracks.map(track => (
+            <div key={track.id} style={{
+              display: 'flex', alignItems: 'center',
+              background: currentTrack?.id === track.id ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
+              border: '1px solid',
+              borderColor: currentTrack?.id === track.id ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.08)',
+              borderRadius: 10, overflow: 'hidden'
+            }}>
+              <button
+                onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track, playAllRef.current)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0 }}
+              >
+                <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>
+                  {currentTrack?.id === track.id && isPlaying
+                    ? '⏸'
+                    : CAT_EMOJI[track.category] || '▶'}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{track.artist}</div>
+                </div>
+              </button>
+              {/* Heart button */}
+              <button
+                onClick={(e) => togglePlaylist(track.id, e)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 14px', fontSize: 18, flexShrink: 0, color: playlist.includes(track.id) ? '#e879a0' : 'rgba(255,255,255,0.2)', transition: 'color 0.2s' }}
+                title={playlist.includes(track.id) ? 'Remove from playlist' : 'Save to playlist'}
+              >
+                {playlist.includes(track.id) ? '♥' : '♡'}
+              </button>
+            </div>
           ))}
-          {filtered.length === 0 && (
+          {displayedTracks.length === 0 && !showPlaylist && (
             <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: 20, fontSize: 13 }}>No tracks found</div>
           )}
         </div>

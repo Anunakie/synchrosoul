@@ -45,12 +45,15 @@ const ALL_TRACKS: Track[] = [
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '✨' },
+  { id: 'playlist', label: 'My Playlist', emoji: '❤️' },
   { id: 'meditation', label: 'Meditation', emoji: '🧘' },
   { id: 'sleep', label: 'Sleep', emoji: '🌙' },
   { id: 'healing', label: 'Healing', emoji: '💚' },
   { id: 'nature', label: 'Nature', emoji: '🌿' },
   { id: 'uplifting', label: 'Uplifting', emoji: '🌟' },
 ]
+
+const PLAYLIST_KEY = 'synchrosoul_music_playlist'
 
 interface MusicPlayerProps {
   defaultCategory?: string
@@ -62,21 +65,57 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
   const [activeCategory, setActiveCategory] = useState(defaultCategory)
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [playAll, setPlayAll] = useState(false)
   const [volume, setVolume] = useState(0.7)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [playlist, setPlaylist] = useState<string[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const playAllRef = useRef(false)
+  const filteredTracksRef = useRef<Track[]>([])
 
-  const filteredTracks = activeCategory === 'all'
-    ? ALL_TRACKS
-    : ALL_TRACKS.filter(t => t.category === activeCategory)
+  // Load playlist from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PLAYLIST_KEY)
+      if (saved) setPlaylist(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  const savePlaylist = useCallback((ids: string[]) => {
+    setPlaylist(ids)
+    try { localStorage.setItem(PLAYLIST_KEY, JSON.stringify(ids)) } catch {}
+  }, [])
+
+  const togglePlaylist = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPlaylist(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      try { localStorage.setItem(PLAYLIST_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [])
+
+  const getFilteredTracks = useCallback((category: string, pl: string[]) => {
+    if (category === 'playlist') return ALL_TRACKS.filter(t => pl.includes(t.id))
+    if (category === 'all') return ALL_TRACKS
+    return ALL_TRACKS.filter(t => t.category === category)
+  }, [])
+
+  const filteredTracks = getFilteredTracks(activeCategory, playlist)
+
+  // Keep ref in sync for use in audio event handlers
+  useEffect(() => {
+    filteredTracksRef.current = filteredTracks
+  }, [filteredTracks])
+
+  useEffect(() => {
+    playAllRef.current = playAll
+  }, [playAll])
 
   const stopProgress = useCallback(() => {
-    if (progressRef.current) {
-      clearInterval(progressRef.current)
-      progressRef.current = null
-    }
+    if (progressRef.current) { clearInterval(progressRef.current); progressRef.current = null }
   }, [])
 
   const startProgress = useCallback(() => {
@@ -89,15 +128,24 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
     }, 500)
   }, [stopProgress])
 
-  const playTrack = useCallback((track: Track) => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
-    }
+  const playTrack = useCallback((track: Track, isPlayAll = false) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = '' }
     const audio = new Audio(track.url)
     audio.volume = volume
-    audio.loop = true
+    // Loop only if NOT in play-all mode
+    audio.loop = !isPlayAll
     audioRef.current = audio
+
+    // Auto-advance when track ends (play-all mode)
+    audio.addEventListener('ended', () => {
+      if (playAllRef.current) {
+        const tracks = filteredTracksRef.current
+        const idx = tracks.findIndex(t => t.id === track.id)
+        const next = tracks[(idx + 1) % tracks.length]
+        if (next) playTrack(next, true)
+      }
+    })
+
     audio.play().then(() => {
       setCurrentTrack(track)
       setIsPlaying(true)
@@ -119,11 +167,7 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
   }, [isPlaying, startProgress, stopProgress])
 
   const stopAll = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
-      audioRef.current = null
-    }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; audioRef.current = null }
     stopProgress()
     setCurrentTrack(null)
     setIsPlaying(false)
@@ -133,37 +177,54 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
 
   const nextTrack = useCallback(() => {
     if (!currentTrack) return
-    const idx = filteredTracks.findIndex(t => t.id === currentTrack.id)
-    const next = filteredTracks[(idx + 1) % filteredTracks.length]
-    if (next) playTrack(next)
-  }, [currentTrack, filteredTracks, playTrack])
+    const tracks = filteredTracksRef.current
+    const idx = tracks.findIndex(t => t.id === currentTrack.id)
+    const next = tracks[(idx + 1) % tracks.length]
+    if (next) playTrack(next, playAllRef.current)
+  }, [currentTrack, playTrack])
 
   const prevTrack = useCallback(() => {
     if (!currentTrack) return
-    const idx = filteredTracks.findIndex(t => t.id === currentTrack.id)
-    const prev = filteredTracks[(idx - 1 + filteredTracks.length) % filteredTracks.length]
-    if (prev) playTrack(prev)
-  }, [currentTrack, filteredTracks, playTrack])
+    const tracks = filteredTracksRef.current
+    const idx = tracks.findIndex(t => t.id === currentTrack.id)
+    const prev = tracks[(idx - 1 + tracks.length) % tracks.length]
+    if (prev) playTrack(prev, playAllRef.current)
+  }, [currentTrack, playTrack])
+
+  const handlePlayAll = useCallback(() => {
+    const newPlayAll = !playAll
+    setPlayAll(newPlayAll)
+    playAllRef.current = newPlayAll
+    if (newPlayAll) {
+      // Start from beginning or current track
+      const tracks = filteredTracksRef.current
+      if (tracks.length === 0) return
+      const startTrack = currentTrack && tracks.find(t => t.id === currentTrack.id)
+        ? currentTrack
+        : tracks[0]
+      playTrack(startTrack, true)
+    } else {
+      // Switch back to loop mode for current track
+      if (audioRef.current && currentTrack) {
+        audioRef.current.loop = true
+      }
+    }
+  }, [playAll, currentTrack, playTrack])
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
 
-  useEffect(() => {
-    return () => {
-      stopAll()
-    }
-  }, [stopAll])
+  useEffect(() => { return () => { stopAll() } }, [stopAll])
 
-  const formatTime = (s: number) => {
+  const fmt = (s: number) => {
     if (!s || isNaN(s)) return '0:00'
-    const m = Math.floor(s / 60)
-    const sec = Math.floor(s % 60)
-    return `${m}:${sec.toString().padStart(2, '0')}`
+    return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`
   }
 
   const catEmoji: Record<string, string> = {
-    sleep: '🌙', meditation: '🧘', healing: '💚', nature: '🌿', uplifting: '🌟'
+    sleep: '🌙', meditation: '🧘', healing: '💚',
+    nature: '🌿', uplifting: '🌟'
   }
 
   return (
@@ -171,7 +232,41 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
       {!compact && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <span style={{ fontSize: 22 }}>🎵</span>
-          <h3 style={{ color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif', fontSize: 20, fontWeight: 600, margin: 0 }}>{title}</h3>
+          <h3 style={{ color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif', fontSize: 20, fontWeight: 600, margin: 0, flex: 1 }}>{title}</h3>
+          {/* Play All toggle */}
+          <button
+            onClick={handlePlayAll}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px',
+              borderRadius: 20, border: '1px solid',
+              borderColor: playAll ? '#c9a84c' : 'rgba(255,255,255,0.2)',
+              background: playAll ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)',
+              color: playAll ? '#c9a84c' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap'
+            }}
+          >
+            <span>{playAll ? '🔁' : '▶▶'}</span>
+            <span>{playAll ? 'Playing All' : 'Play All'}</span>
+          </button>
+        </div>
+      )}
+
+      {compact && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <button
+            onClick={handlePlayAll}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
+              borderRadius: 20, border: '1px solid',
+              borderColor: playAll ? '#c9a84c' : 'rgba(255,255,255,0.2)',
+              background: playAll ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)',
+              color: playAll ? '#c9a84c' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer', fontSize: 11
+            }}
+          >
+            <span>{playAll ? '🔁' : '▶▶'}</span>
+            <span>{playAll ? 'Playing All' : 'Play All'}</span>
+          </button>
         </div>
       )}
 
@@ -183,13 +278,19 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
             onClick={() => setActiveCategory(cat.id)}
             style={{
               padding: '4px 10px', borderRadius: 20, border: '1px solid',
-              borderColor: activeCategory === cat.id ? '#c9a84c' : 'rgba(255,255,255,0.15)',
-              background: activeCategory === cat.id ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)',
-              color: activeCategory === cat.id ? '#c9a84c' : 'rgba(255,255,255,0.6)',
+              borderColor: activeCategory === cat.id
+                ? (cat.id === 'playlist' ? '#e879a0' : '#c9a84c')
+                : 'rgba(255,255,255,0.15)',
+              background: activeCategory === cat.id
+                ? (cat.id === 'playlist' ? 'rgba(232,121,160,0.2)' : 'rgba(201,168,76,0.2)')
+                : 'rgba(255,255,255,0.05)',
+              color: activeCategory === cat.id
+                ? (cat.id === 'playlist' ? '#e879a0' : '#c9a84c')
+                : 'rgba(255,255,255,0.6)',
               fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap'
             }}
           >
-            {cat.emoji} {cat.label}
+            {cat.emoji} {cat.label} {cat.id === 'playlist' && playlist.length > 0 ? `(${playlist.length})` : ''}
           </button>
         ))}
       </div>
@@ -200,7 +301,10 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <span style={{ fontSize: 18 }}>{catEmoji[currentTrack.category] || '✨'}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: '#c9a84c', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentTrack.title}</div>
+              <div style={{ color: '#c9a84c', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentTrack.title}
+                {playAll && <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '1px 6px', borderRadius: 10 }}>🔁 Auto</span>}
+              </div>
               <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{currentTrack.artist}</div>
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -214,11 +318,11 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
           </div>
           {/* Progress bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{formatTime(progress)}</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{fmt(progress)}</span>
             <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
               <div style={{ height: '100%', background: '#c9a84c', width: duration ? `${(progress/duration)*100}%` : '0%', transition: 'width 0.5s linear' }} />
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{formatTime(duration)}</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{fmt(duration)}</span>
           </div>
           {/* Volume */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
@@ -231,29 +335,58 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
         </div>
       )}
 
+      {/* Empty playlist message */}
+      {activeCategory === 'playlist' && playlist.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '24px 16px', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>♥</div>
+          <div style={{ fontSize: 13 }}>No saved tracks yet</div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>Tap the ♥ on any track to add it here</div>
+        </div>
+      )}
+
       {/* Track list */}
-      <div style={{ maxHeight: compact ? 200 : 280, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ maxHeight: compact ? 200 : 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {filteredTracks.map(track => (
-          <button
+          <div
             key={track.id}
-            onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+              display: 'flex', alignItems: 'center', gap: 8,
               background: currentTrack?.id === track.id ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
               border: '1px solid',
               borderColor: currentTrack?.id === track.id ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.08)',
-              borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%'
+              borderRadius: 8, overflow: 'hidden'
             }}
           >
-            <span style={{ fontSize: 16, minWidth: 20 }}>
-              {currentTrack?.id === track.id && isPlaying ? '⏸' : catEmoji[track.category] || '▶'}
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.85)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{track.artist}</div>
-            </div>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'capitalize' }}>{track.category}</span>
-          </button>
+            {/* Play button area */}
+            <button
+              onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track, playAllRef.current)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0
+              }}
+            >
+              <span style={{ fontSize: 14, minWidth: 18, textAlign: 'center', color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.4)' }}>
+                {currentTrack?.id === track.id && isPlaying ? '⏸' : catEmoji[track.category] || '▶'}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.85)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{track.artist}</div>
+              </div>
+            </button>
+            {/* Heart / playlist button */}
+            <button
+              onClick={(e) => togglePlaylist(track.id, e)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '8px 12px', fontSize: 16, flexShrink: 0,
+                color: playlist.includes(track.id) ? '#e879a0' : 'rgba(255,255,255,0.2)',
+                transition: 'color 0.2s'
+              }}
+              title={playlist.includes(track.id) ? 'Remove from playlist' : 'Add to playlist'}
+            >
+              {playlist.includes(track.id) ? '♥' : '♡'}
+            </button>
+          </div>
         ))}
       </div>
     </div>
