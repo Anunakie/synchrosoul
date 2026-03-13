@@ -3,7 +3,7 @@ import './globals.css'
 import Script from 'next/script'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://synchrosoul.app'
-const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+const googleVerification = 'YvfDHzYzkOaeM3C8yJurWLgiu_ysR6v6mj-E7OMFER0'
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 export const metadata: Metadata = {
