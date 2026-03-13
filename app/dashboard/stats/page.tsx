@@ -1,17 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { getLogs } from '@/lib/storage';
+import type { AngelLog } from '@/lib/storage';
 
 export default function StatsPage() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AngelLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    try { setLogs(JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]')); } catch {}
+    getLogs().then(data => {
+      setLogs(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const total = logs.length;
-  const verified = logs.filter((l: any) => l.screenshotUrl).length;
+  const verified = logs.filter((l) => l.screenshotUrl).length;
   const streak = (() => {
     if (!logs.length) return 0;
-    const days = [...new Set(logs.map((l: any) => new Date(l.timestamp).toDateString()))] as string[];
+    const days = [...new Set(logs.map((l) => new Date(l.createdAt).toDateString()))] as string[];
     days.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
     let s = 1;
     for (let i = 1; i < days.length; i++) {
@@ -22,16 +29,25 @@ export default function StatsPage() {
   })();
 
   const freq: Record<string, number> = {};
-  logs.forEach((l: any) => { freq[l.number] = (freq[l.number] || 0) + 1; });
+  logs.forEach((l) => { freq[l.number] = (freq[l.number] || 0) + 1; });
   const topNumbers = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const maxFreq = topNumbers[0]?.[1] || 1;
   const byHour: number[] = Array(24).fill(0);
-  logs.forEach((l: any) => { byHour[new Date(l.timestamp).getHours()]++; });
+  logs.forEach((l) => { byHour[new Date(l.createdAt).getHours()]++; });
   const maxHour = Math.max(...byHour, 1);
   const byDay: number[] = Array(7).fill(0);
-  logs.forEach((l: any) => { byDay[new Date(l.timestamp).getDay()]++; });
+  logs.forEach((l) => { byDay[new Date(l.createdAt).getDay()]++; });
   const maxDay = Math.max(...byDay, 1);
   const COLORS = ['#c9a84c', '#a78bfa', '#22d3ee', '#f472b6', '#22c55e'];
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
+        <p>Loading your cosmic data...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: '100vh', padding: '2rem 1rem', maxWidth: '700px', margin: '0 auto' }}>
@@ -50,7 +66,7 @@ export default function StatsPage() {
           </div>
         ))}
       </div>
-      {topNumbers.length > 0 && (
+      {topNumbers.length > 0 ? (
         <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem', backdropFilter: 'blur(12px)', marginBottom: '0.75rem' }}>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.875rem' }}>Most Seen Numbers</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -65,7 +81,12 @@ export default function StatsPage() {
             ))}
           </div>
         </div>
-      )}
+      ) : total === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)', background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.07)', marginBottom: '0.75rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>📊</div>
+          <p>Start logging angel numbers to see your statistics</p>
+        </div>
+      ) : null}
       <div style={{ background: 'rgba(8,6,28,0.88)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem', backdropFilter: 'blur(12px)', marginBottom: '0.75rem' }}>
         <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.875rem' }}>Activity by Day</p>
         <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'flex-end', height: '60px' }}>
@@ -88,12 +109,6 @@ export default function StatsPage() {
           {['12am','6am','12pm','6pm','12am'].map(t => <span key={t} style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.58rem' }}>{t}</span>)}
         </div>
       </div>
-      {total === 0 && (
-        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>📊</div>
-          <p>Start logging angel numbers to see your statistics</p>
-        </div>
-      )}
     </div>
   );
 }
