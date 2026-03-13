@@ -171,7 +171,7 @@ export default function OnboardingPage() {
         const de = calcDestiny(name);
         const lpd = getLifePathData(lp);
         await saveNumerologyProfile({ lifePath: lp, lifePathMeaning: lpd.meaning, lifePathColor: lpd.color, soulUrge: su, destiny: de, birthdate });
-        await upsertProfile({ display_name: name, birth_date: birthdate, life_path: lp, soul_urge: su, destiny: de, intention, onboarding_complete: true } as any);
+        await upsertProfile({ display_name: name, birthdate: birthdate, life_path: lp, soul_urge: su, destiny: de, intention, onboarding_complete: true } as any);
       }
       document.cookie = 'onboarding_complete=true; path=/; max-age=31536000';
     } catch (e) { console.error(e); }
