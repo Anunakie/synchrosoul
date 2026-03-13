@@ -61,6 +61,24 @@ export async function proxy(request: NextRequest) {
   if (user && isDashboard && !isOnboarding) {
     const onboardingDone = request.cookies.get('onboarding_complete')?.value
     if (onboardingDone !== 'true') {
+      // Cookie missing - check Supabase profile for cross-device sync
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_complete')
+          .eq('id', user.id)
+          .single()
+        if (profile?.onboarding_complete) {
+          // Onboarding done on another device - set cookie and continue
+          supabaseResponse.cookies.set('onboarding_complete', 'true', {
+            path: '/',
+            maxAge: 60 * 60 * 24 * 365,
+            sameSite: 'lax',
+          })
+          return supabaseResponse
+        }
+      } catch {}
+      // Not completed anywhere - redirect to onboarding
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard/onboarding'
       return NextResponse.redirect(url)
