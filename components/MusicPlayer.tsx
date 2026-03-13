@@ -350,18 +350,18 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
           <div
             key={track.id}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
+              display: 'flex', alignItems: 'center', gap: 8, minHeight: 60,
               background: currentTrack?.id === track.id ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
               border: '1px solid',
               borderColor: currentTrack?.id === track.id ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.08)',
-              borderRadius: 8, overflow: 'hidden'
+              borderRadius: 8
             }}
           >
             {/* Play button area */}
             <button
               onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track, playAllRef.current)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10, padding: '12px 12px',
                 background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0
               }}
             >
@@ -369,7 +369,7 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
                 {currentTrack?.id === track.id && isPlaying ? '⏸' : catEmoji[track.category] || '▶'}
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.85)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
+                <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.85)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4', display: 'block' }}>{track.title}</div>
                 <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{track.artist}</div>
               </div>
             </button>

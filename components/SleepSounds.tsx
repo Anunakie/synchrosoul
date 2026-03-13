@@ -221,7 +221,7 @@ export default function SleepSounds() {
                 {isPlaying ? '🎵' : '🎶'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4', display: 'block' }}>
                   {currentTrack.title}
                   {playAll && <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '1px 6px', borderRadius: 10 }}>🔁 Auto</span>}
                 </div>
@@ -276,15 +276,15 @@ export default function SleepSounds() {
         <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {displayedTracks.map(track => (
             <div key={track.id} style={{
-              display: 'flex', alignItems: 'center',
+              display: 'flex', alignItems: 'center', minHeight: 56,
               background: currentTrack?.id === track.id ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.03)',
               border: '1px solid',
               borderColor: currentTrack?.id === track.id ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.08)',
-              borderRadius: 10, overflow: 'hidden'
+              borderRadius: 10
             }}>
               <button
                 onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track, playAllRef.current)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0 }}
               >
                 <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>
                   {currentTrack?.id === track.id && isPlaying
@@ -299,7 +299,7 @@ export default function SleepSounds() {
               {/* Heart button */}
               <button
                 onClick={(e) => togglePlaylist(track.id, e)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 14px', fontSize: 18, flexShrink: 0, color: playlist.includes(track.id) ? '#e879a0' : 'rgba(255,255,255,0.2)', transition: 'color 0.2s' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 14px', fontSize: 18, flexShrink: 0, color: playlist.includes(track.id) ? '#e879a0' : 'rgba(255,255,255,0.2)', transition: 'color 0.2s' }}
                 title={playlist.includes(track.id) ? 'Remove from playlist' : 'Save to playlist'}
               >
                 {playlist.includes(track.id) ? '♥' : '♡'}
