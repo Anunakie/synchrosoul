@@ -17,6 +17,8 @@ const DEFAULTS = {
   hapticEnabled: true,
   privacyMode: false,
   shareJournal: false,
+  emailDigest: true,
+  emailMatchAlerts: true,
 }
 
 export default function SettingsPage() {
@@ -251,6 +253,41 @@ export default function SettingsPage() {
             </p>
           )}
         </div>
+      </Section>
+
+
+      <Section title="Email Notifications">
+        {/* Weekly Digest Toggle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(201,168,76,0.05)', borderRadius: '10px', border: '1px solid rgba(201,168,76,0.1)', marginBottom: '10px' }}>
+          <div>
+            <div style={{ color: 'rgba(232,224,255,0.9)', fontSize: '14px', fontWeight: 600 }}>Weekly Cosmic Digest</div>
+            <div style={{ color: 'rgba(232,224,255,0.5)', fontSize: '12px', marginTop: '2px' }}>AI-generated summary every Sunday</div>
+          </div>
+          <button
+            onClick={() => update('emailDigest', !s.emailDigest)}
+            style={{ width: '48px', height: '26px', borderRadius: '13px', border: 'none', cursor: 'pointer', background: s.emailDigest ? 'linear-gradient(135deg, #c9a84c, #f0d080)' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'all 0.2s', flexShrink: 0 }}
+          >
+            <span style={{ position: 'absolute', top: '3px', left: s.emailDigest ? '25px' : '3px', width: '20px', height: '20px', borderRadius: '50%', background: 'white', transition: 'left 0.2s', display: 'block' }} />
+          </button>
+        </div>
+
+        {/* Match Alerts Toggle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(139,92,246,0.05)', borderRadius: '10px', border: '1px solid rgba(139,92,246,0.1)' }}>
+          <div>
+            <div style={{ color: 'rgba(232,224,255,0.9)', fontSize: '14px', fontWeight: 600 }}>Soul Sync Match Alerts</div>
+            <div style={{ color: 'rgba(232,224,255,0.5)', fontSize: '12px', marginTop: '2px' }}>Email when someone sees your same number</div>
+          </div>
+          <button
+            onClick={() => update('emailMatchAlerts', !s.emailMatchAlerts)}
+            style={{ width: '48px', height: '26px', borderRadius: '13px', border: 'none', cursor: 'pointer', background: s.emailMatchAlerts ? 'linear-gradient(135deg, #8b5cf6, #a78bfa)' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'all 0.2s', flexShrink: 0 }}
+          >
+            <span style={{ position: 'absolute', top: '3px', left: s.emailMatchAlerts ? '25px' : '3px', width: '20px', height: '20px', borderRadius: '50%', background: 'white', transition: 'left 0.2s', display: 'block' }} />
+          </button>
+        </div>
+
+        <p style={{ color: 'rgba(232,224,255,0.35)', fontSize: '11px', textAlign: 'center', marginTop: '10px' }}>
+          Emails sent from hello@synchrosoul.app
+        </p>
       </Section>
 
       <Section title="Data">
