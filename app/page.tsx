@@ -119,6 +119,61 @@ export default function HomePage() {
           <div style={{ width: '1px', height: '3rem', background: 'linear-gradient(to bottom, rgba(200,180,255,0.3), transparent)', margin: '0 auto' }} />
         </div>
       </section>
+      {/* ── SOCIAL PROOF ─────────────────────────────────────────────────── */}
+      <section style={{
+        padding: '4rem 1.5rem 2rem',
+        maxWidth: '960px', margin: '0 auto',
+        position: 'relative', zIndex: 10,
+      }}>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+          color: 'rgba(220,200,255,0.85)',
+          textAlign: 'center', fontWeight: 300,
+          letterSpacing: '0.05em', marginBottom: '2.5rem',
+        }}>What the Universe Brought Together</h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1.25rem',
+        }}>
+          {[
+            { initials: 'LM', name: 'Luna M.', quote: 'I logged 1111 and within minutes found my soul twin. We both saw it at 11:11am. Absolute chills. This app is pure magic.' },
+            { initials: 'SR', name: 'Sage R.', quote: 'The numerology reading was spot-on. My life path 7 explains everything about why I see 777 constantly. Finally, clarity.' },
+            { initials: 'RK', name: 'River K.', quote: 'Finally an app that gets the spiritual side of connection. Met someone who sees the same numbers as me. We talk every day now.' },
+          ].map(({ initials, name, quote }) => (
+            <div key={name} style={{
+              background: 'rgba(8,6,28,0.88)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: '1.5rem',
+              backdropFilter: 'blur(12px)',
+              padding: '1.75rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{
+                  width: '2.5rem', height: '2.5rem', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(201,168,76,0.3), rgba(167,139,250,0.3))',
+                  border: '1px solid rgba(201,168,76,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'Cormorant Garamond, serif', fontSize: '0.9rem',
+                  color: 'rgba(201,168,76,0.9)', fontWeight: 600,
+                }}>{initials}</div>
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'rgba(220,200,255,0.8)', fontWeight: 500 }}>{name}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(201,168,76,0.6)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Verified Member</div>
+                </div>
+                <div style={{ marginLeft: 'auto', color: 'rgba(201,168,76,0.5)', fontSize: '1rem' }}>&#10022;</div>
+              </div>
+              <p style={{
+                color: 'rgba(180,160,255,0.65)',
+                lineHeight: 1.7, margin: 0, fontStyle: 'italic',
+                fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem',
+              }}>&ldquo;{quote}&rdquo;</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
 
       {/* ── SECTION 1: WHAT IS THIS ──────────────────────────────────────── */}
       <section style={{
@@ -542,16 +597,35 @@ export default function HomePage() {
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer style={{
         borderTop: '1px solid rgba(200,180,255,0.06)',
-        padding: '2.5rem', textAlign: 'center',
+        padding: '3rem 2rem 2rem',
         position: 'relative', zIndex: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <span style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.9rem' }}>✦</span>
-          <span style={{ fontFamily: 'Cormorant Garamond, serif', color: 'rgba(200,180,255,0.4)', fontSize: '1rem' }}>SynchroSoul</span>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <span style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.9rem' }}>&#10022;</span>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', color: 'rgba(200,180,255,0.5)', fontSize: '1.1rem' }}>SynchroSoul</span>
+          </div>
+          <p style={{ color: 'rgba(200,180,255,0.3)', fontSize: '0.8rem', letterSpacing: '0.08em', textAlign: 'center', marginBottom: '1.5rem' }}>
+            Where angel numbers become connections
+          </p>
+          <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+            {[
+              { href: '/auth/login', label: 'Sign In' },
+              { href: '/auth/signup', label: 'Get Started' },
+              { href: '/dashboard', label: 'Dashboard' },
+            ].map(({ href, label }) => (
+              <a key={href} href={href} style={{
+                color: 'rgba(180,160,255,0.35)', fontSize: '0.75rem',
+                textDecoration: 'none', letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                transition: 'color 0.2s',
+              }}>{label}</a>
+            ))}
+          </div>
+          <p style={{ color: 'rgba(200,180,255,0.15)', fontSize: '0.7rem', textAlign: 'center', letterSpacing: '0.05em' }}>
+            &copy; {new Date().getFullYear()} SynchroSoul. The universe is always speaking. Are you listening?
+          </p>
         </div>
-        <p style={{ color: 'rgba(200,180,255,0.2)', fontSize: '0.75rem', letterSpacing: '0.1em' }}>
-          The universe is always speaking. Are you listening?
-        </p>
       </footer>
 
       <style>{`

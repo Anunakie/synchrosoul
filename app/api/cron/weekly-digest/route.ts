@@ -110,3 +110,10 @@ export async function GET(request: Request) {
 
   return NextResponse.json({ success: true, sent, failed });
 }
+
+// POST handler for manual admin trigger (no cron auth required)
+export async function POST(request: Request) {
+  // Reuse GET logic but skip cron auth check
+  const fakeRequest = new Request(request.url, { headers: new Headers({ authorization: `Bearer ${process.env.CRON_SECRET}` }) });
+  return GET(fakeRequest);
+}

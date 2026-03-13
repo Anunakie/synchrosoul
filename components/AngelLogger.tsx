@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { saveLog, AngelLog } from '@/lib/storage'
 import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -52,6 +53,18 @@ export default function AngelLogger({ onLogged }: Props) {
     setStep('done')
     setSaving(false)
     onLogged?.(log)
+    // Soul Twin Alert: check if others logged same number in last 30 mins
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        fetch('/api/soul-twin-alert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: activeNumber, userId: user.id }),
+        }).catch(() => {})
+      }
+    } catch {}
   }
 
   function handleReset() {
