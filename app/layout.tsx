@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import Script from 'next/script'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://synchrosoul.com'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://synchrosoul.app'
+const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -16,7 +19,9 @@ export const metadata: Metadata = {
     'twin flame', 'soul mate', 'spiritual connection', 'numerology dating',
     'angel number matching', 'cosmic connection', 'life path number', 'soul urge number',
     'spiritual journal', 'angel number journal', 'synchronicity', 'manifestation app',
-    'numerology calculator', 'angel number tracker', 'spiritual community'
+    'numerology calculator', 'angel number tracker', 'spiritual community',
+    'angel number app', 'spiritual wellness', 'divine guidance', 'sacred numbers',
+    'numerology reading', 'soul path', 'destiny number', 'angel number meaning',
   ],
   authors: [{ name: 'SynchroSoul', url: siteUrl }],
   creator: 'SynchroSoul',
@@ -80,7 +85,7 @@ export const metadata: Metadata = {
     shortcut: '/icon-192.png',
   },
   verification: {
-    // google: 'your-google-verification-code', // Add after Google Search Console setup
+    google: googleVerification,
   },
 }
 
@@ -133,13 +138,69 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         "name": "SynchroSoul",
         "operatingSystem": "Web, iOS, Android",
         "applicationCategory": "LifestyleApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
+        "offers": [
+          { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Mystic", "price": "6.99", "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Twin Flame", "price": "9.99", "priceCurrency": "USD" }
+        ],
         "description": "Log angel numbers, get numerology readings, and match with souls on your cosmic frequency.",
-        "url": siteUrl
+        "url": siteUrl,
+        "screenshot": `${siteUrl}/og-image.png`,
+        "featureList": [
+          "Angel Number Logger",
+          "Thought Anchor Journal",
+          "Dream Journal",
+          "Live Sync Matching",
+          "Numerology Calculator",
+          "AI Angel Oracle",
+          "Healer Directory",
+          "Weekly Cosmic Synthesis"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What are angel numbers?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Angel numbers are repeating number sequences like 1111, 555, or 333 that many people believe carry divine guidance and spiritual messages. They often appear at meaningful moments as signs from the universe."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What does 1111 mean?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "1111 is known as the manifestation portal. It signals new beginnings, spiritual awakening, and alignment with your highest path. When you see 1111, the universe is asking you to pay attention to your thoughts."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does SynchroSoul match people?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "SynchroSoul matches users who log the same or harmonically compatible angel numbers within the same time window. Your Sync Score is calculated based on shared numbers, numerology compatibility, and timing proximity."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is a Life Path number?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Your Life Path number is calculated from your birthdate by reducing all digits to a single number (or master number 11, 22, 33). It reveals your core personality, natural talents, and life purpose."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is SynchroSoul free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! SynchroSoul is free to use with core features including angel number logging, journal, numerology calculator, and sync matching. Premium Mystic ($6.99/mo) and Twin Flame ($9.99/mo) tiers unlock AI readings, advanced tools, and priority matching."
+            }
+          }
+        ]
       }
     ]
   }
@@ -167,6 +228,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ background: "#050510", minHeight: "100vh", overflowX: "hidden" }}>
         {children}
+        {gaMeasurementId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaMeasurementId}', {
+                  page_path: window.location.pathname,
+                });
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   )
