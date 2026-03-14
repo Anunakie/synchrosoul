@@ -55,6 +55,7 @@ export default function SleepSounds() {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playAll, setPlayAll] = useState(false)
+  const [loopPlaylist, setLoopPlaylist] = useState(false)
   const [volume, setVolume] = useState(0.7)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -64,12 +65,18 @@ export default function SleepSounds() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const playAllRef = useRef(false)
+  const loopPlaylistRef = useRef(false)
   const currentTrackRef = useRef<Track | null>(null)
+  const playlistRef = useRef<string[]>([])
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(PLAYLIST_KEY)
-      if (saved) setPlaylist(JSON.parse(saved))
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setPlaylist(parsed)
+        playlistRef.current = parsed
+      }
     } catch {}
   }, [])
 
@@ -77,6 +84,7 @@ export default function SleepSounds() {
     e.stopPropagation()
     setPlaylist(prev => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      playlistRef.current = next
       try { localStorage.setItem(PLAYLIST_KEY, JSON.stringify(next)) } catch {}
       return next
     })
@@ -103,22 +111,31 @@ export default function SleepSounds() {
     }, 500)
   }, [stopProgress])
 
-  const playTrack = useCallback((track: Track, isPlayAllMode = false) => {
+  const playTrack = useCallback((track: Track, isPlayAllMode = false, isLoopMode = false) => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = '' }
     const audio = new Audio(track.url)
     audio.volume = volume
-    audio.loop = !isPlayAllMode
+    audio.loop = !isPlayAllMode && !isLoopMode
     audioRef.current = audio
     currentTrackRef.current = track
 
     audio.addEventListener('ended', () => {
-      if (playAllRef.current) {
-        const allTracks = TRACKS
+      const inPlayAll = playAllRef.current
+      const inLoopPlaylist = loopPlaylistRef.current
+      if (inLoopPlaylist) {
+        const plist = playlistRef.current
+        const playlistTracks = TRACKS.filter(t => plist.includes(t.id))
+        if (playlistTracks.length === 0) return
         const cur = currentTrackRef.current
         if (!cur) return
-        const idx = allTracks.findIndex(t => t.id === cur.id)
-        const next = allTracks[(idx + 1) % allTracks.length]
-        if (next) playTrack(next, true)
+        const idx = playlistTracks.findIndex(t => t.id === cur.id)
+        const nextIdx = (idx + 1) % playlistTracks.length
+        playTrack(playlistTracks[nextIdx], false, true)
+      } else if (inPlayAll) {
+        const cur = currentTrackRef.current
+        if (!cur) return
+        const idx = TRACKS.findIndex(t => t.id === cur.id)
+        playTrack(TRACKS[(idx + 1) % TRACKS.length], true, false)
       }
     })
 
@@ -147,15 +164,31 @@ export default function SleepSounds() {
   const nextTrack = useCallback(() => {
     const cur = currentTrackRef.current
     if (!cur) return
-    const idx = TRACKS.findIndex(t => t.id === cur.id)
-    playTrack(TRACKS[(idx + 1) % TRACKS.length], playAllRef.current)
+    if (loopPlaylistRef.current) {
+      const plist = playlistRef.current
+      const playlistTracks = TRACKS.filter(t => plist.includes(t.id))
+      if (playlistTracks.length === 0) return
+      const idx = playlistTracks.findIndex(t => t.id === cur.id)
+      playTrack(playlistTracks[(idx + 1) % playlistTracks.length], false, true)
+    } else {
+      const idx = TRACKS.findIndex(t => t.id === cur.id)
+      playTrack(TRACKS[(idx + 1) % TRACKS.length], playAllRef.current, false)
+    }
   }, [playTrack])
 
   const prevTrack = useCallback(() => {
     const cur = currentTrackRef.current
     if (!cur) return
-    const idx = TRACKS.findIndex(t => t.id === cur.id)
-    playTrack(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length], playAllRef.current)
+    if (loopPlaylistRef.current) {
+      const plist = playlistRef.current
+      const playlistTracks = TRACKS.filter(t => plist.includes(t.id))
+      if (playlistTracks.length === 0) return
+      const idx = playlistTracks.findIndex(t => t.id === cur.id)
+      playTrack(playlistTracks[(idx - 1 + playlistTracks.length) % playlistTracks.length], false, true)
+    } else {
+      const idx = TRACKS.findIndex(t => t.id === cur.id)
+      playTrack(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length], playAllRef.current, false)
+    }
   }, [playTrack])
 
   const handlePlayAll = useCallback(() => {
@@ -163,12 +196,32 @@ export default function SleepSounds() {
     setPlayAll(next)
     playAllRef.current = next
     if (next) {
+      setLoopPlaylist(false)
+      loopPlaylistRef.current = false
       const start = currentTrackRef.current || TRACKS[0]
-      playTrack(start, true)
+      playTrack(start, true, false)
     } else {
       if (audioRef.current) audioRef.current.loop = true
     }
   }, [playAll, playTrack])
+
+  const handleLoopPlaylist = useCallback(() => {
+    const plist = playlistRef.current
+    const playlistTracks = TRACKS.filter(t => plist.includes(t.id))
+    if (playlistTracks.length === 0) return
+    const next = !loopPlaylist
+    setLoopPlaylist(next)
+    loopPlaylistRef.current = next
+    if (next) {
+      setPlayAll(false)
+      playAllRef.current = false
+      const cur = currentTrackRef.current
+      const startTrack = (cur && plist.includes(cur.id)) ? cur : playlistTracks[0]
+      playTrack(startTrack, false, true)
+    } else {
+      if (audioRef.current) audioRef.current.loop = true
+    }
+  }, [loopPlaylist, playTrack])
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
@@ -178,7 +231,7 @@ export default function SleepSounds() {
 
   const fmt = (s: number) => {
     if (!s || isNaN(s)) return '0:00'
-    return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`
+    return String(Math.floor(s / 60)) + ':' + String(Math.floor(s % 60)).padStart(2, '0')
   }
 
   return (
@@ -187,19 +240,31 @@ export default function SleepSounds() {
 
         {/* Controls row */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Play All */}
-          <button onClick={handlePlayAll} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-            borderRadius: 20, border: '1px solid',
-            borderColor: playAll ? '#c9a84c' : 'rgba(255,255,255,0.2)',
-            background: playAll ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)',
-            color: playAll ? '#c9a84c' : 'rgba(255,255,255,0.7)',
-            cursor: 'pointer', fontSize: 13, fontWeight: 600
-          }}>
-            <span>{playAll ? '🔁' : '▶▶'}</span>
-            <span>{playAll ? 'Playing All' : 'Play All'}</span>
-          </button>
-          {/* My Playlist toggle */}
+          {showPlaylist ? (
+            <button onClick={handleLoopPlaylist} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+              borderRadius: 20, border: '1px solid',
+              borderColor: loopPlaylist ? '#e879a0' : 'rgba(255,255,255,0.2)',
+              background: loopPlaylist ? 'rgba(232,121,160,0.25)' : 'rgba(255,255,255,0.05)',
+              color: loopPlaylist ? '#e879a0' : 'rgba(255,255,255,0.7)',
+              cursor: 'pointer', fontSize: 13, fontWeight: 600
+            }}>
+              <span>🔁</span>
+              <span>{loopPlaylist ? 'Looping Playlist' : 'Loop Playlist'}</span>
+            </button>
+          ) : (
+            <button onClick={handlePlayAll} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+              borderRadius: 20, border: '1px solid',
+              borderColor: playAll ? '#c9a84c' : 'rgba(255,255,255,0.2)',
+              background: playAll ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)',
+              color: playAll ? '#c9a84c' : 'rgba(255,255,255,0.7)',
+              cursor: 'pointer', fontSize: 13, fontWeight: 600
+            }}>
+              <span>{playAll ? '🔁' : '⏩⏩'}</span>
+              <span>{playAll ? 'Playing All' : 'Play All'}</span>
+            </button>
+          )}
           <button onClick={() => setShowPlaylist(p => !p)} style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
             borderRadius: 20, border: '1px solid',
@@ -209,7 +274,7 @@ export default function SleepSounds() {
             cursor: 'pointer', fontSize: 13
           }}>
             <span>♥</span>
-            <span>My Playlist {playlist.length > 0 ? `(${playlist.length})` : ''}</span>
+            <span>My Playlist {playlist.length > 0 ? '(' + playlist.length + ')' : ''}</span>
           </button>
         </div>
 
@@ -221,9 +286,10 @@ export default function SleepSounds() {
                 {isPlaying ? '🎵' : '🎶'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4', display: 'block' }}>
+                <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4' }}>
                   {currentTrack.title}
                   {playAll && <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '1px 6px', borderRadius: 10 }}>🔁 Auto</span>}
+                  {loopPlaylist && <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(232,121,160,0.8)', background: 'rgba(232,121,160,0.1)', padding: '1px 6px', borderRadius: 10 }}>🔁 Playlist</span>}
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{currentTrack.artist}</div>
               </div>
@@ -239,7 +305,7 @@ export default function SleepSounds() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{fmt(progress)}</span>
               <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8c96d)', width: duration ? `${(progress/duration)*100}%` : '0%', transition: 'width 0.5s linear', borderRadius: 2 }} />
+                <div style={{ height: '100%', background: 'linear-gradient(90deg, #c9a84c, #e8c96d)', width: duration ? ((progress / duration) * 100) + '%' : '0%', transition: 'width 0.5s linear', borderRadius: 2 }} />
               </div>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{fmt(duration)}</span>
             </div>
@@ -249,12 +315,11 @@ export default function SleepSounds() {
                 onChange={e => setVolume(parseFloat(e.target.value))}
                 style={{ flex: 1, accentColor: '#c9a84c' }}
               />
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{Math.round(volume*100)}%</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{Math.round(volume * 100)}%</span>
             </div>
           </div>
         )}
 
-        {/* Search (only when not showing playlist) */}
         {!showPlaylist && (
           <input
             type="text" placeholder="🔍 Search tracks..."
@@ -263,7 +328,6 @@ export default function SleepSounds() {
           />
         )}
 
-        {/* Empty playlist */}
         {showPlaylist && playlist.length === 0 && (
           <div style={{ textAlign: 'center', padding: '24px 16px', color: 'rgba(255,255,255,0.3)' }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>♥</div>
@@ -272,7 +336,6 @@ export default function SleepSounds() {
           </div>
         )}
 
-        {/* Track list */}
         <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {displayedTracks.map(track => (
             <div key={track.id} style={{
@@ -283,24 +346,20 @@ export default function SleepSounds() {
               borderRadius: 10
             }}>
               <button
-                onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track, playAllRef.current)}
+                onClick={() => currentTrack?.id === track.id ? togglePlay() : playTrack(track, playAllRef.current, loopPlaylistRef.current)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', flex: 1, minWidth: 0 }}
               >
                 <span style={{ fontSize: 18, minWidth: 24, textAlign: 'center' }}>
-                  {currentTrack?.id === track.id && isPlaying
-                    ? '⏸'
-                    : CAT_EMOJI[track.category] || '▶'}
+                  {currentTrack?.id === track.id && isPlaying ? '⏸' : (CAT_EMOJI[track.category] || '▶')}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: currentTrack?.id === track.id ? '#c9a84c' : 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
                   <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{track.artist}</div>
                 </div>
               </button>
-              {/* Heart button */}
               <button
                 onClick={(e) => togglePlaylist(track.id, e)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 14px', fontSize: 18, flexShrink: 0, color: playlist.includes(track.id) ? '#e879a0' : 'rgba(255,255,255,0.2)', transition: 'color 0.2s' }}
-                title={playlist.includes(track.id) ? 'Remove from playlist' : 'Save to playlist'}
               >
                 {playlist.includes(track.id) ? '♥' : '♡'}
               </button>
