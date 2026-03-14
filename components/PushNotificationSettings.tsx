@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { requestNotificationPermission, getNotificationPermission, savePushSettings, getPushSettings, scheduleDailyReminder, sendTestNotification } from '@/lib/push-notifications';
+import { requestNotificationPermission, getNotificationPermission, savePushSettings, getPushSettings, scheduleDailyReminder, sendTestNotification, registerPushSubscription, unregisterPushSubscription } from '@/lib/push-notifications';
+import { createClient } from '@/lib/supabase/client';
 
 export default function PushNotificationSettings() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -26,6 +27,12 @@ export default function PushNotificationSettings() {
       scheduleDailyReminder(hour, minute);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      // Register Web Push subscription for Soul Twin alerts
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) await registerPushSubscription(user.id);
+      } catch {}
     }
   };
 

@@ -1,5 +1,5 @@
-// SynchroSoul Service Worker v2
-const CACHE_NAME = 'synchrosoul-v2';
+// SynchroSoul Service Worker v3 - Soul Twin Push Alerts
+const CACHE_NAME = 'synchrosoul-v3';
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -40,22 +40,38 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle push notifications from server
+// Handle Web Push notifications from server
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || 'SynchroSoul ✦';
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: 'SynchroSoul', body: event.data ? event.data.text() : '' };
+  }
+
+  const isSoulTwin = data.tag && data.tag.startsWith('soul-twin-');
+  const number = data.number || '';
+
+  const title = data.title || (isSoulTwin ? '✨ Soul Twin Alert!' : 'SynchroSoul ✦');
   const options = {
     body: data.body || 'Your cosmic energy is calling...',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: data.tag || 'synchrosoul',
-    data: { url: data.url || '/dashboard' },
-    vibrate: [200, 100, 200],
-    actions: [
-      { action: 'log', title: 'Log a Number' },
-      { action: 'dismiss', title: 'Dismiss' },
-    ],
+    data: { url: data.url || '/dashboard/sync', number },
+    vibrate: isSoulTwin ? [300, 100, 300, 100, 300] : [200, 100, 200],
+    requireInteraction: isSoulTwin,
+    actions: isSoulTwin
+      ? [
+          { action: 'view-match', title: '✨ View Match' },
+          { action: 'log-number', title: '🔢 Log ' + number },
+        ]
+      : [
+          { action: 'open', title: 'Open App' },
+          { action: 'dismiss', title: 'Dismiss' },
+        ],
   };
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
@@ -63,12 +79,17 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   let url = '/dashboard';
-  if (event.action === 'log') url = '/dashboard';
+  if (event.action === 'view-match') url = '/dashboard/sync';
+  else if (event.action === 'log-number') url = '/dashboard';
   else url = event.notification.data?.url || '/dashboard';
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if ('focus' in client) return client.focus();
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
       }
       if (clients.openWindow) return clients.openWindow(url);
     })
@@ -80,21 +101,14 @@ self.addEventListener('message', (event) => {
   if (event.data?.type === 'SCHEDULE_NOTIFICATION') {
     const { title, body, delay, tag, url } = event.data;
     setTimeout(() => {
-      self.registration.showNotification(title || 'SynchroSoul ✦', {
-        body: body || 'Time to log your angel numbers',
+      self.registration.showNotification(title, {
+        body,
         icon: '/icon-192.png',
         badge: '/icon-192.png',
-        tag: tag || 'reminder',
+        tag: tag || 'daily-reminder',
         data: { url: url || '/dashboard' },
         vibrate: [200, 100, 200],
       });
     }, delay || 0);
-  }
-});
-
-// Background sync
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-logs') {
-    event.waitUntil(Promise.resolve());
   }
 });

@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { getNotificationsFromDB, markAllNotificationsRead, AppNotification } from '@/lib/supabase-db';
-import { isAuthenticated } from '@/lib/supabase-db';
+import { getNotificationsFromDB, markAllNotificationsRead, AppNotification, isAuthenticated } from '@/lib/supabase-db';
+import { registerPushSubscription } from '@/lib/push-notifications';
+import { createClient } from '@/lib/supabase/client';
 
 function getNotifIcon(type: string) {
   switch (type) {
@@ -88,9 +89,15 @@ export default function NotificationBell() {
     setPermission(result);
     if (result === 'granted') {
       new Notification('SynchroSoul ✨', {
-        body: 'You will now receive cosmic sync alerts!',
+        body: 'Soul Twin alerts are now active! You will be notified when someone logs your number.',
         icon: '/icon-192.png',
       });
+      // Register Web Push subscription for Soul Twin alerts
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) await registerPushSubscription(user.id);
+      } catch {}
     }
   };
 
