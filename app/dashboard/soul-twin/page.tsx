@@ -1,7 +1,10 @@
 'use client';
 import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { getOrCreateConversation } from '@/lib/messages';
+import { getNumerologyProfile } from '@/lib/storage';
 
 interface SoulMatch {
   id: string;
@@ -48,35 +51,30 @@ function getTier(score: number): { label: string; color: string } {
 }
 
 function SoulTwinPageInner() {
+  const router = useRouter();
   const [tab, setTab] = useState<'matches' | 'signs'>('matches');
   const [matches, setMatches] = useState<SoulMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
-  const [connectionSent, setConnectionSent] = useState<Set<string>>(new Set());
+  const [messagingId, setMessagingId] = useState<string | null>(null);
   const [myLifePath, setMyLifePath] = useState(7);
   const [myNumbers, setMyNumbers] = useState<string[]>([]);
   const [realCount, setRealCount] = useState(0);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const loadMatches = useCallback(async () => {
     setLoading(true);
     try {
-      // Load my profile
       const lp = parseInt(localStorage.getItem('synchrosoul_numerology') ? JSON.parse(localStorage.getItem('synchrosoul_numerology')!).lifePath || '7' : '7');
       setMyLifePath(lp);
-
-      // Load my recent angel logs
       const myLogs: {number: string}[] = JSON.parse(localStorage.getItem('angel_logs') || '[]');
       const myNums = [...new Set(myLogs.slice(0, 20).map((l: {number: string}) => l.number))];
       setMyNumbers(myNums);
 
-      // Try Supabase for real matches
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user && myNums.length > 0) {
-        // Get logs from other users in last 48h with same numbers
-        const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const { data: recentLogs } = await supabase
           .from('angel_logs')
           .select('user_id, number, created_at')
@@ -86,15 +84,12 @@ function SoulTwinPageInner() {
           .order('created_at', { ascending: false });
 
         if (recentLogs && recentLogs.length > 0) {
-          // Group by user
           const userMap = new Map<string, { numbers: string[]; lastSeen: string }>();
           for (const log of recentLogs) {
             if (!userMap.has(log.user_id)) userMap.set(log.user_id, { numbers: [], lastSeen: log.created_at });
             const u = userMap.get(log.user_id)!;
             if (!u.numbers.includes(log.number)) u.numbers.push(log.number);
           }
-
-          // Get profiles for matched users
           const userIds = [...userMap.keys()].slice(0, 10);
           const { data: profiles } = await supabase
             .from('profiles')
@@ -122,10 +117,8 @@ function SoulTwinPageInner() {
           }).sort((a, b) => b.syncScore - a.syncScore);
 
           setRealCount(realMatches.length);
-          // Merge real + mock, real first
           const mockFill = MOCK_TWINS.slice(0, Math.max(0, 4 - realMatches.length));
           setMatches([...realMatches, ...mockFill]);
-          setLastRefresh(new Date());
           setLoading(false);
           return;
         }
@@ -133,42 +126,50 @@ function SoulTwinPageInner() {
     } catch (e) {
       console.error('Soul twin load error:', e);
     }
-    // Fallback to mock
     setMatches(MOCK_TWINS);
     setRealCount(0);
-    setLastRefresh(new Date());
     setLoading(false);
   }, []);
 
   useEffect(() => {
     loadMatches();
-    // Realtime: refresh when new angel_logs come in
     const supabase = createClient();
     const channel = supabase
       .channel('soul-twin-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'angel_logs' }, () => {
-        loadMatches();
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'angel_logs' }, () => loadMatches())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadMatches]);
 
-  const sendConnection = (id: string) => {
-    setConnectionSent(prev => new Set([...prev, id]));
+  const handleMessage = async (match: SoulMatch) => {
+    if (!match.isReal) return;
+    setMessagingId(match.id);
+    try {
+      const profile = await getNumerologyProfile();
+      const myName = (profile as any)?.name || (profile as any)?.displayName || 'Soul';
+      const myAvatar = typeof window !== 'undefined' ? (localStorage.getItem('synchrosoul_avatar_image') || '') : ''
+      const convId = await getOrCreateConversation(match.id, myName, myAvatar, match.name, match.avatar);
+      if (convId) {
+        router.push(`/dashboard/messages/${match.id}?convId=${convId}&name=${encodeURIComponent(match.name)}&source=soul-twin&shared=${match.sharedNumbers.join(',')}`);
+      }
+    } catch (e) {
+      console.error('Message error:', e);
+    } finally {
+      setMessagingId(null);
+    }
   };
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', padding: '1.5rem 1rem 2rem' }}>
-
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🧲</div>
         <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: 'rgba(220,200,255,0.95)', marginBottom: '0.25rem' }}>Soul Twin Radar</h1>
-        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem' }}>Souls seeing your numbers in the last 48 hours</p>
+        <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem' }}>Souls seeing your numbers in the last 7 days</p>
         {realCount > 0 && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '9999px', padding: '0.3rem 0.875rem', marginTop: '0.5rem' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: '0.72rem', color: 'rgba(134,239,172,0.9)' }}>{realCount} real soul{realCount !== 1 ? 's' : ''} synced live</span>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(134,239,172,0.9)' }}>{realCount} real soul{realCount !== 1 ? 's' : '' } synced live</span>
           </div>
         )}
       </div>
@@ -194,16 +195,14 @@ function SoulTwinPageInner() {
               {matches.map(match => {
                 const tier = getTier(match.syncScore);
                 const isOpen = selected === match.id;
-                const sent = connectionSent.has(match.id);
+                const isMessaging = messagingId === match.id;
                 return (
                   <div key={match.id} style={{ background: 'rgba(8,6,28,0.88)', border: `1px solid ${isOpen ? tier.color + '40' : 'rgba(200,180,255,0.1)'}`, borderRadius: '1.25rem', overflow: 'hidden', transition: 'all 0.2s' }}>
                     <div onClick={() => setSelected(isOpen ? null : match.id)} style={{ padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                      {/* Avatar */}
                       <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: `${tier.color}18`, border: `1px solid ${tier.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0, position: 'relative' }}>
                         {match.avatar}
                         {match.isReal && <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80', border: '2px solid rgba(8,6,28,0.9)' }} />}
                       </div>
-                      {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
                           <span style={{ color: 'rgba(220,200,255,0.9)', fontSize: '0.95rem', fontWeight: 500 }}>{match.name}</span>
@@ -215,12 +214,12 @@ function SoulTwinPageInner() {
                           ))}
                         </div>
                       </div>
-                      {/* Score */}
                       <div style={{ textAlign: 'center', flexShrink: 0 }}>
                         <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: tier.color, lineHeight: 1 }}>{match.syncScore}%</div>
                         <div style={{ fontSize: '0.55rem', color: 'rgba(180,160,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>sync</div>
                       </div>
                     </div>
+
                     {isOpen && (
                       <div style={{ padding: '0 1rem 1rem', borderTop: '1px solid rgba(200,180,255,0.06)' }}>
                         <p style={{ color: 'rgba(180,160,255,0.65)', fontSize: '0.85rem', lineHeight: 1.6, margin: '0.75rem 0' }}>{match.bio}</p>
@@ -230,12 +229,24 @@ function SoulTwinPageInner() {
                           <span>Active {match.lastActive}</span>
                           {match.isReal && <><span>•</span><span style={{ color: 'rgba(74,222,128,0.7)' }}>✓ Real user</span></>}
                         </div>
-                        <button
-                          onClick={() => sendConnection(match.id)}
-                          style={{ width: '100%', background: sent ? 'rgba(74,222,128,0.1)' : `linear-gradient(135deg, ${tier.color}cc, ${tier.color})`, border: sent ? '1px solid rgba(74,222,128,0.3)' : 'none', borderRadius: '0.75rem', color: sent ? 'rgba(134,239,172,0.9)' : 'white', fontSize: '0.85rem', fontWeight: 500, padding: '0.75rem', cursor: sent ? 'default' : 'pointer' }}
-                        >
-                          {sent ? '✓ Sync Signal Sent' : 'Send Sync Signal ✨'}
-                        </button>
+
+                        {match.isReal ? (
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                              onClick={() => handleMessage(match)}
+                              disabled={isMessaging}
+                              style={{ flex: 1, background: isMessaging ? 'rgba(124,58,237,0.2)' : 'linear-gradient(135deg, #7c3aed, #9333ea)', border: 'none', borderRadius: '0.75rem', color: 'white', fontSize: '0.85rem', fontWeight: 600, padding: '0.75rem', cursor: isMessaging ? 'default' : 'pointer', opacity: isMessaging ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                            >
+                              {isMessaging ? 'Opening...' : '💬 Message'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '0.75rem', padding: '0.75rem', textAlign: 'center' }}>
+                            <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.78rem', lineHeight: 1.5, margin: 0 }}>
+                              ✦ Demo soul — invite friends to see real matches
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -265,7 +276,6 @@ function SoulTwinPageInner() {
     </div>
   );
 }
-
 
 export default function SoulTwinPage() {
   return (
