@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.synchrosoul.app",
+    "sha256_cert_fingerprints": [
+      "DD:01:CA:81:EA:9D:C9:8A:B8:9D:A0:A1:65:02:60:84:1A:6A:7B:86:6D:A5:97:B7:BC:4A:1F:36:9E:C0:47:F5"
+    ]
+  }
+}]
