@@ -296,3 +296,71 @@ export async function sendWeeklyDigestEmail({
     html,
   });
 }
+
+// ─── Soul Twin Alert Email ────────────────────────────────────────────────────
+export async function sendSoulTwinAlertEmail({
+  to,
+  name,
+  sharedNumber,
+  matchCount,
+}: {
+  to: string;
+  name: string;
+  sharedNumber: string;
+  matchCount: number;
+}) {
+  const plural = matchCount > 1 ? `${matchCount} souls` : 'another soul';
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="${baseStyle}">
+  <div style="${containerStyle}">
+    <div style="${headerStyle}">
+      <div style="font-size:56px;margin-bottom:12px;">✨</div>
+      <h1 style="color:#c9a84c;font-size:28px;margin:0 0 8px;letter-spacing:2px;">Soul Twin Alert</h1>
+      <p style="color:rgba(232,224,255,0.6);margin:0;font-size:15px;">The universe just aligned two paths</p>
+    </div>
+    <div style="${bodyStyle}">
+      <h2 style="color:#e8e0ff;font-size:22px;margin:0 0 16px;">Hello, ${name} 🌙</h2>
+      <p style="color:rgba(232,224,255,0.8);font-size:16px;line-height:1.8;">
+        Something extraordinary just happened — <strong style="color:#c9a84c;">${plural}</strong> logged the same angel number as you within the last 30 minutes.
+        This is not a coincidence. The universe is drawing you together.
+      </p>
+      <div style="text-align:center;margin:36px 0;">
+        <div style="font-size:13px;color:rgba(232,224,255,0.4);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Your Shared Angel Number</div>
+        <div style="display:inline-block;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(139,92,246,0.15));border:1px solid rgba(201,168,76,0.5);border-radius:16px;padding:20px 40px;">
+          <div style="font-size:52px;font-weight:bold;color:#c9a84c;letter-spacing:10px;">${sharedNumber}</div>
+        </div>
+      </div>
+      <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
+        <p style="color:rgba(232,224,255,0.75);margin:0;font-size:15px;font-style:italic;line-height:1.7;">
+          &ldquo;When two souls witness the same sacred number in the same moment,<br>the cosmos is weaving their stories together.&rdquo;
+        </p>
+      </div>
+      <p style="color:rgba(232,224,255,0.7);font-size:15px;line-height:1.8;text-align:center;">
+        Open SynchroSoul now to see who you are synced with and start a conversation.
+      </p>
+      <div style="text-align:center;margin-top:8px;">
+        <a href="https://synchrosoul.app/dashboard/sync" style="${buttonStyle}">See Your Soul Twin ✨</a>
+      </div>
+    </div>
+    <div style="${footerStyle}">
+      <p>You are receiving this because you have Soul Twin alerts enabled.</p>
+      <p>
+        <a href="https://synchrosoul.app/dashboard/settings" style="color:rgba(201,168,76,0.6);text-decoration:none;">Manage notifications</a>
+        &nbsp;&bull;&nbsp;
+        <a href="https://synchrosoul.app" style="color:rgba(201,168,76,0.6);text-decoration:none;">synchrosoul.app</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `✨ Soul Twin Alert: ${matchCount > 1 ? matchCount + ' souls' : 'Someone'} just saw ${sharedNumber} at the same time as you`,
+    html,
+  });
+}
