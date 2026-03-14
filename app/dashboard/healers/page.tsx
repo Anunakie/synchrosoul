@@ -138,8 +138,8 @@ function BookingModal({ healer, onClose }: { healer: HealerProfile; onClose: () 
   const labelStyle = { display: 'block', fontSize: '0.65rem', color: 'rgba(180,160,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '0.4rem' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div style={{ width: '100%', maxWidth: '480px', background: 'rgba(8,6,28,0.98)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '1.5rem 1.5rem 0 0', padding: '1.5rem 1.25rem 2rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', paddingBottom: '70px' }} onClick={onClose}>
+      <div style={{ width: '100%', maxWidth: '480px', background: 'rgba(8,6,28,0.98)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '1.5rem 1.5rem 0 0', padding: '1.5rem 1.25rem 1.5rem', maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }} onClick={e => e.stopPropagation()}>
 
         {success ? (
           <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>

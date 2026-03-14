@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { getLogs } from '@/lib/storage';
 
 interface AngelLog {
   id: string;
@@ -36,9 +37,13 @@ export default function CosmicReportPage() {
   const [period, setPeriod] = useState<'week' | 'month' | 'all'>('week');
 
   useEffect(() => {
-    try {
-      setLogs(JSON.parse(localStorage.getItem('angel_logs') || '[]'));
-    } catch {}
+    (async () => {
+      try {
+        const logs = await getLogs(); setLogs(logs);
+      } catch {
+        try { setLogs(JSON.parse(localStorage.getItem('angel_logs') || '[]')); } catch {}
+      }
+    })();
   }, []);
 
   const now = Date.now();

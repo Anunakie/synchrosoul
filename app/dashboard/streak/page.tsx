@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { getLogs } from '@/lib/storage';
 
 const MILESTONES = [
   { days: 3, title: 'First Spark', emoji: '✨', color: '#f59e0b', desc: '3 days of divine awareness' },
@@ -15,7 +16,9 @@ const MILESTONES = [
 export default function StreakPage() {
   const [logs, setLogs] = useState<any[]>([]);
   useEffect(() => {
-    try { setLogs(JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]')); } catch {}
+    (async () => {
+      try { const logs = await getLogs(); setLogs(logs); } catch { try { setLogs(JSON.parse(localStorage.getItem('synchrosoul_logs') || '[]')); } catch {} }
+    })();
   }, []);
 
   const days = [...new Set(logs.map((l: any) => new Date(l.timestamp).toDateString()))] as string[];

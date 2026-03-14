@@ -1,5 +1,6 @@
 'use client';
 import FeatureGate from '@/components/FeatureGate'
+import { getProfile } from '@/lib/supabase-db';
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { useState, useEffect } from 'react';
 
@@ -25,10 +26,19 @@ function PersonalYearPageInner() {
   const [result, setResult] = useState<{ year: number; month: number } | null>(null);
 
   useEffect(() => {
-    try {
-      const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
-      if (p.birthdate) { setDob(p.birthdate); }
-    } catch {}
+    (async () => {
+      try {
+        const profile = await getProfile();
+        if (profile?.birthdate) { setDob(profile.birthdate); }
+        else {
+          const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
+          if (p.birthdate) setDob(p.birthdate);
+        }
+      } catch {
+        const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
+        if (p.birthdate) setDob(p.birthdate);
+      }
+    })();
   }, []);
 
   const calculate = () => {

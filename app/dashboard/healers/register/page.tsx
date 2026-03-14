@@ -118,7 +118,7 @@ function HealerRegisterInner() {
     }
   };
 
-  const inp: React.CSSProperties = { width: '100%', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.875rem', color: '#fff', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '0.75rem' };
+  const inp: React.CSSProperties = { width: '100%', padding: '0.75rem 1rem', background: 'rgba(8,6,28,0.95)', border: '1px solid rgba(200,180,255,0.2)', borderRadius: '0.875rem', color: 'rgba(220,200,255,0.9)', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: '0.75rem' };
   const lbl: React.CSSProperties = { color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem', display: 'block' };
   const btnGold: React.CSSProperties = { width: '100%', padding: '0.875rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(167,139,250,0.15))', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '999px', color: '#c9a84c', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer' };
   const btnGhost: React.CSSProperties = { padding: '0.875rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '999px', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', cursor: 'pointer' };
@@ -168,7 +168,7 @@ function HealerRegisterInner() {
             <div style={{ flex: 1 }}><label style={lbl}>State</label><input style={inp} placeholder="CA" value={form.state} onChange={e => update('state', e.target.value)} /></div>
           </div>
           <label style={lbl}>Life Path Number (optional)</label>
-          <select style={{ ...inp, cursor: 'pointer' }} value={form.lifePathNumber || ''} onChange={e => update('lifePathNumber', e.target.value ? parseInt(e.target.value) : undefined)}>
+          <select style={{ ...inp, cursor: 'pointer', background: 'rgba(8,6,28,0.95)', WebkitAppearance: 'none', appearance: 'none', color: 'rgba(220,200,255,0.9)' }} value={form.lifePathNumber || ''} onChange={e => update('lifePathNumber', e.target.value ? parseInt(e.target.value) : undefined)}>
             <option value="">Select your Life Path number</option>
             {[1,2,3,4,5,6,7,8,9,11,22,33].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
@@ -192,7 +192,7 @@ function HealerRegisterInner() {
             {SESSION_TYPES.map(s => { const sel = form.sessionTypes.includes(s.value as 'in-person' | 'virtual' | 'both'); return <button key={s.value} onClick={() => toggleArray('sessionTypes', s.value)} style={{ flex: 1, padding: '0.6rem', borderRadius: '0.875rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: sel ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.04)', border: sel ? '1px solid rgba(34,211,238,0.3)' : '1px solid rgba(255,255,255,0.08)', color: sel ? '#22d3ee' : 'rgba(255,255,255,0.5)', textAlign: 'center' }}>{s.emoji}<br />{s.label}</button>; })}
           </div>
           <label style={lbl}>Price Range</label>
-          <select style={{ ...inp, cursor: 'pointer' }} value={form.priceRange} onChange={e => update('priceRange', e.target.value)}>
+          <select style={{ ...inp, cursor: 'pointer', background: 'rgba(8,6,28,0.95)', WebkitAppearance: 'none', appearance: 'none', color: 'rgba(220,200,255,0.9)' }} value={form.priceRange} onChange={e => update('priceRange', e.target.value)}>
             <option value="">Select price range</option>
             <option value="Free / Donation">Free / Donation-based</option>
             <option value="$30 - $60">$30 - $60 per session</option>

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getOrCreateConversation } from '@/lib/messages';
-import { getNumerologyProfile } from '@/lib/storage';
+import { getNumerologyProfile, getLogs } from '@/lib/storage';
+import { getProfile } from '@/lib/supabase-db';
 
 interface SoulMatch {
   id: string;
@@ -64,9 +65,18 @@ function SoulTwinPageInner() {
   const loadMatches = useCallback(async () => {
     setLoading(true);
     try {
-      const lp = parseInt(localStorage.getItem('synchrosoul_numerology') ? JSON.parse(localStorage.getItem('synchrosoul_numerology')!).lifePath || '7' : '7');
+      let lp = 7;
+      try {
+        const profile = await getProfile();
+        if (profile?.life_path) { lp = profile.life_path; }
+        else {
+          const numData = localStorage.getItem('synchrosoul_numerology');
+          if (numData) lp = parseInt(JSON.parse(numData).lifePath || '7');
+        }
+      } catch { const numData = localStorage.getItem('synchrosoul_numerology'); if (numData) lp = parseInt(JSON.parse(numData).lifePath || '7'); }
       setMyLifePath(lp);
-      const myLogs: {number: string}[] = JSON.parse(localStorage.getItem('angel_logs') || '[]');
+      const rawLogs = await getLogs();
+      const myLogs: {number: string}[] = rawLogs.map(l => ({ number: l.number }));
       const myNums = [...new Set(myLogs.slice(0, 20).map((l: {number: string}) => l.number))];
       setMyNumbers(myNums);
 

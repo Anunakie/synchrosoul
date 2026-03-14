@@ -1,6 +1,8 @@
 
 'use client';
 import FeatureGate from '@/components/FeatureGate';
+import { getLogs } from '@/lib/storage';
+import { getProfile } from '@/lib/supabase-db';
 import { useState, useEffect, useCallback } from 'react';
 
 const ANGEL_COLORS: Record<string, string> = {
@@ -40,10 +42,30 @@ function SynthesisPageInner() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const l = localStorage.getItem('synchrosoul_logs');
-    if (l) setLogs(JSON.parse(l));
-    const p = localStorage.getItem('synchrosoul_profile');
-    if (p) setProfile(JSON.parse(p));
+    (async () => {
+    try {
+      const logs = await getLogs();
+      if (logs.length > 0) setLogs(logs);
+      else {
+        const l = localStorage.getItem('synchrosoul_logs');
+        if (l) setLogs(JSON.parse(l));
+      }
+    } catch {
+      const l = localStorage.getItem('synchrosoul_logs');
+      if (l) setLogs(JSON.parse(l));
+    }
+    try {
+      const profile = await getProfile();
+      if (profile) setProfile({ name: profile.display_name || '', birthdate: profile.birthdate || '' });
+      else {
+        const p = localStorage.getItem('synchrosoul_profile');
+        if (p) setProfile(JSON.parse(p));
+      }
+    } catch {
+      const p = localStorage.getItem('synchrosoul_profile');
+      if (p) setProfile(JSON.parse(p));
+    }
+    })();
     const s = localStorage.getItem('synchrosoul_synthesis_saved');
     if (s) setSaved(JSON.parse(s));
   }, []);

@@ -1,6 +1,7 @@
 'use client';
 import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect } from 'react';
+import { getProfile } from '@/lib/supabase-db';
 import SaveReadingButton from '@/components/SaveReadingButton';
 
 const reduce = (n: number): number => {
@@ -32,11 +33,22 @@ function NumerologyDeepPageInner() {
   const [results, setResults] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
-    try {
-      const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
-      if (p.name) setName(p.name);
-      if (p.birthdate) setDob(p.birthdate);
-    } catch {}
+    (async () => {
+      try {
+        const profile = await getProfile();
+        if (profile?.display_name) setName(profile.display_name);
+        if (profile?.birthdate) setDob(profile.birthdate);
+        if (!profile?.display_name || !profile?.birthdate) {
+          const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
+          if (p.name && !profile?.display_name) setName(p.name);
+          if (p.birthdate && !profile?.birthdate) setDob(p.birthdate);
+        }
+      } catch {
+        const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
+        if (p.name) setName(p.name);
+        if (p.birthdate) setDob(p.birthdate);
+      }
+    })();
   }, []);
 
   const calculate = () => {

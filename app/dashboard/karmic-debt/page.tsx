@@ -1,5 +1,6 @@
 'use client';
 import FeatureGate from '@/components/FeatureGate'
+import { getProfile } from '@/lib/supabase-db';
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { useState, useEffect } from 'react';
 
@@ -98,11 +99,22 @@ function KarmicDebtPageInner() {
   const [calculated, setCalculated] = useState(false);
 
   useEffect(() => {
-    try {
-      const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
-      if (p.birthdate) setDob(p.birthdate);
-      if (p.name) setName(p.name);
-    } catch {}
+    (async () => {
+      try {
+        const profile = await getProfile();
+        if (profile?.birthdate) setDob(profile.birthdate);
+        if (profile?.display_name) setName(profile.display_name);
+        else {
+          const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
+          if (p.birthdate) setDob(p.birthdate);
+          if (p.name) setName(p.name);
+        }
+      } catch {
+        const p = JSON.parse(localStorage.getItem('synchrosoul_profile') || '{}');
+        if (p.birthdate) setDob(p.birthdate);
+        if (p.name) setName(p.name);
+      }
+    })();
   }, []);
 
   const calculate = () => {
