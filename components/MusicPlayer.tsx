@@ -66,6 +66,8 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playAll, setPlayAll] = useState(false)
+  const [loopPlaylist, setLoopPlaylist] = useState(false)
+  const loopPlaylistRef = useRef(false)
   const [volume, setVolume] = useState(0.7)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -114,6 +116,10 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
     playAllRef.current = playAll
   }, [playAll])
 
+  useEffect(() => {
+    loopPlaylistRef.current = loopPlaylist
+  }, [loopPlaylist])
+
   const stopProgress = useCallback(() => {
     if (progressRef.current) { clearInterval(progressRef.current); progressRef.current = null }
   }, [])
@@ -132,17 +138,17 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = '' }
     const audio = new Audio(track.url)
     audio.volume = volume
-    // Loop only if NOT in play-all mode
-    audio.loop = !isPlayAll
+    // Loop only if NOT in play-all or loop-playlist mode
+    audio.loop = !isPlayAll && !loopPlaylistRef.current
     audioRef.current = audio
 
-    // Auto-advance when track ends (play-all mode)
+    // Auto-advance when track ends (play-all or loop-playlist mode)
     audio.addEventListener('ended', () => {
-      if (playAllRef.current) {
+      if (playAllRef.current || loopPlaylistRef.current) {
         const tracks = filteredTracksRef.current
         const idx = tracks.findIndex(t => t.id === track.id)
         const next = tracks[(idx + 1) % tracks.length]
-        if (next) playTrack(next, true)
+        if (next) playTrack(next, playAllRef.current || loopPlaylistRef.current)
       }
     })
 
@@ -211,6 +217,29 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
     }
   }, [playAll, currentTrack, playTrack])
 
+  const handleLoopPlaylist = useCallback(() => {
+    const newLoop = !loopPlaylist
+    setLoopPlaylist(newLoop)
+    loopPlaylistRef.current = newLoop
+    if (newLoop) {
+      // Turn off regular playAll if it's on
+      setPlayAll(false)
+      playAllRef.current = false
+      // Start from first playlist track or current
+      const tracks = filteredTracksRef.current
+      if (tracks.length === 0) return
+      const startTrack = currentTrack && tracks.find(t => t.id === currentTrack.id)
+        ? currentTrack
+        : tracks[0]
+      playTrack(startTrack, true)
+    } else {
+      // Switch back to single track loop
+      if (audioRef.current && currentTrack) {
+        audioRef.current.loop = true
+      }
+    }
+  }, [loopPlaylist, currentTrack, playTrack])
+
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
@@ -234,6 +263,7 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
           <span style={{ fontSize: 22 }}>🎵</span>
           <h3 style={{ color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif', fontSize: 20, fontWeight: 600, margin: 0, flex: 1 }}>{title}</h3>
           {/* Play All toggle */}
+          {activeCategory !== 'playlist' && (
           <button
             onClick={handlePlayAll}
             style={{
@@ -248,6 +278,23 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
             <span>{playAll ? '🔁' : '▶▶'}</span>
             <span>{playAll ? 'Playing All' : 'Play All'}</span>
           </button>
+          )}
+          {activeCategory === 'playlist' && (
+          <button
+            onClick={handleLoopPlaylist}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px',
+              borderRadius: 20, border: '1px solid',
+              borderColor: loopPlaylist ? '#e879a0' : 'rgba(255,255,255,0.2)',
+              background: loopPlaylist ? 'rgba(232,121,160,0.25)' : 'rgba(255,255,255,0.05)',
+              color: loopPlaylist ? '#e879a0' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap'
+            }}
+          >
+            <span>🔁</span>
+            <span>{loopPlaylist ? 'Looping' : 'Loop Playlist'}</span>
+          </button>
+          )}
         </div>
       )}
 
@@ -275,7 +322,14 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
         {CATEGORIES.map(cat => (
           <button
             key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
+            onClick={() => {
+              setActiveCategory(cat.id)
+              if (cat.id !== 'playlist' && loopPlaylist) {
+                setLoopPlaylist(false)
+                loopPlaylistRef.current = false
+                if (audioRef.current && currentTrack) audioRef.current.loop = true
+              }
+            }}
             style={{
               padding: '4px 10px', borderRadius: 20, border: '1px solid',
               borderColor: activeCategory === cat.id
