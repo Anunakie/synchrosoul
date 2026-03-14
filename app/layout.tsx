@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     description: 'Log the angel numbers you see. Match with souls on your cosmic frequency. Discover your numerology profile and connect with people seeing 1111, 555, 333 at the same time as you.',
     images: [
       {
-        url: '/og-image.png',
+        url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
         alt: 'SynchroSoul — Angel Number Dating App',
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     creator: '@synchrosoul',
     title: 'SynchroSoul — Angel Number Dating',
     description: 'Match with souls seeing the same angel numbers. Log 1111, 555, 333 and find your cosmic connection.',
-    images: ['/og-image.png'],
+    images: [`${siteUrl}/og-image.png`],
   },
   appleWebApp: {
     capable: true,
