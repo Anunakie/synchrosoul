@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [posts, setPosts] = useState<SocialPost[]>([])
   const [numerology, setNumerology] = useState<any>(null)
   const [userNumbers, setUserNumbers] = useState<string[]>([])
+  const [earnedBadges, setEarnedBadges] = useState<{id:string,emoji:string,name:string,desc:string,color:string}[]>([])
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editBio, setEditBio] = useState('')
@@ -137,6 +138,41 @@ export default function ProfilePage() {
       getPosts().then(setPosts)
       const logs = await getLogs()
       setUserNumbers([...new Set(logs.map((l: any) => l.number))] as string[])
+      // Compute earned badges
+      const BADGE_DEFS = [
+        { id: 'first_log', emoji: '👁️', name: 'First Sighting', desc: 'Logged your first angel number', color: '#c9a84c' },
+        { id: 'logs_10', emoji: '📖', name: 'Seeker', desc: 'Logged 10 angel numbers', color: '#4299e1' },
+        { id: 'logs_50', emoji: '🔮', name: 'Oracle', desc: 'Logged 50 angel numbers', color: '#9b59b6' },
+        { id: 'logs_100', emoji: '💫', name: 'Starseed', desc: 'Logged 100 angel numbers', color: '#b794f4' },
+        { id: 'streak_3', emoji: '🔥', name: 'Trinity Streak', desc: '3-day logging streak', color: '#f87171' },
+        { id: 'streak_7', emoji: '⚡', name: 'Sacred Week', desc: '7-day logging streak', color: '#ecc94b' },
+        { id: 'truth_first', emoji: '📸', name: 'Truth Seeker', desc: 'First Angel Approved entry', color: '#34d399' },
+        { id: 'truth_10', emoji: '✅', name: 'Verified Mystic', desc: '10 Angel Approved entries', color: '#48bb78' },
+        { id: 'early_adopter', emoji: '🚀', name: 'Early Adopter', desc: 'Joined in the first wave', color: '#ffd700' },
+      ]
+      const logCount = logs.length
+      const logDates = [...new Set(logs.map((l: any) => new Date(l.createdAt).toDateString()))].sort(
+        (a, b) => new Date(a).getTime() - new Date(b).getTime()
+      )
+      let streak = logDates.length > 0 ? 1 : 0
+      let cur = 1
+      for (let i = 1; i < logDates.length; i++) {
+        const ms = new Date(logDates[i]).getTime() - new Date(logDates[i-1]).getTime(); const diff = ms / 86400000
+        if (diff === 1) { cur++; streak = Math.max(streak, cur) } else cur = 1
+      }
+      const verified = logs.filter((l: any) => l.screenshotUrl).length
+      const earned = BADGE_DEFS.filter(b => {
+        if (b.id === 'first_log' || b.id === 'early_adopter') return logCount >= 1
+        if (b.id === 'logs_10') return logCount >= 10
+        if (b.id === 'logs_50') return logCount >= 50
+        if (b.id === 'logs_100') return logCount >= 100
+        if (b.id === 'streak_3') return streak >= 3
+        if (b.id === 'streak_7') return streak >= 7
+        if (b.id === 'truth_first') return verified >= 1
+        if (b.id === 'truth_10') return verified >= 10
+        return false
+      })
+      setEarnedBadges(earned)
     })()
   }, [])
 
@@ -336,7 +372,24 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Stats */}
+          {/* Earned Badges */}
+          {earnedBadges.length > 0 && (
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.58)', letterSpacing: '0.1em' }}>COSMIC BADGES</div>
+                <a href="/dashboard/badges" style={{ fontSize: '0.65rem', color: '#c9a84c', textDecoration: 'none' }}>View all</a>
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                {earnedBadges.map(badge => (
+                  <div key={badge.id} title={badge.name + ': ' + badge.desc} style={{ width: '2.2rem', height: '2.2rem', borderRadius: '50%', background: 'rgba(8,6,28,0.9)', border: '1px solid ' + badge.color + '55', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', filter: 'drop-shadow(0 0 6px ' + badge.color + '66)', cursor: 'default' }}>
+                    {badge.emoji}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+                    {/* Stats */}
           <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
             <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(8,6,28,0.75)', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#c9a84c' }}>{posts.length}</div>
