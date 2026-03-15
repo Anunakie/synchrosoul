@@ -2,109 +2,103 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const adminClient = createClient(
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// GET - list all beta users (non-free tier)
 export async function GET(req: NextRequest) {
-  const authResult = await requireAdmin(req)
-  if ('error' in authResult) return authResult.error
+  const auth = await requireAdmin(req);
+  if ('error' in auth) return auth.error;
 
   try {
-    // Step 1: Get all profiles with non-free subscription tier
-    const { data: profiles, error: profilesError } = await adminClient
-      .from('profiles')
-      .select('id, display_name, subscription_tier, created_at')
-      .neq('subscription_tier', 'free')
-      .order('created_at', { ascending: false })
-
-    if (profilesError) throw profilesError
-    if (!profiles || profiles.length === 0) {
-      return NextResponse.json({ success: true, users: [] })
-    }
-
-    // Step 2: Get emails from auth.users for these profile IDs
-    const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({
-      perPage: 1000
-    })
-    if (authError) throw authError
-
-    // Step 3: Build a map of id -> email
-    const emailMap: Record<string, string> = {}
-    for (const u of authData.users) {
-      emailMap[u.id] = u.email || ''
-    }
-
-    // Step 4: Merge profiles with emails
-    const users = profiles.map(p => ({
-      id: p.id,
-      display_name: p.display_name || 'Unnamed',
-      email: emailMap[p.id] || '(no email)',
-      subscription_tier: p.subscription_tier,
-      created_at: p.created_at
-    }))
-
-    return NextResponse.json({ success: true, users })
-  } catch (e: any) {
-    console.error('beta-users GET error:', e)
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 })
-  }
-}
-
-// POST - toggle beta access for a user
-export async function POST(req: NextRequest) {
-  const authResult = await requireAdmin(req)
-  if ('error' in authResult) return authResult.error
-
-  try {
-    const { userId, action, tier } = await req.json()
-    if (!userId || !action) {
-      return NextResponse.json({ success: false, error: 'userId and action required' }, { status: 400 })
-    }
-
-    const newTier = action === 'revoke' ? 'free' : (tier || 'mystic')
-
-    const { error } = await adminClient
-      .from('profiles')
-      .update({ subscription_tier: newTier })
-      .eq('id', userId)
-
+    // Get ALL users from auth
+    const { data: usersData, error } = await supabase.auth.admin.listUsers({ perPage: 1000 })
     if (error) throw error
 
-    return NextResponse.json({
-      success: true,
-      message: action === 'revoke' ? 'Beta access revoked' : `Beta access granted (${newTier})`
-    })
-  } catch (e: any) {
-    console.error('beta-users POST error:', e)
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 })
+    // Filter ONLY users who were manually granted beta access by admin
+    const betaUsers = usersData.users
+      .filter((u: any) => u.user_metadata?.beta_granted === true)
+      .map((u: any) => ({
+        id: u.id,
+        email: u.email || '',
+        display_name: u.user_metadata?.display_name || u.user_metadata?.full_name || u.email?.split('@')[0] || 'Unknown',
+        subscription_tier: u.user_metadata?.beta_tier || 'mystic',
+        beta_note: u.user_metadata?.beta_note || '',
+        beta_granted_at: u.user_metadata?.beta_granted_at || u.created_at,
+        created_at: u.created_at
+      }))
+
+    return NextResponse.json({ users: betaUsers })
+  } catch (err: any) {
+    console.error('Beta users error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
 
-// DELETE - bulk revoke for selected user IDs
+export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if ('error' in auth) return auth.error;
+
+  try {
+    const { userIds, tier } = await req.json()
+    if (!userIds?.length) return NextResponse.json({ error: 'No users specified' }, { status: 400 })
+
+    const results = []
+    for (const userId of userIds) {
+      // Get current user metadata
+      const { data: userData } = await supabase.auth.admin.getUserById(userId)
+      if (!userData?.user) continue
+
+      // Update profile tier
+      await supabase.from('profiles').update({ subscription_tier: tier }).eq('id', userId)
+
+      // Update metadata
+      await supabase.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          ...userData.user.user_metadata,
+          beta_granted: true,
+          beta_tier: tier,
+          beta_granted_at: new Date().toISOString()
+        }
+      })
+      results.push(userId)
+    }
+
+    return NextResponse.json({ success: true, updated: results.length })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: NextRequest) {
-  const authResult = await requireAdmin(req)
-  if ('error' in authResult) return authResult.error
+  const auth = await requireAdmin(req);
+  if ('error' in auth) return auth.error;
 
   try {
     const { userIds } = await req.json()
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return NextResponse.json({ success: false, error: 'userIds array required' }, { status: 400 })
+    if (!userIds?.length) return NextResponse.json({ error: 'No users specified' }, { status: 400 })
+
+    for (const userId of userIds) {
+      const { data: userData } = await supabase.auth.admin.getUserById(userId)
+      if (!userData?.user) continue
+
+      // Revoke tier
+      await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
+
+      // Remove beta flag
+      await supabase.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          ...userData.user.user_metadata,
+          beta_granted: false,
+          beta_tier: null,
+          beta_note: null
+        }
+      })
     }
 
-    const { error } = await adminClient
-      .from('profiles')
-      .update({ subscription_tier: 'free' })
-      .in('id', userIds)
-
-    if (error) throw error
-
-    return NextResponse.json({ success: true, message: `Revoked access for ${userIds.length} user(s)` })
-  } catch (e: any) {
-    console.error('beta-users DELETE error:', e)
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 })
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

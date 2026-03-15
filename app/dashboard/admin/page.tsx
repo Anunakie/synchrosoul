@@ -18,7 +18,7 @@ interface AdminStats {
   totalPosts: number
   payingSubscribers: number
   subBreakdown: Record<string, number>
-  recentSignups: { email: string; created_at: string }[]
+  recentSignups: { id: string; email: string; created_at: string; display_name?: string; subscription_tier: string }[]
   recentLogs: { number: string; created_at: string; user_id: string }[]
 }
 
@@ -80,7 +80,7 @@ export default function AdminPage() {
   const [betaLoading, setBetaLoading] = useState(false)
   const [betaResult, setBetaResult] = useState<{success?: boolean; message?: string; error?: string} | null>(null)
   const [betaGranted, setBetaGranted] = useState<{email: string; tier: string; time: string}[]>([])
-  const [betaUsers, setBetaUsers] = useState<{id: string; email: string; display_name: string; subscription_tier: string; created_at: string}[]>([])
+  const [betaUsers, setBetaUsers] = useState<{id: string; email: string; display_name: string; subscription_tier: string; beta_note: string; beta_granted_at: string; created_at: string}[]>([])
   const [betaUsersLoading, setBetaUsersLoading] = useState(false)
   const [selectedBetaIds, setSelectedBetaIds] = useState<Set<string>>(new Set())
   const [togglingId, setTogglingId] = useState<string | null>(null)
@@ -399,12 +399,21 @@ export default function AdminPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={card}>
                   <h3 style={{ color: '#c9a84c', marginBottom: '0.75rem', fontSize: '0.9rem' }}>Recent Signups</h3>
-                  {stats.recentSignups.slice(0, 8).map((u, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.75rem' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{u.email}</span>
-                      <span style={{ color: 'rgba(180,160,255,0.4)' }}>{new Date(u.created_at).toLocaleDateString()}</span>
-                    </div>
-                  ))}
+                  {stats.recentSignups.slice(0, 8).map((u, i) => {
+                    const tc = u.subscription_tier === 'twin-flame' ? '#f472b6' : u.subscription_tier === 'mystic' ? '#a78bfa' : 'rgba(255,255,255,0.2)'
+                    const tl = u.subscription_tier === 'twin-flame' ? 'Twin Flame' : u.subscription_tier === 'mystic' ? 'Mystic' : 'Free'
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.75rem' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                          {u.display_name || u.email}
+                        </span>
+                        <span style={{ color: tc, background: tc + '22', border: '1px solid ' + tc + '55', borderRadius: '999px', padding: '0.1rem 0.45rem', fontSize: '0.62rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {tl}
+                        </span>
+                        <span style={{ color: 'rgba(180,160,255,0.35)', whiteSpace: 'nowrap', flexShrink: 0 }}>{new Date(u.created_at).toLocaleDateString()}</span>
+                      </div>
+                    )
+                  })}
                 </div>
                 <div style={card}>
                   <h3 style={{ color: '#c9a84c', marginBottom: '0.75rem', fontSize: '0.9rem' }}>Recent Logs</h3>
@@ -794,9 +803,9 @@ export default function AdminPage() {
           <div style={{ ...card }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>👥 Active Beta Users</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>👥 Admin-Granted Beta Testers</h3>
                 <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>
-                  {betaUsers.length} user{betaUsers.length !== 1 ? 's' : ''} with premium access
+                  {betaUsers.length} tester{betaUsers.length !== 1 ? 's' : ''} manually granted by admin (excludes paid subscribers)
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -876,11 +885,30 @@ export default function AdminPage() {
                         style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#a78bfa', flexShrink: 0 }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: '#e2d9f3', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {user.display_name || 'Unnamed'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <span style={{ color: '#e2d9f3', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user.display_name || 'Unnamed'}
+                          </span>
+                          <span style={{
+                            fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '999px',
+                            background: user.subscription_tier === 'twin-flame' ? 'rgba(244,114,182,0.15)' : 'rgba(167,139,250,0.15)',
+                            border: user.subscription_tier === 'twin-flame' ? '1px solid rgba(244,114,182,0.4)' : '1px solid rgba(167,139,250,0.4)',
+                            color: user.subscription_tier === 'twin-flame' ? '#f472b6' : '#a78bfa',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {user.subscription_tier === 'twin-flame' ? 'Twin Flame' : 'Mystic'}
+                          </span>
                         </div>
-                        <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.72rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {user.email}
+                        </div>
+                        {user.beta_note && (
+                          <div style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.68rem', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            Note: {user.beta_note}
+                          </div>
+                        )}
+                        <div style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.65rem', marginTop: '0.1rem' }}>
+                          Granted: {user.beta_granted_at ? new Date(user.beta_granted_at).toLocaleDateString() : new Date(user.created_at).toLocaleDateString()}
                         </div>
                       </div>
                       <span style={{

@@ -29,12 +29,22 @@ export async function POST(req: NextRequest) {
     // Update their profile subscription_tier
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({
-        subscription_tier: tier
-      })
+      .update({ subscription_tier: tier })
       .eq('id', user.id)
 
     if (updateError) throw updateError
+
+    // Mark user as beta_granted in auth user_metadata so we can filter them
+    const { error: metaError } = await supabase.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...user.user_metadata,
+        beta_granted: true,
+        beta_tier: tier,
+        beta_note: note,
+        beta_granted_at: new Date().toISOString()
+      }
+    })
+    if (metaError) throw metaError
 
     console.log(`[BETA ACCESS] Granted ${tier} to ${email} (${user.id}) - Note: ${note}`)
 
@@ -63,12 +73,24 @@ export async function DELETE(req: NextRequest) {
     const user = users.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
     if (!user) return NextResponse.json({ error: `No user found: ${email}` }, { status: 404 })
 
+    // Revoke subscription tier
     const { error } = await supabase
       .from('profiles')
       .update({ subscription_tier: 'free' })
       .eq('id', user.id)
 
     if (error) throw error
+
+    // Remove beta_granted flag from user_metadata
+    const { error: metaError } = await supabase.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...user.user_metadata,
+        beta_granted: false,
+        beta_tier: null,
+        beta_note: null
+      }
+    })
+    if (metaError) throw metaError
 
     return NextResponse.json({ success: true, message: `Access revoked for ${email}` })
   } catch (err: any) {
