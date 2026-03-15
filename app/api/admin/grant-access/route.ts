@@ -27,8 +27,7 @@ export async function POST(req: NextRequest) {
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        subscription_tier: tier,
-        updated_at: new Date().toISOString()
+        subscription_tier: tier
       })
       .eq('id', user.id)
 
@@ -61,7 +60,7 @@ export async function DELETE(req: NextRequest) {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ subscription_tier: 'free', updated_at: new Date().toISOString() })
+      .update({ subscription_tier: 'free' })
       .eq('id', user.id)
 
     if (error) throw error
