@@ -54,7 +54,7 @@ interface HealerRow {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'overview' | 'revenue' | 'healers' | 'reports'>('overview')
+  const [tab, setTab] = useState<'overview' | 'revenue' | 'healers' | 'reports' | 'beta'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [revenue, setRevenue] = useState<RevenueData | null>(null)
   const [healers, setHealers] = useState<HealerRow[]>([])
@@ -72,6 +72,12 @@ export default function AdminPage() {
   const [reportsLoading, setReportsLoading] = useState(false)
   const [reportsError, setReportsError] = useState('')
   const [updatingReportId, setUpdatingReportId] = useState<string | null>(null)
+  const [betaEmail, setBetaEmail] = useState('')
+  const [betaTier, setBetaTier] = useState<'mystic' | 'twin_flame'>('mystic')
+  const [betaNote, setBetaNote] = useState('')
+  const [betaLoading, setBetaLoading] = useState(false)
+  const [betaResult, setBetaResult] = useState<{success?: boolean; message?: string; error?: string} | null>(null)
+  const [betaGranted, setBetaGranted] = useState<{email: string; tier: string; time: string}[]>([])
 
   useEffect(() => {
     fetch('/api/admin/stats')
@@ -191,7 +197,7 @@ export default function AdminPage() {
     }
   }
 
-  const tabBtn = (t: 'overview' | 'revenue' | 'healers', label: string, icon: string) => (
+  const tabBtn = (t: 'overview' | 'revenue' | 'healers' | 'reports' | 'beta', label: string, icon: string) => (
     <button
       onClick={() => setTab(t)}
       style={{
@@ -235,7 +241,8 @@ export default function AdminPage() {
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         {tabBtn('overview', 'Overview', '📊')}
         {tabBtn('revenue', 'Revenue', '💰')}
-        {tabBtn('healers', 'Healers', '\u2728')}
+        {tabBtn('healers', 'Healers', '✨')}
+        {tabBtn('beta', 'Beta Access', '🔑')}
       </div>
 
       {/* OVERVIEW TAB */}
@@ -561,6 +568,140 @@ export default function AdminPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* BETA TESTERS TAB */}
+      {tab === 'beta' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ ...card }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.25rem' }}>🔑 Grant Beta Access</h2>
+            <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
+              When a tester DMs you their email, enter it here to activate their free Mystic or Twin Flame tier.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Tester Email</label>
+                <input
+                  type="email"
+                  value={betaEmail}
+                  onChange={e => setBetaEmail(e.target.value)}
+                  placeholder="tester@example.com"
+                  style={{
+                    width: '100%', padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#fff', fontSize: '0.95rem', boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Tier to Grant</label>
+                <select
+                  value={betaTier}
+                  onChange={e => setBetaTier(e.target.value as 'mystic' | 'twin_flame')}
+                  style={{
+                    width: '100%', padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                    background: 'rgba(30,20,60,0.95)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#fff', fontSize: '0.95rem'
+                  }}
+                >
+                  <option value="mystic">✨ Mystic ($6.99/mo value)</option>
+                  <option value="twin_flame">🔥 Twin Flame ($9.99/mo value)</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Note (optional)</label>
+                <input
+                  type="text"
+                  value={betaNote}
+                  onChange={e => setBetaNote(e.target.value)}
+                  placeholder="e.g. Reddit beta tester, r/betatests"
+                  style={{
+                    width: '100%', padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#fff', fontSize: '0.95rem', boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  if (!betaEmail.trim()) return
+                  setBetaLoading(true)
+                  setBetaResult(null)
+                  try {
+                    const res = await fetch('/api/admin/grant-access', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: betaEmail.trim(), tier: betaTier, note: betaNote })
+                    })
+                    const data = await res.json()
+                    setBetaResult(data)
+                    if (data.success) {
+                      setBetaGranted(prev => [{ email: betaEmail.trim(), tier: betaTier, time: new Date().toLocaleTimeString() }, ...prev])
+                      setBetaEmail('')
+                      setBetaNote('')
+                    }
+                  } catch (e: any) {
+                    setBetaResult({ error: e.message })
+                  } finally {
+                    setBetaLoading(false)
+                  }
+                }}
+                disabled={betaLoading || !betaEmail.trim()}
+                style={{
+                  padding: '0.85rem 2rem', borderRadius: '0.75rem', border: 'none',
+                  background: betaLoading ? 'rgba(201,168,76,0.3)' : 'linear-gradient(135deg, #c9a84c, #a78bfa)',
+                  color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: betaLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {betaLoading ? 'Granting...' : '🔑 Grant Access'}
+              </button>
+              {betaResult && (
+                <div style={{
+                  padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                  background: betaResult.success ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
+                  border: `1px solid ${betaResult.success ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
+                  color: betaResult.success ? '#4ade80' : '#f87171', fontSize: '0.9rem'
+                }}>
+                  {betaResult.success ? '✓ ' : '✗ '}{betaResult.message || betaResult.error}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {betaGranted.length > 0 && (
+            <div style={{ ...card }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', marginBottom: '1rem' }}>📋 Granted This Session</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {betaGranted.map((g, i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '0.6rem 0.75rem', borderRadius: '0.5rem',
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'
+                  }}>
+                    <span style={{ color: '#e2d9f3', fontSize: '0.85rem' }}>{g.email}</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#c9a84c', background: 'rgba(201,168,76,0.1)', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
+                        {g.tier === 'mystic' ? '✨ Mystic' : '🔥 Twin Flame'}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.4)' }}>{g.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ ...card, background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.75rem' }}>💬 How to handle DMs</h3>
+            <ol style={{ color: 'rgba(180,160,255,0.7)', fontSize: '0.82rem', lineHeight: 1.8, paddingLeft: '1.2rem', margin: 0 }}>
+              <li>Tester signs up at synchrosoul.app</li>
+              <li>They DM you their account email</li>
+              <li>Enter it above and click Grant Access</li>
+              <li>They refresh the app — premium features unlock instantly</li>
+              <li>To revoke later, use Supabase dashboard or contact you</li>
+            </ol>
+          </div>
         </div>
       )}
     </div>
