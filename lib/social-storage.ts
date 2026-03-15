@@ -219,3 +219,24 @@ export function getMockFeedPosts(userNumbers: string[]): SocialPost[] {
 export async function toggleResonate(postId: string): Promise<void> {
   await resonatePost(postId)
 }
+
+export async function syncAuthorNameInPosts(newName: string): Promise<void> {
+  // Update localStorage posts
+  try {
+    const raw = localStorage.getItem(POSTS_KEY)
+    if (raw) {
+      const posts: SocialPost[] = JSON.parse(raw)
+      const updated = posts.map(p => ({ ...p, authorName: newName }))
+      localStorage.setItem(POSTS_KEY, JSON.stringify(updated))
+    }
+  } catch (e) {
+    console.error('Failed to update author name in localStorage posts:', e)
+  }
+  // Update Supabase posts
+  try {
+    const { updateAuthorNameInAllPosts } = await import('./supabase-db')
+    await updateAuthorNameInAllPosts(newName)
+  } catch (e) {
+    console.error('Failed to update author name in Supabase posts:', e)
+  }
+}

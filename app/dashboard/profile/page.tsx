@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { getSocialProfile, saveSocialProfile, getPosts, savePost, deletePost, updatePost, toggleResonate, UserSocialProfile, SocialPost } from '@/lib/social-storage'
+import { getSocialProfile, saveSocialProfile, getPosts, savePost, deletePost, updatePost, toggleResonate, syncAuthorNameInPosts, UserSocialProfile, SocialPost } from '@/lib/social-storage'
 import { loadFullProfile, saveFullProfile, getCurrentUserId } from '@/lib/supabase-db'
 import { getNumerologyProfile } from '@/lib/storage'
 import { getLogs } from '@/lib/storage'
@@ -218,6 +218,8 @@ export default function ProfilePage() {
         soulUrge: numProfile?.soulUrge || null,
         destiny: numProfile?.destiny || null,
       })
+      // Sync author name across all posts
+      await syncAuthorNameInPosts(updated.displayName)
     } catch (e) {
       console.error('Failed to sync profile to cloud:', e)
     }

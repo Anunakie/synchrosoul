@@ -730,3 +730,17 @@ export async function loadFullProfile(): Promise<{
     return null
   }
 }
+
+export async function updateAuthorNameInAllPosts(newName: string): Promise<void> {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase
+      .from('posts')
+      .update({ author_name: newName })
+      .eq('user_id', user.id)
+  } catch (e) {
+    console.error('Failed to update author name in posts:', e)
+  }
+}
