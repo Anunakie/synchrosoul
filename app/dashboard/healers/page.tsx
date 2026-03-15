@@ -10,6 +10,7 @@ import {
 } from '@/lib/healers-storage';
 import { getNumerologyProfile } from '@/lib/storage';
 import { createBooking } from '@/lib/healer-bookings';
+import ReportModal from '@/components/ReportModal';
 
 const MODALITY_EMOJIS: Record<string, string> = {
   'Reiki': '✋',
@@ -240,6 +241,7 @@ function BookingModal({ healer, onClose }: { healer: HealerProfile; onClose: () 
 function HealerCard({ healer, userLifePath }: { healer: HealerProfile; userLifePath: number }) {
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const alignment = calculateCosmicAlignment(userLifePath, healer.lifePathNumber);
   const initials = healer.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
   const avatarColor = ['#c9a84c', '#a78bfa', '#22d3ee', '#f472b6', '#4ade80'][healer.name.charCodeAt(0) % 5];
@@ -247,6 +249,15 @@ function HealerCard({ healer, userLifePath }: { healer: HealerProfile; userLifeP
   return (
     <>
       {showBooking && <BookingModal healer={healer} onClose={() => setShowBooking(false)} />}
+      {showReport && (
+        <ReportModal
+          isOpen={showReport}
+          onClose={() => setShowReport(false)}
+          targetType="healer"
+          targetId={healer.id}
+          targetName={healer.name}
+        />
+      )}
       <div style={{ background: 'rgba(8,6,28,0.92)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', overflow: 'hidden', marginBottom: '0.75rem' }}>
         {/* Header */}
         <div style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -296,10 +307,19 @@ function HealerCard({ healer, userLifePath }: { healer: HealerProfile; userLifeP
           </button>
         </div>
 
-        {/* Expand toggle */}
-        <button onClick={() => setExpanded(!expanded)} style={{ width: '100%', padding: '0.6rem', background: 'rgba(255,255,255,0.03)', border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-          {expanded ? '▲ Less' : '▼ View Profile'}
-        </button>
+        {/* Expand toggle + Report */}
+        <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <button onClick={() => setExpanded(!expanded)} style={{ flex: 1, padding: '0.6rem', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+            {expanded ? '▲ Less' : '▼ View Profile'}
+          </button>
+          <button onClick={() => setShowReport(true)} title="Report this healer"
+            style={{ padding: '0.6rem 0.75rem', background: 'none', border: 'none',
+              borderLeft: '1px solid rgba(255,255,255,0.05)',
+              cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: '0.8rem' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(239,68,68,0.7)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.2)')}
+          >&#9873;</button>
+        </div>
 
         {/* Expanded content */}
         {expanded && (

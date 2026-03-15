@@ -54,7 +54,7 @@ interface HealerRow {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'overview' | 'revenue' | 'healers'>('overview')
+  const [tab, setTab] = useState<'overview' | 'revenue' | 'healers' | 'reports'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [revenue, setRevenue] = useState<RevenueData | null>(null)
   const [healers, setHealers] = useState<HealerRow[]>([])
@@ -68,6 +68,10 @@ export default function AdminPage() {
   const [digestResult, setDigestResult] = useState('')
   const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const [noteInputs, setNoteInputs] = useState<Record<string, string>>({})
+  const [reports, setReports] = useState<any[]>([])
+  const [reportsLoading, setReportsLoading] = useState(false)
+  const [reportsError, setReportsError] = useState('')
+  const [updatingReportId, setUpdatingReportId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/stats')
@@ -95,7 +99,39 @@ export default function AdminPage() {
     if (tab === 'healers' && healers.length === 0 && !healersLoading) {
       loadHealers()
     }
+    if (tab === 'reports' && reports.length === 0 && !reportsLoading) {
+      loadReports()
+    }
   }, [tab, revenue, revLoading, healers.length, healersLoading])
+
+  async function loadReports() {
+    setReportsLoading(true)
+    setReportsError('')
+    try {
+      const res = await fetch('/api/admin/reports')
+      const data = await res.json()
+      if (data.error) setReportsError(data.error)
+      else setReports(data.reports || [])
+    } catch {
+      setReportsError('Failed to load reports')
+    } finally {
+      setReportsLoading(false)
+    }
+  }
+
+  async function updateReportStatus(id: string, status: string) {
+    setUpdatingReportId(id)
+    try {
+      await fetch('/api/admin/reports', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+    } finally {
+      setUpdatingReportId(null)
+    }
+  }
 
   async function loadHealers() {
     setHealersLoading(true)
@@ -429,6 +465,102 @@ export default function AdminPage() {
               <div style={{ color: 'rgba(180,160,255,0.5)' }}>No healers registered yet</div>
             </div>
           )}
+        </div>
+      )}
+      {tab === 'reports' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <h3 style={{ color: '#c9a84c', fontSize: '1rem', margin: 0 }}>User & Content Reports</h3>
+            <button onClick={loadReports} style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)', color: '#a78bfa', padding: '0.4rem 0.8rem', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+              Refresh
+            </button>
+          </div>
+
+          {reportsLoading && <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: '2rem' }}>Loading reports...</div>}
+          {reportsError && <div style={{ color: '#f87171', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '0.5rem', marginBottom: '1rem' }}>{reportsError}</div>}
+
+          {!reportsLoading && reports.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.4)' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
+              <div>No reports yet. Community is clean!</div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            {['pending', 'reviewed', 'resolved', 'dismissed'].map(s => (
+              <span key={s} style={{
+                padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem',
+                background: s === 'pending' ? 'rgba(251,191,36,0.15)' : s === 'resolved' ? 'rgba(34,197,94,0.15)' : s === 'dismissed' ? 'rgba(107,114,128,0.15)' : 'rgba(167,139,250,0.15)',
+                color: s === 'pending' ? '#fbbf24' : s === 'resolved' ? '#22c55e' : s === 'dismissed' ? '#9ca3af' : '#a78bfa',
+                border: '1px solid currentColor'
+              }}>
+                {reports.filter(r => r.status === s).length} {s}
+              </span>
+            ))}
+          </div>
+
+          {reports.map((report: any) => (
+            <div key={report.id} style={{ background: 'rgba(8,6,28,0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                    <span style={{ padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem', background: 'rgba(167,139,250,0.15)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.3)' }}>
+                      {report.target_type}
+                    </span>
+                    <span style={{ padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem',
+                      background: report.status === 'pending' ? 'rgba(251,191,36,0.15)' : report.status === 'resolved' ? 'rgba(34,197,94,0.15)' : 'rgba(107,114,128,0.15)',
+                      color: report.status === 'pending' ? '#fbbf24' : report.status === 'resolved' ? '#22c55e' : '#9ca3af' }}>
+                      {report.status}
+                    </span>
+                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
+                      {new Date(report.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                    <strong>Reason:</strong> {report.reason}
+                  </div>
+                  {report.details && (
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{report.details}</div>
+                  )}
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                    Target ID: {report.target_id}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
+                  {report.status === 'pending' && (
+                    <>
+                      <button
+                        onClick={() => updateReportStatus(report.id, 'reviewed')}
+                        disabled={updatingReportId === report.id}
+                        style={{ padding: '0.35rem 0.7rem', borderRadius: '0.4rem', border: 'none', cursor: 'pointer', fontSize: '0.75rem', background: 'rgba(167,139,250,0.2)', color: '#a78bfa' }}>
+                        Review
+                      </button>
+                      <button
+                        onClick={() => updateReportStatus(report.id, 'resolved')}
+                        disabled={updatingReportId === report.id}
+                        style={{ padding: '0.35rem 0.7rem', borderRadius: '0.4rem', border: 'none', cursor: 'pointer', fontSize: '0.75rem', background: 'rgba(34,197,94,0.2)', color: '#22c55e' }}>
+                        Resolve
+                      </button>
+                      <button
+                        onClick={() => updateReportStatus(report.id, 'dismissed')}
+                        disabled={updatingReportId === report.id}
+                        style={{ padding: '0.35rem 0.7rem', borderRadius: '0.4rem', border: 'none', cursor: 'pointer', fontSize: '0.75rem', background: 'rgba(107,114,128,0.2)', color: '#9ca3af' }}>
+                        Dismiss
+                      </button>
+                    </>
+                  )}
+                  {report.status !== 'pending' && (
+                    <button
+                      onClick={() => updateReportStatus(report.id, 'pending')}
+                      disabled={updatingReportId === report.id}
+                      style={{ padding: '0.35rem 0.7rem', borderRadius: '0.4rem', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '0.75rem', background: 'transparent', color: 'rgba(255,255,255,0.4)' }}>
+                      Reopen
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

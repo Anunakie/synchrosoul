@@ -4,6 +4,7 @@ import { getAllPostsFromDB, FeedPost, getLiveSyncMatches, LiveSyncMatch } from '
 import { getPosts, savePost, SocialPost } from '@/lib/social-storage';
 import { isAuthenticated } from '@/lib/supabase-db';
 import { createClient } from '@/lib/supabase/client';
+import ReportModal from '@/components/ReportModal';
 
 function timeAgo(ts: string) {
   const diff = Date.now() - new Date(ts).getTime();
@@ -26,6 +27,7 @@ function PostCard({ post, onResonate }: { post: FeedPost | SocialPost; onResonat
   const resonates = isFeed ? (post as FeedPost).resonates : (post as SocialPost).resonates;
   const isOwn = isFeed ? (post as FeedPost).isOwn : (post as SocialPost).isOwn;
   const [resonated, setResonated] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const handleResonate = () => {
     if (resonated || isOwn) return;
@@ -67,7 +69,27 @@ function PostCard({ post, onResonate }: { post: FeedPost | SocialPost; onResonat
           <span>{resonated ? '❆' : '❇'}</span>
           <span>{(resonates || 0) + (resonated ? 1 : 0)} resonates</span>
         </button>
+        {!isOwn && (
+          <button onClick={() => setShowReport(true)}
+            title="Report this post"
+            style={{ marginLeft: 'auto', background: 'none', border: 'none',
+              color: 'rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: '0.85rem',
+              padding: '0.3rem 0.5rem', borderRadius: '0.4rem',
+              transition: 'color 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(239,68,68,0.7)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.2)')}
+          >⚑</button>
+        )}
       </div>
+      {showReport && (
+        <ReportModal
+          isOpen={showReport}
+          onClose={() => setShowReport(false)}
+          targetType="post"
+          targetId={post.id}
+          targetName={name}
+        />
+      )}
     </div>
   );
 }
