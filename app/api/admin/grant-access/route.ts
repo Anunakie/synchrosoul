@@ -7,6 +7,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+async function findUserByEmail(email: string) {
+  // listUsers is paginated - loop through all pages to find the user
+  let page = 1
+  const perPage = 1000
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage })
+    if (error) throw error
+    const user = data.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+    if (user) return user
+    // If we got fewer results than perPage, we've reached the end
+    if (data.users.length < perPage) return null
+    page++
+  }
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
   if ('error' in auth) return auth.error;
@@ -17,11 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
 
-    // Find user by email in auth.users
-    const { data: users, error: userError } = await supabase.auth.admin.listUsers()
-    if (userError) throw userError
-
-    const user = users.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+    const user = await findUserByEmail(email)
     if (!user) {
       return NextResponse.json({ error: `No user found with email: ${email}` }, { status: 404 })
     }
@@ -67,11 +78,10 @@ export async function DELETE(req: NextRequest) {
     const { email } = await req.json()
     if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
 
-    const { data: users, error: userError } = await supabase.auth.admin.listUsers()
-    if (userError) throw userError
-
-    const user = users.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
-    if (!user) return NextResponse.json({ error: `No user found: ${email}` }, { status: 404 })
+    const user = await findUserByEmail(email)
+    if (!user) {
+      return NextResponse.json({ error: `No user found: ${email}` }, { status: 404 })
+    }
 
     // Revoke subscription tier
     const { error } = await supabase
