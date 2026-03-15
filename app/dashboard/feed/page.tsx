@@ -5,6 +5,7 @@ import { getPosts, savePost, SocialPost } from '@/lib/social-storage';
 import { isAuthenticated } from '@/lib/supabase-db';
 import { createClient } from '@/lib/supabase/client';
 import ReportModal from '@/components/ReportModal';
+import BlockUserButton from '@/components/BlockUserButton';
 
 function timeAgo(ts: string) {
   const diff = Date.now() - new Date(ts).getTime();
@@ -69,6 +70,13 @@ function PostCard({ post, onResonate }: { post: FeedPost | SocialPost; onResonat
           <span>{resonated ? '❆' : '❇'}</span>
           <span>{(resonates || 0) + (resonated ? 1 : 0)} resonates</span>
         </button>
+        {!isOwn && (
+          <BlockUserButton
+            userId={isFeed ? (post as any).userId || '' : (post as any).userId || ''}
+            userName={name}
+            onBlocked={() => {}}
+          />
+        )}
         {!isOwn && (
           <button onClick={() => setShowReport(true)}
             title="Report this post"
