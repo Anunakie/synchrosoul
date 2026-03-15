@@ -16,8 +16,7 @@ interface AdminStats {
   totalUsers: number
   totalLogs: number
   totalPosts: number
-  payingSubscribers: number
-  subBreakdown: Record<string, number>
+  tierCounts: Record<string, number>
   recentSignups: { id: string; email: string; created_at: string; display_name?: string; subscription_tier: string }[]
   recentLogs: { number: string; created_at: string; user_id: string }[]
 }
@@ -373,13 +372,13 @@ export default function AdminPage() {
                 {statCard('Total Users', stats.totalUsers, '👥')}
                 {statCard('Angel Logs', stats.totalLogs, '💫', '#a78bfa')}
                 {statCard('Posts', stats.totalPosts, '📝', '#60a5fa')}
-                {statCard('Paying', stats.payingSubscribers, '👑', '#4ade80')}
+                {statCard('Paying', (stats.tierCounts?.mystic || 0) + (stats.tierCounts?.['twin-flame'] || 0), '👑', '#4ade80')}
               </div>
 
               <div style={card}>
                 <h3 style={{ color: '#c9a84c', marginBottom: '1rem', fontSize: '1rem' }}>Subscription Breakdown</h3>
                 {(['free', 'mystic', 'twin-flame'] as const).map(tier => {
-                  const count = stats.subBreakdown[tier]
+                  const count = stats.tierCounts[tier]
                   const pct = stats.totalUsers > 0 ? Math.round((count / stats.totalUsers) * 100) : 0
                   const colors: Record<string, string> = { free: '#6b7280', mystic: '#a78bfa', twin_flame: '#c9a84c' }
                   return (
