@@ -80,6 +80,11 @@ export default function AdminPage() {
   const [betaLoading, setBetaLoading] = useState(false)
   const [betaResult, setBetaResult] = useState<{success?: boolean; message?: string; error?: string} | null>(null)
   const [betaGranted, setBetaGranted] = useState<{email: string; tier: string; time: string}[]>([])
+  const [betaUsers, setBetaUsers] = useState<{id: string; email: string; display_name: string; subscription_tier: string; created_at: string}[]>([])
+  const [betaUsersLoading, setBetaUsersLoading] = useState(false)
+  const [selectedBetaIds, setSelectedBetaIds] = useState<Set<string>>(new Set())
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [bulkRevoking, setBulkRevoking] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [adminChecking, setAdminChecking] = useState(true)
@@ -137,6 +142,9 @@ export default function AdminPage() {
     if (tab === 'reports' && reports.length === 0 && !reportsLoading) {
       loadReports()
     }
+    if (tab === 'beta') {
+      loadBetaUsers()
+    }
   }, [tab, revenue, revLoading, healers.length, healersLoading, authToken])
 
   async function loadReports() {
@@ -151,6 +159,69 @@ export default function AdminPage() {
       setReportsError('Failed to load reports')
     } finally {
       setReportsLoading(false)
+    }
+  }
+
+  const loadBetaUsers = async () => {
+    setBetaUsersLoading(true)
+    try {
+      const res = await fetch('/api/admin/beta-users', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      })
+      const data = await res.json()
+      if (data.success) setBetaUsers(data.users || [])
+    } catch (e) {
+      console.error('Failed to load beta users', e)
+    } finally {
+      setBetaUsersLoading(false)
+    }
+  }
+
+  const toggleBetaUser = async (userId: string, currentTier: string) => {
+    setTogglingId(userId)
+    const action = currentTier === 'free' ? 'grant' : 'revoke'
+    try {
+      const res = await fetch('/api/admin/beta-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ userId, action, tier: 'mystic' })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setBetaUsers(prev => prev.map(u =>
+          u.id === userId ? { ...u, subscription_tier: action === 'revoke' ? 'free' : 'mystic' } : u
+        ))
+        if (action === 'revoke') {
+          setSelectedBetaIds(prev => { const n = new Set(prev); n.delete(userId); return n })
+        }
+      }
+    } catch (e) {
+      console.error('Toggle failed', e)
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
+  const bulkRevoke = async () => {
+    if (selectedBetaIds.size === 0) return
+    setBulkRevoking(true)
+    try {
+      const res = await fetch('/api/admin/beta-users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ userIds: Array.from(selectedBetaIds) })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setBetaUsers(prev => prev.map(u =>
+          selectedBetaIds.has(u.id) ? { ...u, subscription_tier: 'free' } : u
+        ))
+        setSelectedBetaIds(new Set())
+      }
+    } catch (e) {
+      console.error('Bulk revoke failed', e)
+    } finally {
+      setBulkRevoking(false)
     }
   }
 
@@ -621,6 +692,8 @@ export default function AdminPage() {
       {/* BETA TESTERS TAB */}
       {tab === 'beta' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* GRANT ACCESS FORM */}
           <div style={{ ...card }}>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.25rem' }}>🔑 Grant Beta Access</h2>
             <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
@@ -677,8 +750,8 @@ export default function AdminPage() {
                   setBetaResult(null)
                   try {
                     const res = await fetch('/api/admin/grant-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
                       body: JSON.stringify({ email: betaEmail.trim(), tier: betaTier, note: betaNote })
                     })
                     const data = await res.json()
@@ -687,6 +760,7 @@ export default function AdminPage() {
                       setBetaGranted(prev => [{ email: betaEmail.trim(), tier: betaTier, time: new Date().toLocaleTimeString() }, ...prev])
                       setBetaEmail('')
                       setBetaNote('')
+                      loadBetaUsers()
                     }
                   } catch (e: any) {
                     setBetaResult({ error: e.message })
@@ -716,29 +790,135 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {betaGranted.length > 0 && (
-            <div style={{ ...card }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', marginBottom: '1rem' }}>📋 Granted This Session</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {betaGranted.map((g, i) => (
-                  <div key={i} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '0.6rem 0.75rem', borderRadius: '0.5rem',
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'
-                  }}>
-                    <span style={{ color: '#e2d9f3', fontSize: '0.85rem' }}>{g.email}</span>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#c9a84c', background: 'rgba(201,168,76,0.1)', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
-                        {g.tier === 'mystic' ? '✨ Mystic' : '🔥 Twin Flame'}
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.4)' }}>{g.time}</span>
-                    </div>
-                  </div>
-                ))}
+          {/* ACTIVE BETA USERS LIST */}
+          <div style={{ ...card }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>👥 Active Beta Users</h3>
+                <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>
+                  {betaUsers.length} user{betaUsers.length !== 1 ? 's' : ''} with premium access
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => {
+                    if (selectedBetaIds.size === betaUsers.length && betaUsers.length > 0) {
+                      setSelectedBetaIds(new Set())
+                    } else {
+                      setSelectedBetaIds(new Set(betaUsers.map(u => u.id)))
+                    }
+                  }}
+                  style={{
+                    padding: '0.4rem 0.9rem', borderRadius: '0.5rem', border: '1px solid rgba(167,139,250,0.3)',
+                    background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.8rem', cursor: 'pointer'
+                  }}
+                >
+                  {selectedBetaIds.size === betaUsers.length && betaUsers.length > 0 ? '☐ Deselect All' : '☑ Select All'}
+                </button>
+                {selectedBetaIds.size > 0 && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Revoke beta access for ${selectedBetaIds.size} user(s)?`)) return
+                      await bulkRevoke()
+                    }}
+                    disabled={bulkRevoking}
+                    style={{
+                      padding: '0.4rem 0.9rem', borderRadius: '0.5rem', border: '1px solid rgba(248,113,113,0.3)',
+                      background: bulkRevoking ? 'rgba(248,113,113,0.05)' : 'rgba(248,113,113,0.1)',
+                      color: '#f87171', fontSize: '0.8rem', cursor: bulkRevoking ? 'not-allowed' : 'pointer', fontWeight: 600
+                    }}
+                  >
+                    {bulkRevoking ? 'Revoking...' : `✕ Revoke ${selectedBetaIds.size} Selected`}
+                  </button>
+                )}
+                <button
+                  onClick={loadBetaUsers}
+                  disabled={betaUsersLoading}
+                  style={{
+                    padding: '0.4rem 0.9rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)', color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', cursor: 'pointer'
+                  }}
+                >
+                  {betaUsersLoading ? '...' : '↻ Refresh'}
+                </button>
               </div>
             </div>
-          )}
 
+            {betaUsersLoading && betaUsers.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'rgba(180,160,255,0.4)', padding: '2rem', fontSize: '0.9rem' }}>Loading beta users...</div>
+            ) : betaUsers.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'rgba(180,160,255,0.3)', padding: '2rem', fontSize: '0.9rem' }}>No beta users yet. Grant access above.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {betaUsers.map(user => {
+                  const isSelected = selectedBetaIds.has(user.id)
+                  const isToggling = togglingId === user.id
+                  const isActive = user.subscription_tier !== 'free'
+                  return (
+                    <div key={user.id} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                      background: isSelected ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${isSelected ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setSelectedBetaIds(prev => {
+                            const n = new Set(prev)
+                            if (n.has(user.id)) n.delete(user.id)
+                            else n.add(user.id)
+                            return n
+                          })
+                        }}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#a78bfa', flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: '#e2d9f3', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user.display_name || 'Unnamed'}
+                        </div>
+                        <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user.email}
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '999px', flexShrink: 0,
+                        background: user.subscription_tier === 'twin_flame' ? 'rgba(251,146,60,0.15)' : 'rgba(167,139,250,0.15)',
+                        color: user.subscription_tier === 'twin_flame' ? '#fb923c' : '#a78bfa',
+                        border: `1px solid ${user.subscription_tier === 'twin_flame' ? 'rgba(251,146,60,0.3)' : 'rgba(167,139,250,0.3)'}`
+                      }}>
+                        {user.subscription_tier === 'twin_flame' ? '🔥 Twin Flame' : '✨ Mystic'}
+                      </span>
+                      <button
+                        onClick={() => toggleBetaUser(user.id, user.subscription_tier)}
+                        disabled={isToggling}
+                        title={isActive ? 'Click to revoke access' : 'Click to grant access'}
+                        style={{
+                          width: '44px', height: '24px', borderRadius: '999px', border: 'none',
+                          background: isActive ? 'linear-gradient(135deg, #4ade80, #22c55e)' : 'rgba(255,255,255,0.1)',
+                          cursor: isToggling ? 'not-allowed' : 'pointer',
+                          position: 'relative', transition: 'all 0.3s', flexShrink: 0,
+                          opacity: isToggling ? 0.5 : 1
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute', top: '3px',
+                          left: isActive ? '23px' : '3px',
+                          width: '18px', height: '18px', borderRadius: '50%',
+                          background: '#fff', transition: 'left 0.3s',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                        }} />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* HOW TO HANDLE DMs */}
           <div style={{ ...card, background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}>
             <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.75rem' }}>💬 How to handle DMs</h3>
             <ol style={{ color: 'rgba(180,160,255,0.7)', fontSize: '0.82rem', lineHeight: 1.8, paddingLeft: '1.2rem', margin: 0 }}>
@@ -746,11 +926,13 @@ export default function AdminPage() {
               <li>They DM you their account email</li>
               <li>Enter it above and click Grant Access</li>
               <li>They refresh the app — premium features unlock instantly</li>
-              <li>To revoke later, use Supabase dashboard or contact you</li>
+              <li>Use the toggle switch to revoke access anytime</li>
+              <li>Use Select All + Revoke to bulk-remove access after beta ends</li>
             </ol>
           </div>
         </div>
       )}
+
     </div>
   )
 }
