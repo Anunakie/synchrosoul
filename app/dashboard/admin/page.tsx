@@ -17,7 +17,7 @@ interface AdminStats {
   totalLogs: number
   totalPosts: number
   payingSubscribers: number
-  subBreakdown: { free: number; mystic: number; twin_flame: number }
+  subBreakdown: Record<string, number>
   recentSignups: { email: string; created_at: string }[]
   recentLogs: { number: string; created_at: string; user_id: string }[]
 }
@@ -29,7 +29,7 @@ interface RevenueData {
   activeSubscribers: number
   canceledSubscribers: number
   churnRate: number
-  tierCounts: { mystic: number; twin_flame: number; other: number }
+  tierCounts: Record<string, number>
   monthlyRevenue: { month: string; revenue: number; count: number }[]
   recentCharges: {
     id: string
@@ -75,7 +75,7 @@ export default function AdminPage() {
   const [reportsError, setReportsError] = useState('')
   const [updatingReportId, setUpdatingReportId] = useState<string | null>(null)
   const [betaEmail, setBetaEmail] = useState('')
-  const [betaTier, setBetaTier] = useState<'mystic' | 'twin_flame'>('mystic')
+  const [betaTier, setBetaTier] = useState<string>('mystic')
   const [betaNote, setBetaNote] = useState('')
   const [betaLoading, setBetaLoading] = useState(false)
   const [betaResult, setBetaResult] = useState<{success?: boolean; message?: string; error?: string} | null>(null)
@@ -378,7 +378,7 @@ export default function AdminPage() {
 
               <div style={card}>
                 <h3 style={{ color: '#c9a84c', marginBottom: '1rem', fontSize: '1rem' }}>Subscription Breakdown</h3>
-                {(['free', 'mystic', 'twin_flame'] as const).map(tier => {
+                {(['free', 'mystic', 'twin-flame'] as const).map(tier => {
                   const count = stats.subBreakdown[tier]
                   const pct = stats.totalUsers > 0 ? Math.round((count / stats.totalUsers) * 100) : 0
                   const colors: Record<string, string> = { free: '#6b7280', mystic: '#a78bfa', twin_flame: '#c9a84c' }
@@ -718,7 +718,7 @@ export default function AdminPage() {
                 <label style={{ display: 'block', color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Tier to Grant</label>
                 <select
                   value={betaTier}
-                  onChange={e => setBetaTier(e.target.value as 'mystic' | 'twin_flame')}
+                  onChange={e => setBetaTier(e.target.value)}
                   style={{
                     width: '100%', padding: '0.75rem 1rem', borderRadius: '0.75rem',
                     background: 'rgba(30,20,60,0.95)', border: '1px solid rgba(255,255,255,0.1)',
@@ -726,7 +726,7 @@ export default function AdminPage() {
                   }}
                 >
                   <option value="mystic">✨ Mystic ($6.99/mo value)</option>
-                  <option value="twin_flame">🔥 Twin Flame ($9.99/mo value)</option>
+                  <option value="twin-flame">🔥 Twin Flame ($9.99/mo value)</option>
                 </select>
               </div>
               <div>
@@ -885,11 +885,11 @@ export default function AdminPage() {
                       </div>
                       <span style={{
                         fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '999px', flexShrink: 0,
-                        background: user.subscription_tier === 'twin_flame' ? 'rgba(251,146,60,0.15)' : 'rgba(167,139,250,0.15)',
-                        color: user.subscription_tier === 'twin_flame' ? '#fb923c' : '#a78bfa',
-                        border: `1px solid ${user.subscription_tier === 'twin_flame' ? 'rgba(251,146,60,0.3)' : 'rgba(167,139,250,0.3)'}`
+                        background: user.subscription_tier === 'twin-flame' ? 'rgba(251,146,60,0.15)' : 'rgba(167,139,250,0.15)',
+                        color: user.subscription_tier === 'twin-flame' ? '#fb923c' : '#a78bfa',
+                        border: `1px solid ${user.subscription_tier === 'twin-flame' ? 'rgba(251,146,60,0.3)' : 'rgba(167,139,250,0.3)'}`
                       }}>
-                        {user.subscription_tier === 'twin_flame' ? '🔥 Twin Flame' : '✨ Mystic'}
+                        {user.subscription_tier === 'twin-flame' ? '🔥 Twin Flame' : '✨ Mystic'}
                       </span>
                       <button
                         onClick={() => toggleBetaUser(user.id, user.subscription_tier)}

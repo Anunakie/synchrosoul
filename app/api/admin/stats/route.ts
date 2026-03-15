@@ -31,13 +31,13 @@ export async function GET(req: NextRequest) {
       .select('id, display_name, subscription_tier, created_at');
 
     const totalUsers = profiles?.length ?? 0;
-    const subBreakdown = { free: 0, mystic: 0, twin_flame: 0 };
+    const subBreakdown: Record<string, number> = { free: 0, mystic: 0, 'twin-flame': 0 };
     profiles?.forEach((p: { subscription_tier?: string }) => {
-      const tier = (p.subscription_tier || 'free') as keyof typeof subBreakdown;
+      const tier = (p.subscription_tier || 'free');
       if (tier in subBreakdown) subBreakdown[tier]++;
       else subBreakdown.free++;
     });
-    const payingSubscribers = subBreakdown.mystic + subBreakdown.twin_flame;
+    const payingSubscribers = subBreakdown.mystic + (subBreakdown['twin-flame'] || 0);
 
     // Recent 10 signups with email
     const { data: recentUsersRaw } = await serviceClient.auth.admin.listUsers({ perPage: 10 });
