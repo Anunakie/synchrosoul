@@ -403,9 +403,14 @@ export default function AdminPage() {
                     const tl = u.subscription_tier === 'twin-flame' ? 'Twin Flame' : u.subscription_tier === 'mystic' ? 'Mystic' : 'Free'
                     return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.75rem' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                          {u.display_name || u.email}
-                        </span>
+                        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                          <div style={{ color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                            {u.display_name || '(no name)'}
+                          </div>
+                          <div style={{ color: 'rgba(180,160,255,0.55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.65rem', marginTop: '0.1rem' }}>
+                            {u.email}
+                          </div>
+                        </div>
                         <span style={{ color: tc, background: tc + '22', border: '1px solid ' + tc + '55', borderRadius: '999px', padding: '0.1rem 0.45rem', fontSize: '0.62rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
                           {tl}
                         </span>
