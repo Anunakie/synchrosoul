@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 const card = {
   background: 'rgba(8,6,28,0.88)',
@@ -78,9 +80,35 @@ export default function AdminPage() {
   const [betaLoading, setBetaLoading] = useState(false)
   const [betaResult, setBetaResult] = useState<{success?: boolean; message?: string; error?: string} | null>(null)
   const [betaGranted, setBetaGranted] = useState<{email: string; tier: string; time: string}[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [authToken, setAuthToken] = useState<string | null>(null)
+  const [adminChecking, setAdminChecking] = useState(true)
+  const router = useRouter()
+
+    // ── Admin guard ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.replace('/auth/login')
+        return
+      }
+      const email = session.user.email?.toLowerCase()
+      if (email !== 'dezekiel@live.com') {
+        router.replace('/dashboard')
+        return
+      }
+      setAuthToken(session.access_token)
+      setIsAdmin(true)
+      setAdminChecking(false)
+    }
+    checkAdmin()
+  }, [])
 
   useEffect(() => {
-    fetch('/api/admin/stats')
+    if (!authToken) return
+    fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${authToken}` } })
       .then(r => r.json())
       .then(data => {
         if (data.error) setError(data.error)
@@ -88,12 +116,13 @@ export default function AdminPage() {
       })
       .catch(() => setError('Failed to load stats'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [authToken])
 
   useEffect(() => {
+    if (!authToken) return
     if (tab === 'revenue' && !revenue && !revLoading) {
       setRevLoading(true)
-      fetch('/api/admin/revenue')
+      fetch('/api/admin/revenue', { headers: { Authorization: `Bearer ${authToken}` } })
         .then(r => r.json())
         .then(data => {
           if (data.error) setRevError(data.error)
@@ -108,13 +137,13 @@ export default function AdminPage() {
     if (tab === 'reports' && reports.length === 0 && !reportsLoading) {
       loadReports()
     }
-  }, [tab, revenue, revLoading, healers.length, healersLoading])
+  }, [tab, revenue, revLoading, healers.length, healersLoading, authToken])
 
   async function loadReports() {
     setReportsLoading(true)
     setReportsError('')
     try {
-      const res = await fetch('/api/admin/reports')
+      const res = await fetch('/api/admin/reports', { headers: { Authorization: `Bearer ${authToken}` } })
       const data = await res.json()
       if (data.error) setReportsError(data.error)
       else setReports(data.reports || [])
@@ -130,7 +159,7 @@ export default function AdminPage() {
     try {
       await fetch('/api/admin/reports', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({ id, status })
       })
       setReports(prev => prev.map(r => r.id === id ? { ...r, status } : r))
@@ -143,7 +172,7 @@ export default function AdminPage() {
     setHealersLoading(true)
     setHealersError('')
     try {
-      const res = await fetch('/api/admin/healers')
+      const res = await fetch('/api/admin/healers', { headers: { Authorization: `Bearer ${authToken}` } })
       const data = await res.json()
       if (data.error) setHealersError(data.error)
       else setHealers(data.healers || [])
@@ -159,7 +188,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/verify-healer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({
           healerId: healer.id,
           verified: !healer.verified,
@@ -231,6 +260,24 @@ export default function AdminPage() {
       Loading admin data...
     </div>
   )
+
+  // ── Admin guard render ───────────────────────────────────────────────────
+  if (adminChecking) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#a78bfa', fontSize: '1.2rem' }}>Verifying access...</p>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
+        <p style={{ color: '#ef4444', fontSize: '1.5rem', fontWeight: 700 }}>Access Denied</p>
+        <p style={{ color: '#a78bfa' }}>You do not have permission to view this page.</p>
+      </div>
+    )
+  }
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1rem' }}>
@@ -630,8 +677,8 @@ export default function AdminPage() {
                   setBetaResult(null)
                   try {
                     const res = await fetch('/api/admin/grant-access', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
                       body: JSON.stringify({ email: betaEmail.trim(), tier: betaTier, note: betaNote })
                     })
                     const data = await res.json()

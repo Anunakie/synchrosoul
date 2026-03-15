@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -7,6 +8,8 @@ const supabase = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if ('error' in auth) return auth.error;
   try {
     const { email, tier = 'mystic', note = '' } = await req.json()
 
@@ -48,6 +51,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if ('error' in auth) return auth.error;
   try {
     const { email } = await req.json()
     if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })

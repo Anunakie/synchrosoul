@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -10,6 +11,8 @@ const serviceClient = createClient(
 );
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if ('error' in auth) return auth.error;
   try {
     const { healerId, verified, notes } = await req.json();
 
