@@ -116,19 +116,57 @@ export async function saveLogToDB(data: {
     const supabase = createClient()
     const userId = await getCurrentUserId()
     if (!userId) return null
+
+    // If screenshot is base64, upload to Supabase Storage first
+    // Storing base64 directly in DB causes row size limit errors and silent failures
+    let screenshotStorageUrl: string | null = null
+    if (data.screenshotUrl && data.screenshotUrl.startsWith('data:')) {
+      try {
+        const base64Data = data.screenshotUrl.split(',')[1]
+        const mimeType = data.screenshotUrl.split(';')[0].split(':')[1]
+        const ext = mimeType.includes('png') ? 'png' : 'jpg'
+        const fileName = `${userId}/${Date.now()}.${ext}`
+        // Convert base64 to Uint8Array
+        const binaryStr = atob(base64Data)
+        const bytes = new Uint8Array(binaryStr.length)
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i)
+        }
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('screenshots')
+          .upload(fileName, bytes, { contentType: mimeType, upsert: true })
+        if (!uploadError && uploadData) {
+          const { data: urlData } = supabase.storage
+            .from('screenshots')
+            .getPublicUrl(uploadData.path)
+          screenshotStorageUrl = urlData.publicUrl
+        }
+        // If upload fails, we still save the log without screenshot
+      } catch {
+        // Screenshot upload failed - save log without it
+      }
+    } else if (data.screenshotUrl && data.screenshotUrl.startsWith('http')) {
+      // Already a URL (not base64), use as-is
+      screenshotStorageUrl = data.screenshotUrl
+    }
+
     const { data: row, error } = await supabase
       .from('angel_logs')
       .insert({
         user_id: userId,
         number: data.number,
         thought: data.thought,
-        screenshot_url: data.screenshotUrl,
+        screenshot_url: screenshotStorageUrl,
       })
       .select('id')
       .single()
-    if (error || !row) return null
+    if (error || !row) {
+      console.error('[saveLogToDB] Insert error:', error?.message)
+      return null
+    }
     return row.id
-  } catch {
+  } catch (err) {
+    console.error('[saveLogToDB] Unexpected error:', err)
     return null
   }
 }
