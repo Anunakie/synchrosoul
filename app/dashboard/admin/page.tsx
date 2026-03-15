@@ -168,7 +168,7 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${authToken}` }
       })
       const data = await res.json()
-      if (data.success) setBetaUsers(data.users || [])
+      if (data.users) setBetaUsers(data.users || [])
     } catch (e) {
       console.error('Failed to load beta users', e)
     } finally {
@@ -766,6 +766,7 @@ export default function AdminPage() {
                     setBetaResult(data)
                     if (data.success) {
                       setBetaGranted(prev => [{ email: betaEmail.trim(), tier: betaTier, time: new Date().toLocaleTimeString() }, ...prev])
+                      loadBetaUsers()
                       setBetaEmail('')
                       setBetaNote('')
                       loadBetaUsers()
