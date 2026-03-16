@@ -93,9 +93,23 @@ export default function AdminPage() {
   useEffect(() => {
     const checkAdmin = async () => {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.replace('/auth/login')
+      // Refresh session to ensure we have a valid, non-expired token
+      const { data: { session }, error } = await supabase.auth.refreshSession()
+      if (!session || error) {
+        // Fall back to getSession if refresh fails
+        const { data: { session: fallbackSession } } = await supabase.auth.getSession()
+        if (!fallbackSession) {
+          router.replace('/auth/login')
+          return
+        }
+        const email = fallbackSession.user.email?.toLowerCase()
+        if (email !== 'dezekiel@live.com') {
+          router.replace('/dashboard')
+          return
+        }
+        setAuthToken(fallbackSession.access_token)
+        setIsAdmin(true)
+        setAdminChecking(false)
         return
       }
       const email = session.user.email?.toLowerCase()
