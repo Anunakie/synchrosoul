@@ -135,7 +135,7 @@ export default function ProfilePage() {
       } finally {
         setSyncing(false)
       }
-      getPosts().then(setPosts)
+      getPosts().then(all => setPosts(all.filter(p => p.isOwn)))
       const logs = await getLogs()
       setUserNumbers([...new Set(logs.map((l: any) => l.number))] as string[])
       // Compute earned badges
@@ -232,7 +232,7 @@ export default function ProfilePage() {
     try {
       await new Promise(r => setTimeout(r, 300))
       await savePost({ content: text, angelNumber: postNumber.trim() || undefined })
-      getPosts().then(setPosts)
+      getPosts().then(all => setPosts(all.filter(p => p.isOwn)))
       setPostText('')
       setPostNumber('')
       setComposing(false)
@@ -245,12 +245,12 @@ export default function ProfilePage() {
 
   const handleResonate = async (postId: string) => {
     await toggleResonate(postId)
-    getPosts().then(setPosts)
+    getPosts().then(all => setPosts(all.filter(p => p.isOwn)))
   }
 
   const handleDelete = async (postId: string) => {
     deletePost(postId)
-    getPosts().then(setPosts)
+    getPosts().then(all => setPosts(all.filter(p => p.isOwn)))
   }
 
   const initials = profile.displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
@@ -465,8 +465,8 @@ export default function ProfilePage() {
         {posts.map(post => (
           <div key={post.id} style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.18)', borderRadius: '1rem', padding: '1rem', marginBottom: '0.75rem', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarImage ? 'transparent' : post.authorColor + '33', border: '2px solid ' + post.authorColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: post.authorColor, flexShrink: 0, overflow: 'hidden' }}>
-                {avatarImage ? <img src={avatarImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : post.authorAvatar}
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: post.authorImage ? 'transparent' : post.authorColor + '33', border: '2px solid ' + post.authorColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: post.authorColor, flexShrink: 0, overflow: 'hidden' }}>
+                {post.authorImage ? <img src={post.authorImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : post.authorAvatar}
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#f0e6ff' }}>{post.authorName}</span>
