@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
@@ -32,6 +31,33 @@ export async function POST(req: NextRequest) {
       })
       customerId = customer.id
       await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
+    }
+
+    // Cancel any existing active subscriptions to prevent double billing on upgrades
+    const existingSubs = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'active',
+      limit: 10,
+    })
+    const trialSubs = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'trialing',
+      limit: 10,
+    })
+    const allActiveSubs = [...existingSubs.data, ...trialSubs.data]
+
+    for (const sub of allActiveSubs) {
+      // Cancel immediately so user can subscribe to new plan
+      await stripe.subscriptions.cancel(sub.id)
+      console.log(`Cancelled existing subscription ${sub.id} for customer ${customerId} before upgrade`)
+    }
+
+    // Update DB to free while checkout is pending
+    if (allActiveSubs.length > 0) {
+      await supabase
+        .from('profiles')
+        .update({ subscription_tier: 'free', subscription_status: 'canceled' })
+        .eq('id', user.id)
     }
 
     const session = await stripe.checkout.sessions.create({
