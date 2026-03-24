@@ -125,6 +125,22 @@ function DashboardBackground() {
     )
   }
 
+  if (theme === 'bright') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0,
+        background: 'radial-gradient(ellipse at 20% 20%, rgba(80,40,180,0.35) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(60,20,140,0.3) 0%, transparent 50%), linear-gradient(135deg, #0d0a1f 0%, #120e2a 50%, #0a0818 100%)'
+      }} />
+    )
+  }
+
+  if (theme === 'light') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0,
+        background: 'radial-gradient(ellipse at 20% 10%, rgba(167,139,250,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 90%, rgba(196,181,253,0.15) 0%, transparent 50%), linear-gradient(135deg, #f5f0ff 0%, #ede8ff 30%, #f0f4ff 60%, #faf5ff 100%)'
+      }} />
+    )
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${themeConfig.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />

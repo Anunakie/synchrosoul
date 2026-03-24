@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-export type AppTheme = 'starfield' | 'angels-teal' | 'angels-ghost'
+export type AppTheme = 'starfield' | 'angels-teal' | 'angels-ghost' | 'bright' | 'light'
 
 interface ThemeContextType {
   theme: AppTheme
@@ -20,12 +20,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(THEME_KEY) as AppTheme | null
-    if (saved) setThemeState(saved)
+    if (saved) {
+      setThemeState(saved)
+      applyThemeClass(saved)
+    }
   }, [])
+
+  function applyThemeClass(t: AppTheme) {
+    const html = document.documentElement
+    html.classList.remove('theme-starfield', 'theme-angels-teal', 'theme-angels-ghost', 'theme-bright', 'theme-light')
+    html.classList.add('theme-' + t)
+  }
 
   function setTheme(t: AppTheme) {
     setThemeState(t)
     localStorage.setItem(THEME_KEY, t)
+    applyThemeClass(t)
   }
 
   return (
@@ -39,7 +49,7 @@ export function useTheme() {
   return useContext(ThemeContext)
 }
 
-export const THEMES: { id: AppTheme; label: string; emoji: string; thumbnail: string; overlay: string }[] = [
+export const THEMES: { id: AppTheme; label: string; emoji: string; thumbnail: string; overlay: string; isLight?: boolean }[] = [
   {
     id: 'starfield',
     label: 'Cosmos',
@@ -60,5 +70,20 @@ export const THEMES: { id: AppTheme; label: string; emoji: string; thumbnail: st
     emoji: '🕊️',
     thumbnail: '/bg-angels-ghost.png',
     overlay: 'rgba(0,0,0,0.42)',
+  },
+  {
+    id: 'bright',
+    label: 'Bright',
+    emoji: '☀️',
+    thumbnail: '',
+    overlay: 'transparent',
+  },
+  {
+    id: 'light',
+    label: 'Light Mode',
+    emoji: '🌙',
+    thumbnail: '',
+    overlay: 'transparent',
+    isLight: true,
   },
 ]
