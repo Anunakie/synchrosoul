@@ -322,7 +322,7 @@ export default function AngelLogger({ onLogged }: Props) {
           <textarea
             value={thought}
             onChange={e => setThought(e.target.value)}
-            placeholder="A thought, a feeling, a question you were holding... or tap \uD83C\uDF99\uFE0F to speak"
+            placeholder="A thought, a feeling, a question you were holding... or tap 🎙️ to speak"
             rows={3}
             style={{
               width: '100%', borderRadius: '0.75rem', padding: '1rem',
@@ -331,13 +331,13 @@ export default function AngelLogger({ onLogged }: Props) {
               color: 'rgba(255,255,255,0.8)', fontFamily: 'inherit', boxSizing: 'border-box',
             }}
           />
-          <p style={{ fontSize: '0.7rem', color: 'rgba(200,180,255,0.25)', marginTop: '0.25rem' }}>Optional \u00B7 100% private \u00B7 tap \uD83C\uDF99\uFE0F to speak</p>
+          <p style={{ fontSize: '0.7rem', color: 'rgba(200,180,255,0.25)', marginTop: '0.25rem' }}>Optional · 100% private · tap 🎙️ to speak</p>
         </div>
 
         {/* Screenshot / Truth Score */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.5)', marginBottom: '0.5rem' }}>
-            Screenshot Proof <span style={{ color: 'rgba(68,255,170,0.7)' }}>\u2192 Angel Approved Badge</span>
+            Screenshot Proof <span style={{ color: 'rgba(68,255,170,0.7)' }}>→ Angel Approved Badge</span>
           </label>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
           {screenshot ? (
@@ -348,7 +348,7 @@ export default function AngelLogger({ onLogged }: Props) {
             }}>
               <img src={screenshot} alt="proof" style={{ width: '3rem', height: '3rem', borderRadius: '0.5rem', objectFit: 'cover' }} />
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#44ffaa', fontSize: '0.8rem', fontWeight: 600 }}>\u2756 Angel Approved \u00B7 Truth Score Active</p>
+                <p style={{ color: '#44ffaa', fontSize: '0.8rem', fontWeight: 600 }}>❖ Angel Approved · Truth Score Active</p>
                 <p style={{ color: 'rgba(200,180,255,0.4)', fontSize: '0.7rem' }}>{screenshotName}</p>
               </div>
               <button onClick={() => { setScreenshot(null); setScreenshotName('') }}
@@ -359,7 +359,7 @@ export default function AngelLogger({ onLogged }: Props) {
               width: '100%', padding: '1rem', borderRadius: '0.75rem',
               background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(200,180,255,0.2)',
               color: 'rgba(200,180,255,0.4)', cursor: 'pointer', fontSize: '0.875rem',
-            }}>\uD83D\uDCF8 Upload screenshot for Angel Approved badge (optional)</button>
+            }}>📸 Upload screenshot for Angel Approved badge (optional)</button>
           )}
         </div>
 
@@ -370,7 +370,7 @@ export default function AngelLogger({ onLogged }: Props) {
           cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.95rem',
           fontWeight: 500, letterSpacing: '0.05em', opacity: saving ? 0.7 : 1,
         }}>
-          {saving ? '\u2756 Channeling your reading...' : 'Log This Number \u2756'}
+          {saving ? '❖ Channeling your reading...' : 'Log This Number ❖'}
         </button>
       </div>
     )
@@ -425,7 +425,7 @@ export default function AngelLogger({ onLogged }: Props) {
           border: `1px solid ${custom ? 'rgba(200,150,255,0.4)' : 'rgba(200,180,255,0.1)'}`,
           color: custom ? 'rgba(220,180,255,0.9)' : 'rgba(200,180,255,0.3)',
           cursor: custom ? 'pointer' : 'not-allowed', fontSize: '0.875rem',
-        }}>Next \u2192</button>
+        }}>Next →</button>
       </div>
     </div>
   )
