@@ -15,6 +15,124 @@ const ThemeContext = createContext<ThemeContextType>({
 
 const THEME_KEY = 'synchrosoul_theme'
 
+let observer: MutationObserver | null = null
+let lightStyleTag: HTMLStyleElement | null = null
+
+function injectLightModeStyles() {
+  if (lightStyleTag) return
+  lightStyleTag = document.createElement('style')
+  lightStyleTag.id = 'synchrosoul-light-override'
+  lightStyleTag.textContent = `
+    /* NUCLEAR LIGHT MODE OVERRIDE */
+    .theme-light,
+    .theme-light body,
+    .theme-light #__next,
+    .theme-light main {
+      background: #f0eeff !important;
+      color: #1a0a3e !important;
+    }
+
+    /* Force ALL text dark */
+    .theme-light * {
+      color: #1a0a3e !important;
+    }
+
+    /* Override specific light-colored text */
+    .theme-light *[style*="color: rgba(255"],
+    .theme-light *[style*="color:rgba(255"],
+    .theme-light *[style*="color: white"],
+    .theme-light *[style*="color: #fff"] {
+      color: #1a0a3e !important;
+    }
+
+    /* Make all dark glass cards white */
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.0"],
+    .theme-light *[style*="background: rgba(255,255,255,0.0"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.1"],
+    .theme-light *[style*="background: rgba(255,255,255,0.1"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.05"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.08"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.03"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.06"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.12"],
+    .theme-light *[style*="background: rgba(255, 255, 255, 0.15"] {
+      background: rgba(255,255,255,0.92) !important;
+      border-color: rgba(109,40,217,0.25) !important;
+    }
+
+    /* Dark purple/navy backgrounds -> white cards */
+    .theme-light *[style*="background: rgba(5,"],
+    .theme-light *[style*="background: rgba(8,"],
+    .theme-light *[style*="background: rgba(10,"],
+    .theme-light *[style*="background: rgba(12,"],
+    .theme-light *[style*="background: rgba(15,"],
+    .theme-light *[style*="background: rgba(20,"],
+    .theme-light *[style*="background: rgba(26,"],
+    .theme-light *[style*="background: rgba(30,"] {
+      background: rgba(255,255,255,0.88) !important;
+      border-color: rgba(109,40,217,0.2) !important;
+    }
+
+    /* Inputs */
+    .theme-light input,
+    .theme-light textarea,
+    .theme-light select {
+      background: rgba(255,255,255,0.95) !important;
+      color: #1a0a3e !important;
+      border-color: rgba(109,40,217,0.3) !important;
+    }
+
+    .theme-light input::placeholder,
+    .theme-light textarea::placeholder {
+      color: rgba(45,27,94,0.5) !important;
+    }
+
+    /* Buttons - keep purple accent buttons readable */
+    .theme-light button {
+      color: #1a0a3e !important;
+    }
+
+    /* Purple/violet gradient buttons should keep white text */
+    .theme-light button[style*="background: linear-gradient"],
+    .theme-light button[style*="background:linear-gradient"] {
+      color: white !important;
+    }
+
+    /* Nav */
+    .theme-light nav,
+    .theme-light header {
+      background: rgba(240,238,255,0.95) !important;
+      border-color: rgba(109,40,217,0.2) !important;
+    }
+
+    /* Number grid buttons */
+    .theme-light button[style*="background: rgba"] {
+      background: rgba(255,255,255,0.9) !important;
+      border: 1px solid rgba(109,40,217,0.3) !important;
+    }
+
+    /* Scrollbar */
+    .theme-light ::-webkit-scrollbar-track {
+      background: #e8e4ff;
+    }
+    .theme-light ::-webkit-scrollbar-thumb {
+      background: rgba(109,40,217,0.4);
+    }
+  `
+  document.head.appendChild(lightStyleTag)
+}
+
+function removeLightModeStyles() {
+  if (lightStyleTag) {
+    lightStyleTag.remove()
+    lightStyleTag = null
+  }
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<AppTheme>('starfield')
 
@@ -30,6 +148,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const html = document.documentElement
     html.classList.remove('theme-starfield', 'theme-angels-teal', 'theme-angels-ghost', 'theme-bright', 'theme-light')
     html.classList.add('theme-' + t)
+
+    if (t === 'light') {
+      injectLightModeStyles()
+    } else {
+      removeLightModeStyles()
+    }
   }
 
   function setTheme(t: AppTheme) {
