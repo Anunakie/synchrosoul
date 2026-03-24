@@ -61,7 +61,11 @@ function injectLightModeStyles() {
     }
 
     /* Dark purple/navy backgrounds -> white cards */
+    .theme-light *[style*="background: rgba(3,"],
+    .theme-light *[style*="background: rgba(4,"],
     .theme-light *[style*="background: rgba(5,"],
+    .theme-light *[style*="background: rgba(6,"],
+    .theme-light *[style*="background: rgba(7,"],
     .theme-light *[style*="background: rgba(8,"],
     .theme-light *[style*="background: rgba(10,"],
     .theme-light *[style*="background: rgba(12,"],
@@ -71,6 +75,27 @@ function injectLightModeStyles() {
     .theme-light *[style*="background: rgba(30,"] {
       background: rgba(255,255,255,0.88) !important;
       border-color: rgba(109,40,217,0.2) !important;
+    }
+
+    /* Profile card dark linear-gradient backgrounds -> white */
+    .theme-light *[style*="background: linear-gradient(135deg,#0d0a"],
+    .theme-light *[style*="background: linear-gradient(135deg,#050510"],
+    .theme-light *[style*="background: linear-gradient(135deg,#0a0520"],
+    .theme-light *[style*="background: linear-gradient(135deg,#0a0a"],
+    .theme-light *[style*="background: linear-gradient(135deg, #0d0a"],
+    .theme-light *[style*="background: linear-gradient(135deg, #050510"],
+    .theme-light *[style*="background: linear-gradient(135deg, #0a0520"] {
+      background: linear-gradient(135deg, #f0eeff 0%, #e8e4ff 50%, #ede8ff 100%) !important;
+      border-color: rgba(109,40,217,0.25) !important;
+    }
+
+    /* Dreams night mode - very dark red/black backgrounds */
+    .theme-light *[style*="background: rgba(6,0,0"],
+    .theme-light *[style*="background: rgba(0,0,0"],
+    .theme-light *[style*="background: black"],
+    .theme-light *[style*="background: #000"] {
+      background: rgba(255,240,240,0.95) !important;
+      border-color: rgba(180,40,40,0.2) !important;
     }
 
     /* Inputs */
