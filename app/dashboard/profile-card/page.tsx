@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useTheme } from '@/lib/theme-context'
 import { createClient } from '@/lib/supabase/client'
 
 const KEY_PROFILE = 'synchrosoul_numerology_profile'
@@ -14,12 +15,19 @@ const LIFE_PATH_ARCHETYPES: Record<number, string> = {
 }
 
 const STYLES = {
-  cosmic: { bg: 'linear-gradient(135deg,#0d0a2e 0%,#1a0a3e 50%,#0a1a3e 100%)', accent: '#a78bfa', border: 'rgba(167,139,250,0.3)', glow: 'rgba(167,139,250,0.15)' },
-  minimal: { bg: 'linear-gradient(135deg,#050510 0%,#0a0820 100%)', accent: '#c9a84c', border: 'rgba(201,168,76,0.3)', glow: 'rgba(201,168,76,0.1)' },
-  sacred: { bg: 'linear-gradient(135deg,#0a0520 0%,#1a0530 50%,#050520 100%)', accent: '#f472b6', border: 'rgba(244,114,182,0.3)', glow: 'rgba(244,114,182,0.12)' },
+  cosmic: { bg: 'linear-gradient(135deg,#0d0a2e 0%,#1a0a3e 50%,#0a1a3e 100%)', accent: '#a78bfa', border: 'rgba(167,139,250,0.3)', glow: 'rgba(167,139,250,0.15)', text: '#f0e6ff', subtext: 'rgba(220,200,255,0.7)' },
+  minimal: { bg: 'linear-gradient(135deg,#050510 0%,#0a0820 100%)', accent: '#c9a84c', border: 'rgba(201,168,76,0.3)', glow: 'rgba(201,168,76,0.1)', text: '#f0e6ff', subtext: 'rgba(220,200,255,0.7)' },
+  sacred: { bg: 'linear-gradient(135deg,#0a0520 0%,#1a0530 50%,#050520 100%)', accent: '#f472b6', border: 'rgba(244,114,182,0.3)', glow: 'rgba(244,114,182,0.12)', text: '#f0e6ff', subtext: 'rgba(220,200,255,0.7)' },
+}
+
+const LIGHT_STYLES = {
+  cosmic: { bg: 'linear-gradient(135deg,#ede8ff 0%,#e0d4ff 50%,#e8e0ff 100%)', accent: '#7c3aed', border: 'rgba(124,58,237,0.35)', glow: 'rgba(124,58,237,0.12)', text: '#1a0a3e', subtext: 'rgba(45,27,94,0.7)' },
+  minimal: { bg: 'linear-gradient(135deg,#fdf8e8 0%,#f5edcc 100%)', accent: '#92700a', border: 'rgba(146,112,10,0.35)', glow: 'rgba(146,112,10,0.1)', text: '#2a1a00', subtext: 'rgba(80,55,0,0.7)' },
+  sacred: { bg: 'linear-gradient(135deg,#fce8f3 0%,#f5d0e8 50%,#fce8f3 100%)', accent: '#be185d', border: 'rgba(190,24,93,0.35)', glow: 'rgba(190,24,93,0.1)', text: '#2d0a1e', subtext: 'rgba(80,20,50,0.7)' },
 }
 
 export default function ProfileCardPage() {
+  const { theme } = useTheme()
   const [userId, setUserId] = useState<string | null>(null)
   const [name, setName] = useState('Soul Seeker')
   const [bio, setBio] = useState('')
@@ -99,7 +107,7 @@ export default function ProfileCardPage() {
   }, [])
 
   const archetype = lifePathNumber ? (LIFE_PATH_ARCHETYPES[lifePathNumber] || 'The Seeker') : 'The Seeker'
-  const style = STYLES[cardStyle]
+  const style = (theme === 'light' ? LIGHT_STYLES : STYLES)[cardStyle]
   const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 
   function copyLink() {
