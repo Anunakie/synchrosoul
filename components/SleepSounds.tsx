@@ -47,7 +47,7 @@ const TRACKS: Track[] = [
 const PLAYLIST_KEY = 'synchrosoul_music_playlist'
 
 const CAT_EMOJI: Record<string, string> = {
-  sleep: '🌙', meditation: '🧘', healing: '💚',
+  sleep: '🎵', meditation: '🧘', healing: '💚',
   nature: '🌿', uplifting: '🌟'
 }
 

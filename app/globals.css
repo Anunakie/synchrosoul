@@ -472,3 +472,144 @@ html {
 .theme-light ::-webkit-scrollbar-thumb:hover {
   background: rgba(109,40,217,0.5);
 }
+
+/* ============================================
+   COMPREHENSIVE LIGHT MODE FIXES v2
+   Targeting all dark inline styles
+   ============================================ */
+
+/* Fix ALL white/light text colors - most critical fix */
+.theme-light [style*="color: rgba(255,255,255,0.9)"],
+.theme-light [style*="color: rgba(255,255,255,0.85)"],
+.theme-light [style*="color: rgba(255,255,255,0.8)"],
+.theme-light [style*="color: rgba(255,255,255,0.75)"],
+.theme-light [style*="color: rgba(255,255,255,0.7)"],
+.theme-light [style*="color: rgba(255,255,255,0.65)"],
+.theme-light [style*="color: rgba(255,255,255,0.6)"],
+.theme-light [style*="color: rgba(255,255,255,0.5)"],
+.theme-light [style*="color: rgba(255,255,255,0.45)"],
+.theme-light [style*="color: rgba(255,255,255,0.4)"],
+.theme-light [style*="color: rgba(255,255,255,0.35)"],
+.theme-light [style*="color: rgba(255,255,255,0.3)"],
+.theme-light [style*="color: rgba(255,255,255,0.25)"],
+.theme-light [style*="color: rgba(255,255,255,0.2)"],
+.theme-light [style*="color: white"],
+.theme-light [style*="color: #fff"],
+.theme-light [style*="color: #ffffff"] { color: #2d1b5e !important; }
+
+/* Faint secondary text gets medium dark color */
+.theme-light [style*="color: rgba(255,255,255,0.4)"],
+.theme-light [style*="color: rgba(255,255,255,0.3)"],
+.theme-light [style*="color: rgba(255,255,255,0.25)"],
+.theme-light [style*="color: rgba(255,255,255,0.2)"] { color: rgba(45,27,94,0.6) !important; }
+
+/* Fix ALL dark card/container backgrounds */
+.theme-light [style*="background: rgba(255,255,255,0.03)"],
+.theme-light [style*="background: rgba(255,255,255,0.04)"],
+.theme-light [style*="background: rgba(255,255,255,0.05)"],
+.theme-light [style*="background: rgba(255,255,255,0.06)"],
+.theme-light [style*="background: rgba(255,255,255,0.07)"],
+.theme-light [style*="background: rgba(255,255,255,0.08)"],
+.theme-light [style*="background: rgba(255,255,255,0.1)"],
+.theme-light [style*="background: rgba(255,255,255,0.12)"],
+.theme-light [style*="background: rgba(255,255,255,0.15)"] {
+  background: rgba(255,255,255,0.85) !important;
+  border-color: rgba(109,40,217,0.2) !important;
+}
+
+/* Fix dark hex backgrounds */
+.theme-light [style*="background: #050510"],
+.theme-light [style*="background: #0a0820"],
+.theme-light [style*="background: #0d0b1e"],
+.theme-light [style*="background: #1a1a2e"],
+.theme-light [style*="background: #0f0a28"],
+.theme-light [style*="background: #12102a"],
+.theme-light [style*="background: #1e1b4b"],
+.theme-light [style*="background: rgba(5,5,16"],
+.theme-light [style*="background: rgba(8,6,28"],
+.theme-light [style*="background: rgba(10,8,30"],
+.theme-light [style*="background: rgba(12,10,32"],
+.theme-light [style*="background: rgba(15,10,40"],
+.theme-light [style*="background: rgba(20,15,50"],
+.theme-light [style*="background: rgba(26,26,46"],
+.theme-light [style*="background: rgba(30,27,75"] {
+  background: rgba(245,240,255,0.92) !important;
+  border-color: rgba(109,40,217,0.2) !important;
+}
+
+/* Fix filter tab buttons - light purple invisible on light bg */
+.theme-light [style*="background: rgba(167,139,250,0.1)"],
+.theme-light [style*="background: rgba(167,139,250,0.15)"],
+.theme-light [style*="background: rgba(167,139,250,0.2)"],
+.theme-light [style*="background: rgba(139,92,246,0.1)"],
+.theme-light [style*="background: rgba(139,92,246,0.15)"],
+.theme-light [style*="background: rgba(109,40,217,0.1)"],
+.theme-light [style*="background: rgba(109,40,217,0.15)"] {
+  background: rgba(109,40,217,0.18) !important;
+  border: 1px solid rgba(109,40,217,0.4) !important;
+  color: #4c1d95 !important;
+}
+
+/* Active filter tabs */
+.theme-light [style*="background: rgba(167,139,250,0.3)"],
+.theme-light [style*="background: rgba(167,139,250,0.25)"],
+.theme-light [style*="background: rgba(139,92,246,0.3)"],
+.theme-light [style*="background: rgba(109,40,217,0.3)"],
+.theme-light [style*="background: rgba(109,40,217,0.25)"] {
+  background: rgba(109,40,217,0.28) !important;
+  border: 1px solid rgba(109,40,217,0.55) !important;
+  color: #3b0764 !important;
+}
+
+/* Fix border colors too faint */
+.theme-light [style*="border-color: rgba(255,255,255,0.08)"],
+.theme-light [style*="border-color: rgba(255,255,255,0.1)"],
+.theme-light [style*="border-color: rgba(255,255,255,0.12)"],
+.theme-light [style*="border-color: rgba(255,255,255,0.15)"] { border-color: rgba(109,40,217,0.25) !important; }
+
+/* Fix dark overlay backgrounds */
+.theme-light [style*="background: rgba(0,0,0,0.3)"],
+.theme-light [style*="background: rgba(0,0,0,0.4)"],
+.theme-light [style*="background: rgba(0,0,0,0.5)"] { background: rgba(109,40,217,0.08) !important; }
+
+/* Fix progress bar track */
+.theme-light [style*="background: rgba(255,255,255,0.1)"] { background: rgba(109,40,217,0.15) !important; }
+
+/* Fix pink heart/favorite buttons */
+.theme-light [style*="color: #e879a0"] { color: #be185d !important; }
+.theme-light [style*="color: rgba(255,255,255,0.2)"] { color: rgba(109,40,217,0.5) !important; }
+
+/* Fix teal elements */
+.theme-light [style*="color: #7dd3fc"],
+.theme-light [style*="color: #38bdf8"] { color: #0369a1 !important; }
+
+/* Fix green elements */
+.theme-light [style*="color: #6ee7b7"],
+.theme-light [style*="color: #34d399"] { color: #065f46 !important; }
+
+/* Fix Live badge */
+.theme-light [style*="background: rgba(52,211,153"],
+.theme-light [style*="background: rgba(16,185,129"] {
+  background: rgba(16,185,129,0.2) !important;
+  color: #065f46 !important;
+}
+
+/* Fix gold tinted cards */
+.theme-light [style*="background: rgba(201,168,76,0.1)"],
+.theme-light [style*="background: rgba(201,168,76,0.15)"] {
+  background: rgba(201,168,76,0.15) !important;
+  border-color: rgba(184,134,11,0.35) !important;
+}
+
+/* Fix you badge on posts */
+.theme-light [style*="background: rgba(201,168,76,0.2)"] {
+  background: rgba(184,134,11,0.2) !important;
+  color: #78350f !important;
+}
+
+/* Fix range input */
+.theme-light input[type="range"] { accent-color: #6d28d9; }
+
+/* Fix buttons with no background */
+.theme-light button[style*="background: none"],
+.theme-light button[style*="background: transparent"] { color: #3b1f7a !important; }

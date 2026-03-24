@@ -252,7 +252,7 @@ export default function MusicPlayer({ defaultCategory = 'all', compact = false, 
   }
 
   const catEmoji: Record<string, string> = {
-    sleep: '🌙', meditation: '🧘', healing: '💚',
+    sleep: '🎵', meditation: '🧘', healing: '💚',
     nature: '🌿', uplifting: '🌟'
   }
 
