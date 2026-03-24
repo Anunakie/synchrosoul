@@ -10,6 +10,26 @@ interface Props {
   onLogged?: (log: AngelLog) => void
 }
 
+async function getSubscriptionTier(): Promise<string> {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return 'free'
+    const { data } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single()
+    return data?.subscription_tier || 'free'
+  } catch {
+    return 'free'
+  }
+}
+
+function isPremium(tier: string): boolean {
+  return tier === 'mystic' || tier === 'twin-flame' || tier === 'twin_flame'
+}
+
 export default function AngelLogger({ onLogged }: Props) {
   const [selected, setSelected] = useState<string>('')
   const [custom, setCustom] = useState<string>('')
@@ -20,6 +40,8 @@ export default function AngelLogger({ onLogged }: Props) {
   const [step, setStep] = useState<'pick' | 'thought' | 'done'>('pick')
   const [lastLog, setLastLog] = useState<AngelLog | null>(null)
   const [saving, setSaving] = useState(false)
+  const [upgradeTeaser, setUpgradeTeaser] = useState<string | null>(null)
+  const [personalizedReading, setPersonalizedReading] = useState<boolean>(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const activeNumber = custom || selected
@@ -47,13 +69,70 @@ export default function AngelLogger({ onLogged }: Props) {
   async function handleSave() {
     if (!activeNumber) return
     setSaving(true)
+    setUpgradeTeaser(null)
+    setPersonalizedReading(false)
+
+    const hasThought = thought.trim().length > 0
+    let miniReadingOverride: string | undefined
+    let readingTitleOverride: string | undefined
+
+    if (hasThought) {
+      const tier = await getSubscriptionTier()
+      if (isPremium(tier)) {
+        // Premium: get AI-personalized reading based on thought
+        try {
+          const supabase = createClient()
+          const { data: { user } } = await supabase.auth.getUser()
+          let numerologyProfile = null
+          if (user) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('life_path_number, soul_urge_number, destiny_number')
+              .eq('id', user.id)
+              .single()
+            if (data) numerologyProfile = {
+              lifePathNumber: data.life_path_number,
+              soulUrgeNumber: data.soul_urge_number,
+              destinyNumber: data.destiny_number,
+            }
+          }
+          const res = await fetch('/api/oracle/instant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: activeNumber, thoughtAnchor: thought.trim(), numerologyProfile }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.reading) {
+              miniReadingOverride = data.reading
+              readingTitleOverride = data.title
+              setPersonalizedReading(true)
+            }
+          }
+        } catch {
+          // Fall back to generic reading
+        }
+      } else {
+        // Free user with thought: save generic, show upgrade teaser
+        const snippet = thought.trim().slice(0, 45)
+        setUpgradeTeaser(snippet)
+      }
+    }
+
     await new Promise(r => setTimeout(r, 600))
-    const log = await saveLog({ number: activeNumber, thought, screenshotUrl: screenshot })
+    const log = await saveLog({
+      number: activeNumber,
+      thought,
+      screenshotUrl: screenshot,
+      miniReadingOverride,
+      readingTitleOverride,
+    })
     setLastLog(log)
     setStep('done')
     setSaving(false)
     onLogged?.(log)
-    // Soul Twin Alert: check if others logged same number in last 30 mins
+
+    // Soul Twin Alert
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -72,9 +151,10 @@ export default function AngelLogger({ onLogged }: Props) {
     setScreenshot(null); setScreenshotName('')
     setVoiceNoteUrl(null)
     setStep('pick'); setLastLog(null)
+    setUpgradeTeaser(null); setPersonalizedReading(false)
   }
 
-  // ── DONE ──────────────────────────────────────────────────────────────────
+  // DONE
   if (step === 'done' && lastLog) {
     return (
       <div style={{
@@ -89,18 +169,31 @@ export default function AngelLogger({ onLogged }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 1.5rem', fontSize: '2rem',
         }}>✦</div>
+
         <div style={{
           display: 'inline-block', padding: '0.25rem 1rem', borderRadius: '9999px',
           marginBottom: '0.75rem', background: lastLog.readingColor + '22',
           color: lastLog.readingColor, border: `1px solid ${lastLog.readingColor}44`,
           fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase',
         }}>{lastLog.number}</div>
+
+        {personalizedReading && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.2rem 0.75rem', borderRadius: '9999px', marginBottom: '0.75rem',
+            marginLeft: '0.5rem',
+            background: 'rgba(255,200,80,0.12)', border: '1px solid rgba(255,200,80,0.35)',
+            color: '#ffc850', fontSize: '0.7rem', letterSpacing: '0.1em',
+          }}>✦ AI-Personalized Reading</div>
+        )}
+
         <h3 style={{ color: lastLog.readingColor, fontSize: '1.5rem', marginBottom: '0.5rem', fontFamily: 'Cormorant Garamond, serif' }}>
           {lastLog.readingTitle}
         </h3>
         <p style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
           {lastLog.miniReading}
         </p>
+
         {lastLog.truthScore && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
@@ -109,6 +202,60 @@ export default function AngelLogger({ onLogged }: Props) {
             color: '#44ffaa', fontSize: '0.8rem', fontWeight: 500,
           }}>✦ Angel Approved · Truth Score Verified</div>
         )}
+
+        {/* Upgrade teaser for free users who entered a thought */}
+        {upgradeTeaser && (
+          <div style={{
+            margin: '0 0 1.5rem', borderRadius: '1rem', overflow: 'hidden',
+            border: '1px solid rgba(255,180,80,0.3)',
+            background: 'rgba(255,150,50,0.06)',
+          }}>
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: 'rgba(255,180,80,0.1)',
+              borderBottom: '1px solid rgba(255,180,80,0.2)',
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+            }}>
+              <span style={{ fontSize: '1rem' }}>🔮</span>
+              <span style={{ color: '#ffb850', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Your Personalized Reading is Waiting
+              </span>
+            </div>
+            <div style={{ padding: '1rem', position: 'relative' }}>
+              <p style={{ color: 'rgba(220,200,255,0.5)', fontSize: '0.8rem', marginBottom: '0.75rem', fontStyle: 'italic' }}>
+                The universe heard your thought about &ldquo;{upgradeTeaser}{upgradeTeaser.length >= 45 ? '...' : ''}&rdquo;
+              </p>
+              {/* Blurred fake reading preview */}
+              <div style={{
+                filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none',
+                color: 'rgba(220,200,255,0.7)', fontSize: '0.875rem', lineHeight: 1.6,
+                marginBottom: '1rem',
+              }}>
+                The angel number {lastLog.number} is responding directly to what you were holding in your mind. This synchronicity carries a specific message about your path forward and the energy you are currently...
+              </div>
+              <div style={{
+                position: 'absolute', top: '2.5rem', left: 0, right: 0,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>🔒</span>
+              </div>
+              <a href="/dashboard/upgrade" style={{
+                display: 'block', width: '100%', padding: '0.75rem',
+                borderRadius: '9999px', textAlign: 'center', textDecoration: 'none',
+                background: 'linear-gradient(135deg, rgba(255,180,80,0.25), rgba(255,120,50,0.2))',
+                border: '1px solid rgba(255,180,80,0.4)',
+                color: '#ffb850', fontSize: '0.875rem', fontWeight: 600,
+                letterSpacing: '0.05em',
+              }}>
+                Unlock My Personalized Reading ✦
+              </a>
+              <p style={{ color: 'rgba(200,180,255,0.3)', fontSize: '0.7rem', marginTop: '0.5rem' }}>
+                Mystic tier · $6.99/mo · Cancel anytime
+              </p>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
           <button onClick={handleReset} style={{
             padding: '0.6rem 1.5rem', borderRadius: '9999px',
@@ -125,7 +272,7 @@ export default function AngelLogger({ onLogged }: Props) {
     )
   }
 
-  // ── THOUGHT ───────────────────────────────────────────────────────────────
+  // THOUGHT
   if (step === 'thought') {
     return (
       <div style={{
@@ -149,6 +296,18 @@ export default function AngelLogger({ onLogged }: Props) {
           </div>
         </div>
 
+        {/* Premium hint */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          padding: '0.5rem 0.75rem', borderRadius: '0.75rem', marginBottom: '1rem',
+          background: 'rgba(255,200,80,0.06)', border: '1px solid rgba(255,200,80,0.15)',
+        }}>
+          <span style={{ fontSize: '0.85rem' }}>✨</span>
+          <p style={{ color: 'rgba(255,200,80,0.7)', fontSize: '0.7rem', margin: 0 }}>
+            <strong style={{ color: 'rgba(255,200,80,0.9)' }}>Mystic members</strong> get an AI reading tailored to exactly what you were thinking
+          </p>
+        </div>
+
         {/* Thought input with voice */}
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -163,7 +322,7 @@ export default function AngelLogger({ onLogged }: Props) {
           <textarea
             value={thought}
             onChange={e => setThought(e.target.value)}
-            placeholder="A thought, a feeling, a question you were holding... or tap 🎙️ to speak"
+            placeholder="A thought, a feeling, a question you were holding... or tap \uD83C\uDF99\uFE0F to speak"
             rows={3}
             style={{
               width: '100%', borderRadius: '0.75rem', padding: '1rem',
@@ -172,13 +331,13 @@ export default function AngelLogger({ onLogged }: Props) {
               color: 'rgba(255,255,255,0.8)', fontFamily: 'inherit', boxSizing: 'border-box',
             }}
           />
-          <p style={{ fontSize: '0.7rem', color: 'rgba(200,180,255,0.25)', marginTop: '0.25rem' }}>Optional · 100% private · tap 🎙️ to speak</p>
+          <p style={{ fontSize: '0.7rem', color: 'rgba(200,180,255,0.25)', marginTop: '0.25rem' }}>Optional \u00B7 100% private \u00B7 tap \uD83C\uDF99\uFE0F to speak</p>
         </div>
 
         {/* Screenshot / Truth Score */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.5)', marginBottom: '0.5rem' }}>
-            Screenshot Proof <span style={{ color: 'rgba(68,255,170,0.7)' }}>→ Angel Approved Badge</span>
+            Screenshot Proof <span style={{ color: 'rgba(68,255,170,0.7)' }}>\u2192 Angel Approved Badge</span>
           </label>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
           {screenshot ? (
@@ -189,18 +348,18 @@ export default function AngelLogger({ onLogged }: Props) {
             }}>
               <img src={screenshot} alt="proof" style={{ width: '3rem', height: '3rem', borderRadius: '0.5rem', objectFit: 'cover' }} />
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#44ffaa', fontSize: '0.8rem', fontWeight: 600 }}>✦ Angel Approved · Truth Score Active</p>
+                <p style={{ color: '#44ffaa', fontSize: '0.8rem', fontWeight: 600 }}>\u2756 Angel Approved \u00B7 Truth Score Active</p>
                 <p style={{ color: 'rgba(200,180,255,0.4)', fontSize: '0.7rem' }}>{screenshotName}</p>
               </div>
               <button onClick={() => { setScreenshot(null); setScreenshotName('') }}
-                style={{ color: 'rgba(200,180,255,0.3)', fontSize: '1.1rem', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
+                style={{ color: 'rgba(200,180,255,0.3)', fontSize: '1.1rem', background: 'none', border: 'none', cursor: 'pointer' }}>\u00D7</button>
             </div>
           ) : (
             <button onClick={() => fileRef.current?.click()} style={{
               width: '100%', padding: '1rem', borderRadius: '0.75rem',
               background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(200,180,255,0.2)',
               color: 'rgba(200,180,255,0.4)', cursor: 'pointer', fontSize: '0.875rem',
-            }}>📸 Upload screenshot for Angel Approved badge (optional)</button>
+            }}>\uD83D\uDCF8 Upload screenshot for Angel Approved badge (optional)</button>
           )}
         </div>
 
@@ -211,13 +370,13 @@ export default function AngelLogger({ onLogged }: Props) {
           cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.95rem',
           fontWeight: 500, letterSpacing: '0.05em', opacity: saving ? 0.7 : 1,
         }}>
-          {saving ? '✦ Logging to the cosmos...' : 'Log This Number ✦'}
+          {saving ? '\u2756 Channeling your reading...' : 'Log This Number \u2756'}
         </button>
       </div>
     )
   }
 
-  // ── PICK ──────────────────────────────────────────────────────────────────
+  // PICK
   return (
     <div style={{
       background: 'rgba(10,8,30,0.85)', border: '1px solid rgba(200,180,255,0.15)',
@@ -266,7 +425,7 @@ export default function AngelLogger({ onLogged }: Props) {
           border: `1px solid ${custom ? 'rgba(200,150,255,0.4)' : 'rgba(200,180,255,0.1)'}`,
           color: custom ? 'rgba(220,180,255,0.9)' : 'rgba(200,180,255,0.3)',
           cursor: custom ? 'pointer' : 'not-allowed', fontSize: '0.875rem',
-        }}>Next →</button>
+        }}>Next \u2192</button>
       </div>
     </div>
   )

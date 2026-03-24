@@ -131,6 +131,8 @@ export async function saveLog(data: {
   number: string
   thought: string
   screenshotUrl: string | null
+  miniReadingOverride?: string
+  readingTitleOverride?: string
 }): Promise<AngelLog> {
   const meaning = getAngelMeaning(data.number)
   const log: AngelLog = {
@@ -139,8 +141,8 @@ export async function saveLog(data: {
     thought: data.thought,
     screenshotUrl: data.screenshotUrl,
     truthScore: !!data.screenshotUrl,
-    miniReading: meaning.message,
-    readingTitle: meaning.title,
+    miniReading: data.miniReadingOverride || meaning.message,
+    readingTitle: data.readingTitleOverride || meaning.title,
     readingColor: meaning.color,
     createdAt: new Date().toISOString(),
     shared: false,
