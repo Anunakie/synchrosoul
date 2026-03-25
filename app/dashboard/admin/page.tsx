@@ -197,7 +197,7 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/beta-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ userId, action, tier: 'mystic' })
+        body: JSON.stringify({ userId, action, tier: 'twin-flame' })
       })
       const data = await res.json()
       if (data.success) {

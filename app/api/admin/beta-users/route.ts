@@ -41,19 +41,51 @@ export async function POST(req: NextRequest) {
   if ('error' in auth) return auth.error;
 
   try {
-    const { userIds, tier } = await req.json()
+    const body = await req.json()
+
+    // Handle single-user toggle (userId + action) from toggle button
+    if (body.userId && body.action) {
+      const { userId, action, tier = 'twin-flame' } = body
+      const { data: userData } = await supabase.auth.admin.getUserById(userId)
+      if (!userData?.user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+      if (action === 'revoke') {
+        // Revoke beta access
+        await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
+        await supabase.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            ...userData.user.user_metadata,
+            beta_granted: false,
+            beta_tier: null,
+            beta_note: null
+          }
+        })
+        return NextResponse.json({ success: true, action: 'revoked' })
+      } else {
+        // Grant beta access
+        await supabase.from('profiles').update({ subscription_tier: tier }).eq('id', userId)
+        await supabase.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            ...userData.user.user_metadata,
+            beta_granted: true,
+            beta_tier: tier,
+            beta_granted_at: new Date().toISOString()
+          }
+        })
+        return NextResponse.json({ success: true, action: 'granted' })
+      }
+    }
+
+    // Handle bulk grant (userIds array) from grant-access form
+    const { userIds, tier } = body
     if (!userIds?.length) return NextResponse.json({ error: 'No users specified' }, { status: 400 })
 
     const results = []
     for (const userId of userIds) {
-      // Get current user metadata
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user) continue
 
-      // Update profile tier
       await supabase.from('profiles').update({ subscription_tier: tier }).eq('id', userId)
-
-      // Update metadata
       await supabase.auth.admin.updateUserById(userId, {
         user_metadata: {
           ...userData.user.user_metadata,
@@ -83,10 +115,7 @@ export async function DELETE(req: NextRequest) {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user) continue
 
-      // Revoke tier
       await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
-
-      // Remove beta flag
       await supabase.auth.admin.updateUserById(userId, {
         user_metadata: {
           ...userData.user.user_metadata,

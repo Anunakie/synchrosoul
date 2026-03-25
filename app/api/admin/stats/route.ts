@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       email: u.email,
       created_at: u.created_at,
       display_name: u.user_metadata?.display_name || u.user_metadata?.full_name || null,
-      subscription_tier: profileTierMap[u.id] || 'free'
+      subscription_tier: (profileTierMap[u.id] && profileTierMap[u.id] !== 'free') ? profileTierMap[u.id] : (u.user_metadata?.beta_tier || profileTierMap[u.id] || 'free')
     }))
 
     const { data: recentLogs } = await serviceClient
