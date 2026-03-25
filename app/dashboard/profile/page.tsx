@@ -341,13 +341,11 @@ export default function ProfilePage() {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       onClick={saveProfile}
-                      onTouchEnd={e => { e.preventDefault(); saveProfile() }}
-                      style={{ flex: 1, padding: '0.6rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.6rem', color: '#c9a84c', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600, WebkitAppearance: 'none' } as React.CSSProperties}
+                      style={{ flex: 1, padding: '0.75rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.6rem', color: '#c9a84c', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600, WebkitAppearance: 'none', touchAction: 'manipulation', minHeight: '44px' } as React.CSSProperties}
                     >Save Profile</button>
                     <button
                       onClick={() => setEditing(false)}
-                      onTouchEnd={e => { e.preventDefault(); setEditing(false) }}
-                      style={{ flex: 1, padding: '0.6rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.6rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', cursor: 'pointer', WebkitAppearance: 'none' } as React.CSSProperties}
+                      style={{ flex: 1, padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.6rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', cursor: 'pointer', WebkitAppearance: 'none', touchAction: 'manipulation', minHeight: '44px' } as React.CSSProperties}
                     >Cancel</button>
                   </div>
                 </div>
