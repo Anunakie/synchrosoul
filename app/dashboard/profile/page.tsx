@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState('')
   const [editColor, setEditColor] = useState('#9b59b6')
   const [editImage, setEditImage] = useState<string | null>(null)
+  const [imageExplicitlyRemoved, setImageExplicitlyRemoved] = useState(false)
   const [composing, setComposing] = useState(false)
   const [postText, setPostText] = useState('')
   const [postNumber, setPostNumber] = useState('')
@@ -184,12 +185,14 @@ export default function ProfilePage() {
     reader.onload = (ev) => {
       const result = ev.target?.result as string
       setEditImage(result)
+      setImageExplicitlyRemoved(false)
     }
     reader.readAsDataURL(file)
   }
 
   const removeImage = () => {
     setEditImage(null)
+    setImageExplicitlyRemoved(true)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -209,20 +212,24 @@ export default function ProfilePage() {
     // Save to Supabase for cross-device sync
     try {
       const numProfile = await getNumerologyProfile()
+      // Determine the definitive final image:
+      // - if user explicitly removed it (clicked X), use null
+      // - if user picked a new image, use that
+      // - otherwise keep the current avatarImage (user only changed name/bio)
+      const finalImage = imageExplicitlyRemoved ? null : (editImage || avatarImage || null)
       await saveFullProfile({
         displayName: updated.displayName,
         bio: updated.bio,
         avatarColor: updated.avatarColor,
-        avatarImage: editImage || null,
+        avatarImage: finalImage,
         lifePath: numProfile?.lifePath || null,
         soulUrge: numProfile?.soulUrge || null,
         destiny: numProfile?.destiny || null,
       })
-      // Sync author name and image across all posts
+      // Always sync author name and image across all posts with the definitive final image
       await syncAuthorNameInPosts(updated.displayName)
-      if (editImage !== undefined) {
-        await syncAuthorImageInPosts(editImage || '')
-      }
+      await syncAuthorImageInPosts(finalImage || '')
+      setImageExplicitlyRemoved(false)
     } catch (e) {
       console.error('Failed to sync profile to cloud:', e)
     }
