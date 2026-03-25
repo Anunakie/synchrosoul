@@ -31,7 +31,8 @@ export default function ProfilePage() {
   const [editColor, setEditColor] = useState('#9b59b6')
   const [editImage, setEditImage] = useState<string | null>(null)
   const [imageExplicitlyRemoved, setImageExplicitlyRemoved] = useState(false)
-  const [composing, setComposing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+    const [composing, setComposing] = useState(false)
   const [postText, setPostText] = useState('')
   const [postNumber, setPostNumber] = useState('')
   const [posting, setPosting] = useState(false)
@@ -197,6 +198,8 @@ export default function ProfilePage() {
   }
 
   const saveProfile = async () => {
+    if (isSaving) return
+    setIsSaving(true)
     const updated = { ...profile, displayName: editName || profile.displayName, bio: editBio, avatarColor: editColor }
     // Save to localStorage
     saveSocialProfile(updated)
@@ -232,6 +235,8 @@ export default function ProfilePage() {
       setImageExplicitlyRemoved(false)
     } catch (e) {
       console.error('Failed to sync profile to cloud:', e)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -338,16 +343,22 @@ export default function ProfilePage() {
                       <div key={c} onClick={() => setEditColor(c)} style={{ width: 22, height: 22, borderRadius: '50%', background: c, cursor: 'pointer', border: editColor === c ? '2px solid white' : '2px solid transparent', transition: 'transform 0.15s', transform: editColor === c ? 'scale(1.2)' : 'scale(1)' }} />
                     ))}
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={saveProfile}
-                      style={{ flex: 1, padding: '0.75rem', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: '0.6rem', color: '#c9a84c', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600, WebkitAppearance: 'none', touchAction: 'manipulation', minHeight: '44px' } as React.CSSProperties}
-                    >Save Profile</button>
-                    <button
-                      onClick={() => setEditing(false)}
-                      style={{ flex: 1, padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.6rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', cursor: 'pointer', WebkitAppearance: 'none', touchAction: 'manipulation', minHeight: '44px' } as React.CSSProperties}
-                    >Cancel</button>
-                  </div>
+
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                      <button
+                        onClick={saveProfile}
+                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); saveProfile(); }}
+                        disabled={isSaving}
+                        style={{ flex: 1, padding: '1rem', background: isSaving ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.2)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: '0.75rem', color: '#c9a84c', fontSize: '1rem', cursor: isSaving ? 'not-allowed' : 'pointer', fontWeight: 700, WebkitAppearance: 'none', touchAction: 'manipulation', minHeight: '56px', userSelect: 'none', WebkitUserSelect: 'none' } as React.CSSProperties}
+                      >{isSaving ? 'Saving...' : 'Save Profile'}</button>
+                      <button
+                        onClick={() => { if (!isSaving) setEditing(false); }}
+                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); if (!isSaving) setEditing(false); }}
+                        disabled={isSaving}
+                        style={{ flex: 1, padding: '1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '0.75rem', color: 'rgba(255,255,255,0.6)', fontSize: '1rem', cursor: isSaving ? 'not-allowed' : 'pointer', WebkitAppearance: 'none', touchAction: 'manipulation', minHeight: '56px', userSelect: 'none', WebkitUserSelect: 'none' } as React.CSSProperties}
+                      >Cancel</button>
+                    </div>
+
                 </div>
               ) : (
                 <>
