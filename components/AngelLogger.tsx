@@ -352,7 +352,7 @@ export default function AngelLogger({ onLogged }: Props) {
                 <p style={{ color: 'rgba(200,180,255,0.4)', fontSize: '0.7rem' }}>{screenshotName}</p>
               </div>
               <button onClick={() => { setScreenshot(null); setScreenshotName('') }}
-                style={{ color: 'rgba(200,180,255,0.3)', fontSize: '1.1rem', background: 'none', border: 'none', cursor: 'pointer' }}>\u00D7</button>
+                style={{ color: 'rgba(200,180,255,0.3)', fontSize: '1.1rem', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
             </div>
           ) : (
             <button onClick={() => fileRef.current?.click()} style={{
