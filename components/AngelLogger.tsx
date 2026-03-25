@@ -409,10 +409,10 @@ export default function AngelLogger({ onLogged }: Props) {
       </div>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <input
-          type="text" value={custom}
-          onChange={e => setCustom(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          type="text" inputMode="numeric" value={custom}
+          onChange={e => { setCustom(e.target.value.replace(/\D/g, '').slice(0, 8)); setSelected(''); }}
           onKeyDown={e => e.key === 'Enter' && handleCustomSubmit()}
-          placeholder="Other number..."
+          placeholder="Type any number (e.g. 55555)"
           style={{
             flex: 1, borderRadius: '0.75rem', padding: '0.75rem 1rem',
             fontSize: '0.875rem', outline: 'none', background: 'rgba(255,255,255,0.04)',
