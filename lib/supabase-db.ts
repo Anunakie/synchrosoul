@@ -793,3 +793,18 @@ export async function updateAuthorNameInAllPosts(newName: string): Promise<void>
     console.error('Failed to update author name in posts:', e)
   }
 }
+
+export async function updateAuthorImageInAllPosts(newImage: string): Promise<void> {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase
+      .from('posts')
+      .update({ author_image: newImage })
+      .eq('user_id', user.id)
+  } catch (e) {
+    console.error('Failed to update author image in posts:', e)
+  }
+}
+

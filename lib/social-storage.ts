@@ -240,3 +240,25 @@ export async function syncAuthorNameInPosts(newName: string): Promise<void> {
     console.error('Failed to update author name in Supabase posts:', e)
   }
 }
+
+export async function syncAuthorImageInPosts(newImage: string): Promise<void> {
+  // Update localStorage posts
+  try {
+    const raw = localStorage.getItem(POSTS_KEY)
+    if (raw) {
+      const posts: SocialPost[] = JSON.parse(raw)
+      const updated = posts.map(p => ({ ...p, authorImage: newImage }))
+      localStorage.setItem(POSTS_KEY, JSON.stringify(updated))
+    }
+  } catch (e) {
+    console.error('Failed to update author image in localStorage posts:', e)
+  }
+  // Update Supabase posts
+  try {
+    const { updateAuthorImageInAllPosts } = await import('./supabase-db')
+    await updateAuthorImageInAllPosts(newImage)
+  } catch (e) {
+    console.error('Failed to update author image in Supabase posts:', e)
+  }
+}
+
