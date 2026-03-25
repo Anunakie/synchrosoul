@@ -151,7 +151,12 @@ export async function saveLog(data: {
     const userId = await getCurrentUserId()
     if (userId) {
       setSyncStatus('syncing')
-      const dbId = await saveLogToDB(data)
+      const dbId = await saveLogToDB({
+      ...data,
+      miniReading: data.miniReadingOverride || meaning.message,
+      readingTitle: data.readingTitleOverride || meaning.title,
+      readingColor: meaning.color,
+    })
       if (dbId) {
         setSyncStatus('synced')
         return { ...log, id: dbId }

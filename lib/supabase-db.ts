@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { AngelLog } from './storage'
 import type { DreamEntry } from './dream-storage'
 import type { SocialPost } from './social-storage'
+import { getAngelMeaning } from '@/lib/angel-meanings'
 
 // ── Auth Helper ────────────────────────────────────────────────────────────
 export async function getCurrentUserId(): Promise<string | null> {
@@ -90,18 +91,22 @@ export async function getLogsFromDB(): Promise<AngelLog[]> {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
     if (error || !data) return []
-    return data.map(row => ({
-      id: row.id,
-      number: row.number,
-      thought: row.thought ?? '',
-      screenshotUrl: row.screenshot_url ?? null,
-      truthScore: !!row.screenshot_url,
-      miniReading: '',
-      readingTitle: '',
-      readingColor: '#9b59b6',
-      createdAt: row.created_at,
-      shared: false,
-    }))
+    return data.map(row => {
+      // Fall back to static meaning only if no AI reading was saved
+      const meaning = row.mini_reading ? null : getAngelMeaning(row.number)
+      return {
+        id: row.id,
+        number: row.number,
+        thought: row.thought ?? '',
+        screenshotUrl: row.screenshot_url ?? null,
+        truthScore: !!row.screenshot_url,
+        miniReading: row.mini_reading || (meaning?.message ?? ''),
+        readingTitle: row.reading_title || (meaning?.title ?? ''),
+        readingColor: row.reading_color || (meaning?.color ?? '#9b59b6'),
+        createdAt: row.created_at,
+        shared: false,
+      }
+    })
   } catch {
     return []
   }
@@ -111,6 +116,9 @@ export async function saveLogToDB(data: {
   number: string
   thought: string
   screenshotUrl: string | null
+  miniReading?: string
+  readingTitle?: string
+  readingColor?: string
 }): Promise<string | null> {
   try {
     const supabase = createClient()
@@ -157,6 +165,9 @@ export async function saveLogToDB(data: {
         number: data.number,
         thought: data.thought,
         screenshot_url: screenshotStorageUrl,
+        mini_reading: data.miniReading || null,
+        reading_title: data.readingTitle || null,
+        reading_color: data.readingColor || null,
       })
       .select('id')
       .single()
