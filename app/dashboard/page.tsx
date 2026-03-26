@@ -3,10 +3,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AngelLogger from '@/components/AngelLogger'
 import { generateDailyGuidance } from '@/lib/daily-guidance'
-
-const KEY_LOGS = 'synchrosoul_logs'
-const KEY_PROFILE = 'synchrosoul_numerology_profile'
-const KEY_STREAK = 'synchrosoul_streak'
+import { getLogs } from '@/lib/storage'
+import { createClient } from '@/lib/supabase/client'
 
 const QUICK_TOOLS = [
   { href: '/dashboard/oracle', emoji: '◈', label: 'Oracle', color: '#e0e7ff' },
@@ -44,35 +42,96 @@ export default function DashboardPage() {
   const [topNumber, setTopNumber] = useState<string|null>(null)
 
   useEffect(() => {
-    try {
-      const l = localStorage.getItem(KEY_LOGS)
-      const parsed = l ? JSON.parse(l) : []
-      setLogs(parsed)
-
-      // Today count
-      const today = new Date().toDateString()
-      setTodayCount(parsed.filter((x:any) => new Date(x.timestamp).toDateString()===today).length)
-
-      // Top number
-      const counts: Record<string,number> = {}
-      parsed.forEach((x:any) => { counts[x.number]=(counts[x.number]||0)+1 })
-      const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]
-      if (top) setTopNumber(top[0])
-
-      const p = localStorage.getItem(KEY_PROFILE)
-      if (p) {
-        const parsed2 = JSON.parse(p)
-        setProfile(parsed2)
-        const recentNums = parsed.slice(0,10).map((x:any)=>x.number)
-        setGuidance(generateDailyGuidance(recentNums, parsed2.lifePathNumber || null, Math.min(parsed.length, 30)))
-      }
-
-      const sk = localStorage.getItem(KEY_STREAK)
-      if (sk) { try { setStreak(JSON.parse(sk).current || 0) } catch {} }
-    } catch {}
-
     const h = new Date().getHours()
     setGreeting(h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening')
+
+    async function loadData() {
+      try {
+        // Load logs from Supabase (with localStorage fallback)
+        const allLogs = await getLogs()
+        setLogs(allLogs)
+
+        // TODAY count - logs with createdAt matching today
+        const todayStr = new Date().toDateString()
+        const todayLogs = allLogs.filter((x: any) => {
+          const d = x.createdAt || x.created_at || x.timestamp
+          return d ? new Date(d).toDateString() === todayStr : false
+        })
+        setTodayCount(todayLogs.length)
+
+        // TOP NUMBER - most frequently logged
+        const counts: Record<string, number> = {}
+        allLogs.forEach((x: any) => { counts[x.number] = (counts[x.number] || 0) + 1 })
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+        if (top) setTopNumber(top[0])
+
+        // STREAK - count consecutive days with at least 1 log
+        const daySet = new Set(
+          allLogs.map((x: any) => {
+            const d = x.createdAt || x.created_at || x.timestamp
+            return d ? new Date(d).toDateString() : null
+          }).filter(Boolean)
+        )
+        let streakCount = 0
+        const checkDate = new Date()
+        while (true) {
+          if (daySet.has(checkDate.toDateString())) {
+            streakCount++
+            checkDate.setDate(checkDate.getDate() - 1)
+          } else {
+            break
+          }
+        }
+        setStreak(streakCount)
+
+        // Load profile from Supabase
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          if (profileData) {
+            setProfile(profileData)
+            const recentNums = allLogs.slice(0, 10).map((x: any) => x.number)
+            setGuidance(generateDailyGuidance(
+              recentNums,
+              profileData.life_path_number || profileData.lifePathNumber || null,
+              Math.min(allLogs.length, 30)
+            ))
+          } else {
+            // Fallback to localStorage profile
+            try {
+              const p = localStorage.getItem('synchrosoul_numerology_profile')
+              if (p) {
+                const parsed2 = JSON.parse(p)
+                setProfile(parsed2)
+                const recentNums = allLogs.slice(0, 10).map((x: any) => x.number)
+                setGuidance(generateDailyGuidance(recentNums, parsed2.lifePathNumber || null, Math.min(allLogs.length, 30)))
+              }
+            } catch {}
+          }
+        }
+      } catch (err) {
+        console.error('Dashboard stats error:', err)
+        // Fallback to localStorage if Supabase fails
+        try {
+          const l = localStorage.getItem('synchrosoul_logs')
+          const parsed = l ? JSON.parse(l) : []
+          setLogs(parsed)
+          const todayStr = new Date().toDateString()
+          setTodayCount(parsed.filter((x: any) => new Date(x.timestamp || x.createdAt).toDateString() === todayStr).length)
+          const counts: Record<string, number> = {}
+          parsed.forEach((x: any) => { counts[x.number] = (counts[x.number] || 0) + 1 })
+          const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+          if (top) setTopNumber(top[0])
+        } catch {}
+      }
+    }
+
+    loadData()
   }, [])
 
   const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
