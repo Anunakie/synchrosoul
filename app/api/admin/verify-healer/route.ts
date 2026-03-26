@@ -12,7 +12,7 @@ const serviceClient = createClient(
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if ('error' in auth) return auth.error;
+  if (auth) return auth;
   try {
     const { healerId, verified, notes } = await req.json();
 

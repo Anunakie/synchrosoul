@@ -82,6 +82,10 @@ export default function AdminPage() {
   const [betaUsers, setBetaUsers] = useState<{id: string; email: string; display_name: string; subscription_tier: string; beta_note: string; beta_granted_at: string; created_at: string}[]>([])
   const [betaUsersLoading, setBetaUsersLoading] = useState(false)
   const [selectedBetaIds, setSelectedBetaIds] = useState<Set<string>>(new Set())
+  const [betaSignups, setBetaSignups] = useState<{id: string; email: string; name: string | null; device: string; reason: string | null; status: string; created_at: string; notes: string | null}[]>([])
+  const [betaSignupsLoading, setBetaSignupsLoading] = useState(false)
+  const [betaSignupsFilter, setBetaSignupsFilter] = useState('all')
+  const [betaSubTab, setBetaSubTab] = useState<'grant' | 'signups' | 'users'>('signups')
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [bulkRevoking, setBulkRevoking] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -157,6 +161,8 @@ export default function AdminPage() {
     }
     if (tab === 'beta') {
       loadBetaUsers()
+      loadBetaSignups()
+      loadBetaSignups()
     }
   }, [tab, revenue, revLoading, healers.length, healersLoading, authToken])
 
@@ -188,6 +194,70 @@ export default function AdminPage() {
     } finally {
       setBetaUsersLoading(false)
     }
+  }
+
+  const loadBetaSignups = async (filter = 'all') => {
+    setBetaSignupsLoading(true)
+    try {
+      const supabaseClient = createClient()
+      const { data: { session } } = await supabaseClient.auth.getSession()
+      const token = session?.access_token
+      const res = await fetch(`/api/admin/beta-signups?status=${filter}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.signups) setBetaSignups(data.signups)
+    } catch (e) { console.error('Failed to load beta signups', e) }
+    setBetaSignupsLoading(false)
+  }
+
+  const updateSignupStatus = async (id: string, status: string) => {
+    try {
+      const supabaseClient = createClient()
+      const { data: { session } } = await supabaseClient.auth.getSession()
+      const token = session?.access_token
+      await fetch('/api/admin/beta-signups', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, status })
+      })
+      setBetaSignups(prev => prev.map(s => s.id === id ? { ...s, status } : s))
+    } catch (e) { console.error('Failed to update signup', e) }
+  }
+
+  const deleteSignup = async (id: string) => {
+    if (!confirm('Delete this signup?')) return
+    try {
+      const supabaseClient = createClient()
+      const { data: { session } } = await supabaseClient.auth.getSession()
+      const token = session?.access_token
+      await fetch('/api/admin/beta-signups', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id })
+      })
+      setBetaSignups(prev => prev.filter(s => s.id !== id))
+    } catch (e) { console.error('Failed to delete signup', e) }
+  }
+
+  const grantSignupAccess = async (email: string, signupId: string) => {
+    try {
+      const supabaseClient = createClient()
+      const { data: { session } } = await supabaseClient.auth.getSession()
+      const token = session?.access_token
+      const res = await fetch('/api/admin/grant-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email, tier: 'mystic', note: 'Beta signup via /beta page' })
+      })
+      const data = await res.json()
+      if (data.success) {
+        await updateSignupStatus(signupId, 'approved')
+        alert('Access granted to ' + email)
+      } else {
+        alert(data.error || 'User must sign up at synchrosoul.app first')
+      }
+    } catch (e) { console.error('Failed to grant access', e) }
   }
 
   const toggleBetaUser = async (userId: string, currentTier: string) => {
@@ -720,9 +790,112 @@ export default function AdminPage() {
       {tab === 'beta' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-          {/* GRANT ACCESS FORM */}
+          {/* Sub-tab buttons */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {(['signups', 'grant', 'users'] as const).map(t => (
+              <button key={t} onClick={() => setBetaSubTab(t)} style={{
+                padding: '8px 18px', borderRadius: '50px', border: 'none', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600,
+                background: betaSubTab === t ? 'linear-gradient(135deg,#c9a84c,#a78bfa)' : 'rgba(255,255,255,0.06)',
+                color: betaSubTab === t ? '#fff' : 'rgba(180,160,255,0.7)'
+              }}>
+                {t === 'signups' ? `Beta Signups (${betaSignups.length})` : t === 'grant' ? 'Grant Access' : `Active Testers (${betaUsers.length})`}
+              </button>
+            ))}
+          </div>
+
+          {/* SIGNUPS TAB */}
+          {betaSubTab === 'signups' && (
+            <div style={{ ...card }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>Beta Signup Requests</h2>
+                  <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '4px 0 0' }}>People who signed up at synchrosoul.app/beta</p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select value={betaSignupsFilter} onChange={e => { setBetaSignupsFilter(e.target.value); loadBetaSignups(e.target.value) }}
+                    style={{ background: '#1a0a3e', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '8px', padding: '6px 10px', color: '#e2d9f3', fontSize: '12px' }}>
+                    <option value="all">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <button onClick={() => loadBetaSignups(betaSignupsFilter)} disabled={betaSignupsLoading}
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', padding: '6px 12px', color: '#c4b5fd', fontSize: '12px', cursor: 'pointer' }}>
+                    {betaSignupsLoading ? '...' : 'Refresh'}
+                  </button>
+                </div>
+              </div>
+
+              {betaSignupsLoading && betaSignups.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'rgba(180,160,255,0.4)', padding: '2rem' }}>Loading signups...</div>
+              ) : betaSignups.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2.5rem' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '12px' }}>📭</div>
+                  <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.9rem', marginBottom: '12px' }}>No signups yet.</div>
+                  <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.8rem', marginBottom: '16px' }}>Share this link to start collecting beta testers:</div>
+                  <code style={{ background: 'rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: '8px', color: '#c4b5fd', fontSize: '14px' }}>synchrosoul.app/beta</code>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {betaSignups.map(signup => (
+                    <div key={signup.id} style={{
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(167,139,250,0.15)',
+                      borderRadius: '12px', padding: '14px 16px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                            <span style={{ color: '#e2d9f3', fontWeight: 600, fontSize: '14px' }}>{signup.name || '(no name)'}</span>
+                            <span style={{ color: '#9ca3af', fontSize: '13px' }}>{signup.email}</span>
+                            <span style={{
+                              padding: '2px 8px', borderRadius: '50px', fontSize: '11px', fontWeight: 600,
+                              background: signup.status === 'approved' ? 'rgba(74,222,128,0.15)' : signup.status === 'rejected' ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)',
+                              color: signup.status === 'approved' ? '#4ade80' : signup.status === 'rejected' ? '#f87171' : '#fbbf24'
+                            }}>{signup.status}</span>
+                            <span style={{ color: '#6b7280', fontSize: '11px', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{signup.device}</span>
+                          </div>
+                          {signup.reason && (
+                            <div style={{ color: '#9ca3af', fontSize: '12px', fontStyle: 'italic', marginBottom: '4px' }}>&ldquo;{signup.reason}&rdquo;</div>
+                          )}
+                          <div style={{ color: '#6b7280', fontSize: '11px' }}>{new Date(signup.created_at).toLocaleDateString()} at {new Date(signup.created_at).toLocaleTimeString()}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', flexShrink: 0 }}>
+                          {signup.status === 'pending' && (
+                            <button onClick={() => grantSignupAccess(signup.email, signup.id)} style={{
+                              background: 'linear-gradient(135deg,#c9a84c,#a78bfa)', color: '#fff', border: 'none',
+                              borderRadius: '8px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', fontWeight: 600
+                            }}>Grant Access</button>
+                          )}
+                          {signup.status === 'pending' && (
+                            <button onClick={() => updateSignupStatus(signup.id, 'rejected')} style={{
+                              background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.3)',
+                              borderRadius: '8px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer'
+                            }}>Reject</button>
+                          )}
+                          {signup.status !== 'pending' && (
+                            <button onClick={() => updateSignupStatus(signup.id, 'pending')} style={{
+                              background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)',
+                              borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer'
+                            }}>Reset</button>
+                          )}
+                          <button onClick={() => deleteSignup(signup.id)} style={{
+                            background: 'rgba(255,255,255,0.04)', color: '#6b7280', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer'
+                          }}>Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* GRANT ACCESS TAB */}
+          {betaSubTab === 'grant' && (
           <div style={{ ...card }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.25rem' }}>🔑 Grant Beta Access</h2>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.25rem' }}>Grant Beta Access</h2>
             <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
               When a tester DMs you their email, enter it here to activate their free Mystic or Twin Flame tier.
             </p>
@@ -752,8 +925,8 @@ export default function AdminPage() {
                     color: '#fff', fontSize: '0.95rem'
                   }}
                 >
-                  <option value="mystic">✨ Mystic ($6.99/mo value)</option>
-                  <option value="twin-flame">🔥 Twin Flame ($9.99/mo value)</option>
+                  <option value="mystic">Mystic ($6.99/mo value)</option>
+                  <option value="twin-flame">Twin Flame ($9.99/mo value)</option>
                 </select>
               </div>
               <div>
@@ -776,9 +949,11 @@ export default function AdminPage() {
                   setBetaLoading(true)
                   setBetaResult(null)
                   try {
+                    const { data: { session } } = await createClient().auth.refreshSession()
+                    const token = session?.access_token
                     const res = await fetch('/api/admin/grant-access', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                       body: JSON.stringify({ email: betaEmail.trim(), tier: betaTier, note: betaNote })
                     })
                     const data = await res.json()
@@ -790,20 +965,21 @@ export default function AdminPage() {
                       setBetaNote('')
                       loadBetaUsers()
                     }
-                  } catch (e: any) {
-                    setBetaResult({ error: e.message })
+                  } catch (e: unknown) {
+                    setBetaResult({ error: e instanceof Error ? e.message : 'Unknown error' })
                   } finally {
                     setBetaLoading(false)
                   }
                 }}
                 disabled={betaLoading || !betaEmail.trim()}
                 style={{
-                  padding: '0.85rem 2rem', borderRadius: '0.75rem', border: 'none',
+                  padding: '0.85rem 1.5rem', borderRadius: '0.75rem', border: 'none', fontWeight: 700, fontSize: '1rem',
+                  cursor: betaLoading ? 'not-allowed' : 'pointer',
                   background: betaLoading ? 'rgba(201,168,76,0.3)' : 'linear-gradient(135deg, #c9a84c, #a78bfa)',
-                  color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: betaLoading ? 'not-allowed' : 'pointer'
+                  color: '#fff'
                 }}
               >
-                {betaLoading ? 'Granting...' : '🔑 Grant Access'}
+                {betaLoading ? 'Granting...' : 'Grant Access'}
               </button>
               {betaResult && (
                 <div style={{
@@ -812,171 +988,132 @@ export default function AdminPage() {
                   border: `1px solid ${betaResult.success ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
                   color: betaResult.success ? '#4ade80' : '#f87171', fontSize: '0.9rem'
                 }}>
-                  {betaResult.success ? '✓ ' : '✗ '}{betaResult.message || betaResult.error}
+                  {betaResult.success ? 'Access granted!' : betaResult.error}
                 </div>
               )}
             </div>
           </div>
+          )}
 
-          {/* ACTIVE BETA USERS LIST */}
+          {/* ACTIVE TESTERS TAB */}
+          {betaSubTab === 'users' && (
           <div style={{ ...card }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>👥 Admin-Granted Beta Testers</h3>
-                <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>
-                  {betaUsers.length} tester{betaUsers.length !== 1 ? 's' : ''} manually granted by admin (excludes paid subscribers)
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => {
-                    if (selectedBetaIds.size === betaUsers.length && betaUsers.length > 0) {
-                      setSelectedBetaIds(new Set())
-                    } else {
-                      setSelectedBetaIds(new Set(betaUsers.map(u => u.id)))
-                    }
-                  }}
-                  style={{
-                    padding: '0.4rem 0.9rem', borderRadius: '0.5rem', border: '1px solid rgba(167,139,250,0.3)',
-                    background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.8rem', cursor: 'pointer'
-                  }}
-                >
-                  {selectedBetaIds.size === betaUsers.length && betaUsers.length > 0 ? '☐ Deselect All' : '☑ Select All'}
-                </button>
-                {selectedBetaIds.size > 0 && (
-                  <button
-                    onClick={async () => {
-                      if (!confirm(`Revoke beta access for ${selectedBetaIds.size} user(s)?`)) return
-                      await bulkRevoke()
-                    }}
-                    disabled={bulkRevoking}
-                    style={{
-                      padding: '0.4rem 0.9rem', borderRadius: '0.5rem', border: '1px solid rgba(248,113,113,0.3)',
-                      background: bulkRevoking ? 'rgba(248,113,113,0.05)' : 'rgba(248,113,113,0.1)',
-                      color: '#f87171', fontSize: '0.8rem', cursor: bulkRevoking ? 'not-allowed' : 'pointer', fontWeight: 600
-                    }}
-                  >
-                    {bulkRevoking ? 'Revoking...' : `✕ Revoke ${selectedBetaIds.size} Selected`}
-                  </button>
-                )}
-                <button
-                  onClick={loadBetaUsers}
-                  disabled={betaUsersLoading}
-                  style={{
-                    padding: '0.4rem 0.9rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.05)', color: 'rgba(180,160,255,0.7)', fontSize: '0.8rem', cursor: 'pointer'
-                  }}
-                >
-                  {betaUsersLoading ? '...' : '↻ Refresh'}
-                </button>
-              </div>
-            </div>
-
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>Admin-Granted Beta Testers</h3>
+                    <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem', margin: '4px 0 0' }}>
+                      {betaUsers.length} tester{betaUsers.length !== 1 ? 's' : '' } manually granted (excludes paid subscribers)
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button
+                      onClick={() => {
+                        if (selectedBetaIds.size === betaUsers.length && betaUsers.length > 0) {
+                          setSelectedBetaIds(new Set())
+                        } else {
+                          setSelectedBetaIds(new Set(betaUsers.map(u => u.id)))
+                        }
+                      }}
+                      style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(180,160,255,0.7)', fontSize: '0.78rem', cursor: 'pointer' }}
+                    >
+                      {selectedBetaIds.size === betaUsers.length && betaUsers.length > 0 ? 'Deselect All' : 'Select All'}
+                    </button>
+                    {selectedBetaIds.size > 0 && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Revoke beta access for ${selectedBetaIds.size} user(s)?`)) return
+                          const { data: { session } } = await createClient().auth.refreshSession()
+                          const token = session?.access_token
+                          const res = await fetch('/api/admin/beta-users', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ userIds: Array.from(selectedBetaIds) })
+                          })
+                          if (res.ok) {
+                            setBetaUsers(prev => prev.map(u =>
+                              selectedBetaIds.has(u.id) ? { ...u, subscription_tier: 'free' } : u
+                            ))
+                            setSelectedBetaIds(new Set())
+                          }
+                        }}
+                        style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.1)', color: '#f87171', fontSize: '0.78rem', cursor: 'pointer' }}
+                      >
+                        Revoke {selectedBetaIds.size} Selected
+                      </button>
+                    )}
+                    <button
+                      onClick={loadBetaUsers}
+                      disabled={betaUsersLoading}
+                      style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(180,160,255,0.7)', fontSize: '0.78rem', cursor: 'pointer' }}
+                    >
+                      {betaUsersLoading ? '...' : 'Refresh'}
+                    </button>
+                  </div>
+                </div>
             {betaUsersLoading && betaUsers.length === 0 ? (
               <div style={{ textAlign: 'center', color: 'rgba(180,160,255,0.4)', padding: '2rem', fontSize: '0.9rem' }}>Loading beta users...</div>
             ) : betaUsers.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'rgba(180,160,255,0.3)', padding: '2rem', fontSize: '0.9rem' }}>No beta users yet. Grant access above.</div>
+              <div style={{ textAlign: 'center', color: 'rgba(180,160,255,0.3)', padding: '2rem', fontSize: '0.9rem' }}>No beta users yet. Grant access in the Grant Access tab.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {betaUsers.map(user => {
                   const isSelected = selectedBetaIds.has(user.id)
-                  const isToggling = togglingId === user.id
                   const isActive = user.subscription_tier !== 'free'
                   return (
                     <div key={user.id} style={{
                       display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '0.75rem 1rem', borderRadius: '0.75rem',
-                      background: isSelected ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${isSelected ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.06)'}`,
-                      transition: 'all 0.2s'
+                      background: isSelected ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${isSelected ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                      borderRadius: '0.75rem', padding: '0.75rem 1rem', flexWrap: 'wrap'
                     }}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {
-                          setSelectedBetaIds(prev => {
-                            const n = new Set(prev)
-                            if (n.has(user.id)) n.delete(user.id)
-                            else n.add(user.id)
-                            return n
-                          })
-                        }}
-                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#a78bfa', flexShrink: 0 }}
+                      <input type="checkbox" checked={isSelected}
+                        onChange={() => setSelectedBetaIds(prev => {
+                          const n = new Set(prev)
+                          if (n.has(user.id)) n.delete(user.id); else n.add(user.id)
+                          return n
+                        })}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
                       />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          <span style={{ color: '#e2d9f3', fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {user.display_name || 'Unnamed'}
-                          </span>
-                          <span style={{
-                            fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '999px',
-                            background: user.subscription_tier === 'twin-flame' ? 'rgba(244,114,182,0.15)' : 'rgba(167,139,250,0.15)',
-                            border: user.subscription_tier === 'twin-flame' ? '1px solid rgba(244,114,182,0.4)' : '1px solid rgba(167,139,250,0.4)',
-                            color: user.subscription_tier === 'twin-flame' ? '#f472b6' : '#a78bfa',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {user.subscription_tier === 'twin-flame' ? 'Twin Flame' : 'Mystic'}
-                          </span>
-                        </div>
-                        <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.72rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {user.email}
-                        </div>
+                      <div style={{ flex: 1, minWidth: '150px' }}>
+                        <div style={{ color: '#e2d9f3', fontWeight: 600, fontSize: '0.9rem' }}>{user.display_name || '(no name)'}</div>
+                        <div style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.75rem' }}>{user.email}</div>
                         {user.beta_note && (
-                          <div style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.68rem', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            Note: {user.beta_note}
-                          </div>
+                          <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.7rem', marginTop: '2px' }}>Note: {user.beta_note}</div>
                         )}
-                        <div style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.65rem', marginTop: '0.1rem' }}>
+                        <div style={{ color: 'rgba(180,160,255,0.3)', fontSize: '0.7rem' }}>
                           Granted: {user.beta_granted_at ? new Date(user.beta_granted_at).toLocaleDateString() : new Date(user.created_at).toLocaleDateString()}
                         </div>
                       </div>
-                      <span style={{
-                        fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '999px', flexShrink: 0,
-                        background: user.subscription_tier === 'twin-flame' ? 'rgba(251,146,60,0.15)' : 'rgba(167,139,250,0.15)',
-                        color: user.subscription_tier === 'twin-flame' ? '#fb923c' : '#a78bfa',
-                        border: `1px solid ${user.subscription_tier === 'twin-flame' ? 'rgba(251,146,60,0.3)' : 'rgba(167,139,250,0.3)'}`
-                      }}>
-                        {user.subscription_tier === 'twin-flame' ? '🔥 Twin Flame' : '✨ Mystic'}
-                      </span>
-                      <button
-                        onClick={() => toggleBetaUser(user.id, user.subscription_tier)}
-                        disabled={isToggling}
-                        title={isActive ? 'Click to revoke access' : 'Click to grant access'}
-                        style={{
-                          width: '44px', height: '24px', borderRadius: '999px', border: 'none',
-                          background: isActive ? 'linear-gradient(135deg, #4ade80, #22c55e)' : 'rgba(255,255,255,0.1)',
-                          cursor: isToggling ? 'not-allowed' : 'pointer',
-                          position: 'relative', transition: 'all 0.3s', flexShrink: 0,
-                          opacity: isToggling ? 0.5 : 1
-                        }}
-                      >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                         <span style={{
-                          position: 'absolute', top: '3px',
-                          left: isActive ? '23px' : '3px',
-                          width: '18px', height: '18px', borderRadius: '50%',
-                          background: '#fff', transition: 'left 0.3s',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                        }} />
-                      </button>
+                          padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
+                          background: user.subscription_tier === 'twin-flame' ? 'rgba(239,68,68,0.15)' : 'rgba(167,139,250,0.15)',
+                          color: user.subscription_tier === 'twin-flame' ? '#f87171' : '#a78bfa'
+                        }}>{user.subscription_tier}</span>
+                        <button
+                          onClick={() => toggleBetaUser(user.id, user.subscription_tier)}
+                          style={{
+                            position: 'relative', width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                            background: isActive ? 'linear-gradient(135deg,#c9a84c,#a78bfa)' : 'rgba(255,255,255,0.1)',
+                            transition: 'background 0.3s', flexShrink: 0
+                          }}
+                        >
+                          <div style={{
+                            position: 'absolute', top: '3px', left: isActive ? '23px' : '3px',
+                            width: '18px', height: '18px', borderRadius: '50%',
+                            background: '#fff', transition: 'left 0.3s',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                          }} />
+                        </button>
+                      </div>
                     </div>
                   )
                 })}
               </div>
             )}
           </div>
+          )}
 
-          {/* HOW TO HANDLE DMs */}
-          <div style={{ ...card, background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}>
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#c9a84c', marginBottom: '0.75rem' }}>💬 How to handle DMs</h3>
-            <ol style={{ color: 'rgba(180,160,255,0.7)', fontSize: '0.82rem', lineHeight: 1.8, paddingLeft: '1.2rem', margin: 0 }}>
-              <li>Tester signs up at synchrosoul.app</li>
-              <li>They DM you their account email</li>
-              <li>Enter it above and click Grant Access</li>
-              <li>They refresh the app — premium features unlock instantly</li>
-              <li>Use the toggle switch to revoke access anytime</li>
-              <li>Use Select All + Revoke to bulk-remove access after beta ends</li>
-            </ol>
-          </div>
         </div>
       )}
 

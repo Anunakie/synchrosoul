@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const ADMIN_EMAIL = 'dezekiel@live.com'
 
-export async function requireAdmin(req: NextRequest): Promise<{ error: NextResponse } | { userId: string; email: string }> {
+export async function requireAdmin(req: NextRequest): Promise<NextResponse | null> {
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '')
 
   if (!token) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = createClient(
@@ -19,12 +19,12 @@ export async function requireAdmin(req: NextRequest): Promise<{ error: NextRespo
   const { data: { user }, error } = await supabase.auth.getUser(token)
 
   if (error || !user) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   if (user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  return { userId: user.id, email: user.email }
+  return null
 }

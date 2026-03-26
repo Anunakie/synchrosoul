@@ -9,7 +9,7 @@ const supabase = createClient(
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if ('error' in auth) return auth.error;
+  if (auth) return auth;
 
   try {
     // Get ALL users from auth
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if ('error' in auth) return auth.error;
+  if (auth) return auth;
 
   try {
     const body = await req.json()
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if ('error' in auth) return auth.error;
+  if (auth) return auth;
 
   try {
     const { userIds } = await req.json()

@@ -10,7 +10,7 @@ const serviceClient = createClient(
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if ('error' in auth) return auth.error;
+  if (auth) return auth;
 
   try {
     // Total users

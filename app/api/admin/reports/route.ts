@@ -31,7 +31,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if ('error' in auth) return auth.error;
+  if (auth) return auth;
   try {
     const { id, status, admin_notes } = await req.json();
 
