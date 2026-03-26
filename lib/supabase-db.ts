@@ -716,6 +716,40 @@ export async function markAllNotificationsRead(): Promise<void> {
 
 
 // ── Profile Sync (full profile save/load) ─────────────────────────────────
+
+export async function uploadAvatarImage(base64DataUrl: string, userId: string): Promise<string | null> {
+  try {
+    const supabase = createClient()
+    // Convert base64 data URL to blob
+    const matches = base64DataUrl.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
+    if (!matches) return null
+    const mimeType = matches[1]
+    const base64Data = matches[2]
+    const byteCharacters = atob(base64Data)
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    const blob = new Blob([byteArray], { type: mimeType })
+    const ext = mimeType.includes('png') ? 'png' : 'jpg'
+    const filePath = `${userId}/avatar.${ext}`
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, blob, { upsert: true, contentType: mimeType })
+    if (error) {
+      console.error('[SynchroSoul] Avatar upload error:', error.message)
+      return null
+    }
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    // Add cache-busting timestamp
+    return data.publicUrl + '?t=' + Date.now()
+  } catch (e) {
+    console.error('[SynchroSoul] uploadAvatarImage exception:', e)
+    return null
+  }
+}
+
 export async function saveFullProfile(data: {
   displayName: string
   bio: string
@@ -736,7 +770,15 @@ export async function saveFullProfile(data: {
       bio: data.bio,
       avatar_color: data.avatarColor,
     }
-    if (data.avatarImage !== undefined) updates.avatar_url = data.avatarImage
+    if (data.avatarImage !== undefined) {
+      if (data.avatarImage && data.avatarImage.startsWith('data:')) {
+        // Upload base64 to Supabase Storage to avoid row size limits
+        const uploadedUrl = await uploadAvatarImage(data.avatarImage, userId)
+        updates.avatar_url = uploadedUrl || data.avatarImage
+      } else {
+        updates.avatar_url = data.avatarImage
+      }
+    }
     if (data.lifePath !== undefined) updates.life_path = data.lifePath
     if (data.soulUrge !== undefined) updates.soul_urge = data.soulUrge
     if (data.destiny !== undefined) updates.destiny = data.destiny

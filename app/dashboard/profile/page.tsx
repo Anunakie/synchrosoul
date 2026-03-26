@@ -200,27 +200,34 @@ export default function ProfilePage() {
   const saveProfile = async () => {
     if (isSaving) return
     setIsSaving(true)
-    const updated = { ...profile, displayName: editName || profile.displayName, bio: editBio, avatarColor: editColor }
-    // Save to localStorage
-    saveSocialProfile(updated)
-    setProfile(updated)
-    if (editImage) {
-      localStorage.setItem(AVATAR_IMG_KEY, editImage)
-      setAvatarImage(editImage)
-    } else {
-      localStorage.removeItem(AVATAR_IMG_KEY)
-      setAvatarImage(null)
-    }
-    setEditing(false)
-    // Save to Supabase for cross-device sync
     try {
-      const numProfile = await getNumerologyProfile()
-      // Determine the definitive final image:
-      // - if user explicitly removed it (clicked X), use null
-      // - if user picked a new image, use that
-      // - otherwise keep the current avatarImage (user only changed name/bio)
+      const updated = { ...profile, displayName: editName || profile.displayName, bio: editBio, avatarColor: editColor }
+      // Save to localStorage (wrapped to prevent QuotaExceededError from blocking save)
+      try {
+        saveSocialProfile(updated)
+      } catch (e) {
+        console.warn('saveSocialProfile failed:', e)
+      }
+      setProfile(updated)
+      // Determine the definitive final image
       const finalImage = imageExplicitlyRemoved ? null : (editImage || avatarImage || null)
-      await saveFullProfile({
+      // Update localStorage with image (may fail on mobile if image is large - that is ok)
+      try {
+        if (finalImage) {
+          localStorage.setItem(AVATAR_IMG_KEY, finalImage)
+          setAvatarImage(finalImage)
+        } else {
+          localStorage.removeItem(AVATAR_IMG_KEY)
+          setAvatarImage(null)
+        }
+      } catch (e) {
+        console.warn('localStorage avatar save failed (quota?):', e)
+        // Still update state even if localStorage fails
+        setAvatarImage(finalImage)
+      }
+      // Save to Supabase for cross-device sync
+      const numProfile = await getNumerologyProfile()
+      const saved = await saveFullProfile({
         displayName: updated.displayName,
         bio: updated.bio,
         avatarColor: updated.avatarColor,
@@ -229,12 +236,28 @@ export default function ProfilePage() {
         soulUrge: numProfile?.soulUrge || null,
         destiny: numProfile?.destiny || null,
       })
-      // Always sync author name and image across all posts with the definitive final image
+      if (saved) {
+        // After Supabase save, reload the avatar URL (may have been uploaded to Storage)
+        // so localStorage gets the CDN URL instead of base64
+        try {
+          const { loadFullProfile } = await import('@/lib/supabase-db')
+          const freshProfile = await loadFullProfile()
+          if (freshProfile?.avatarImage) {
+            localStorage.setItem(AVATAR_IMG_KEY, freshProfile.avatarImage)
+            setAvatarImage(freshProfile.avatarImage)
+          }
+        } catch (e) {
+          console.warn('Could not reload avatar URL after save:', e)
+        }
+      }
+      // Sync author name and image across all posts
       await syncAuthorNameInPosts(updated.displayName)
       await syncAuthorImageInPosts(finalImage || '')
       setImageExplicitlyRemoved(false)
+      setEditing(false)
     } catch (e) {
-      console.error('Failed to sync profile to cloud:', e)
+      console.error('Failed to save profile:', e)
+      alert('Save failed. Please try again.')
     } finally {
       setIsSaving(false)
     }
