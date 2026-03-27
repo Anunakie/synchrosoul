@@ -1,302 +1,199 @@
 'use client'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTheme } from '@/lib/theme-context'
 
-// Pool of hidden messages that occasionally surface in the rain
 const HIDDEN_MESSAGES = [
-  'FREE YOUR MIND',
-  'WAKE UP',
-  'FOLLOW THE CODE',
-  'YOU ARE THE ANOMALY',
-  'THERE IS NO SPOON',
-  'THE CODE KNOWS',
-  'CAUSALITY',
-  'SIGNAL DETECTED',
-  'CHOICE NODE',
-  'ANOMALY CONFIRMED',
-  'TRUST THE ALGORITHM',
-  'THE SIMULATION SEES YOU',
-  'BREAK THE LOOP',
-  'EXECUTE',
-  '1111',
-  '333',
-  '444',
-  '777',
-  '1234',
-  '11:11',
-  'ROOT ACCESS',
-  'SYSTEM AWARE',
-  'PATTERN RECOGNIZED',
+  'FREE YOUR MIND', 'WAKE UP', 'FOLLOW THE CODE', 'YOU ARE THE ANOMALY',
+  'THERE IS NO SPOON', 'THE CODE KNOWS', 'CAUSALITY', 'SIGNAL DETECTED',
+  'CHOICE NODE', 'ANOMALY CONFIRMED', 'TRUST THE ALGORITHM',
+  'THE SIMULATION SEES YOU', 'BREAK THE LOOP', 'EXECUTE', 'ROOT ACCESS',
+  '1111', '333', '444', '777', '1234', '11:11', 'SYSTEM AWARE',
+  'PATTERN RECOGNIZED', 'YOU SEE IT NOW',
 ]
 
-const KATAKANA = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'
-const LATIN = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@!<>?/[]{}^~$#&*'
-const ALL_CHARS = KATAKANA + LATIN
-
-interface Drop {
-  y: number
-  speed: number
-  brightness: number
-  // hidden message state
-  msgChars: string[]
-  msgIdx: number
-  msgTimer: number
-  msgActive: boolean
-  msgGlowFade: number[] // per-char glow intensity
-}
+const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@!<>?/[]{}^~$#'
 
 export default function SimulationRain() {
   const { theme } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animRef = useRef<number>(0)
-  const stateRef = useRef<Drop[]>([])
+  const activeRef = useRef(false)
+  const rafRef = useRef<number>(0)
 
-  const isSimulation = theme === 'simulation'
-
-  const startAnimation = useCallback(() => {
+  useEffect(() => {
     const el = canvasRef.current
     if (!el) return
-    const ctxMaybe = el.getContext('2d')
-    if (!ctxMaybe) return
-    const ctx: CanvasRenderingContext2D = ctxMaybe
 
+    if (theme !== 'simulation') {
+      activeRef.current = false
+      cancelAnimationFrame(rafRef.current)
+      const ctx = el.getContext('2d')
+      if (ctx) ctx.clearRect(0, 0, el.width, el.height)
+      return
+    }
+
+    const ctx = el.getContext('2d')
+    if (!ctx) return
+    activeRef.current = true
+
+    const FS = 14
     let W = window.innerWidth
     let H = window.innerHeight
     el.width = W
     el.height = H
+    let cols = Math.floor(W / FS)
 
-    const fontSize = 14
-    let columns = Math.floor(W / fontSize)
+    // Each column: y position, speed, and optional glitch message state
+    interface Col {
+      y: number
+      speed: number
+      // glitch state: when active, this column shows message chars slowly
+      glitch: string[]
+      gi: number          // current char index in glitch
+      gTimer: number      // frames until next char advance
+      gFade: number       // 0-1 glow fade
+    }
 
-    // Initialize drops
-    const initDrops = (count: number): Drop[] =>
-      Array.from({ length: count }, () => ({
-        y: Math.random() * -100,
-        speed: 0.25 + Math.random() * 0.65,
-        brightness: Math.floor(Math.random() * 80 + 80),
-        msgChars: [],
-        msgIdx: 0,
-        msgTimer: 0,
-        msgActive: false,
-        msgGlowFade: [],
+    const makeCols = (n: number): Col[] =>
+      Array.from({ length: n }, () => ({
+        y: Math.random() * -50,
+        speed: 0.3 + Math.random() * 0.6,
+        glitch: [], gi: 0, gTimer: 0, gFade: 0,
       }))
 
-    stateRef.current = initDrops(columns)
+    let columns = makeCols(cols)
 
-    const resize = () => {
-      W = window.innerWidth
-      H = window.innerHeight
-      el.width = W
-      el.height = H
-      columns = Math.floor(W / fontSize)
-      // Resize drops array without resetting
-      if (stateRef.current.length < columns) {
-        stateRef.current = [...stateRef.current, ...initDrops(columns - stateRef.current.length)]
-      } else if (stateRef.current.length > columns) {
-        stateRef.current = stateRef.current.slice(0, columns)
+    const onResize = () => {
+      W = window.innerWidth; H = window.innerHeight
+      el.width = W; el.height = H
+      const newCols = Math.floor(W / FS)
+      if (newCols > columns.length) {
+        columns = [...columns, ...makeCols(newCols - columns.length)]
+      } else {
+        columns = columns.slice(0, newCols)
       }
+      cols = newCols
     }
-    window.addEventListener('resize', resize)
+    window.addEventListener('resize', onResize)
 
-    // Track revealed chars for glowing effect: {col, row} -> glow intensity
-    const glowMap = new Map<string, number>()
+    // Schedule glitch messages
+    let nextGlitch = Date.now() + 3000 + Math.random() * 5000
 
-    // Schedule next hidden message reveal
-    let nextMsgTime = Date.now() + 3000 + Math.random() * 5000
-
-    function triggerHiddenMessage() {
+    const fireGlitch = () => {
       const msg = HIDDEN_MESSAGES[Math.floor(Math.random() * HIDDEN_MESSAGES.length)]
-      // Pick a random starting column that has room
-      const startCol = Math.floor(Math.random() * (columns - msg.length - 2)) + 1
-      // Place chars horizontally across columns at a fixed row
-      const row = Math.floor(0.2 + Math.random() * 0.5) // 20-70% down screen
-      const y = row * H
-
-      // Mark each column in that range to glow the char at that y position
-      for (let i = 0; i < msg.length; i++) {
-        const col = startCol + i
-        const key = `${col}_${Math.floor(y / fontSize)}`
-        glowMap.set(key, 1.0)
-        // Store the specific char to display
-        const drop = stateRef.current[col]
-        if (drop) {
-          drop.msgChars = [msg[i]]
-          drop.msgGlowFade = [1.0]
-          drop.msgActive = true
-          drop.msgTimer = 180 + i * 8 // stagger the reveal slightly
-        }
-      }
-    }
-
-    // Alternative: vertical message drop (column spells word downward)
-    function triggerVerticalMessage() {
-      const msg = HIDDEN_MESSAGES[Math.floor(Math.random() * HIDDEN_MESSAGES.length)]
-      const col = Math.floor(Math.random() * (columns - 4)) + 2
-      const drop = stateRef.current[col]
-      if (drop && !drop.msgActive) {
-        drop.msgChars = msg.split('')
-        drop.msgIdx = 0
-        drop.msgTimer = 0
-        drop.msgActive = true
-        drop.msgGlowFade = new Array(msg.length).fill(0)
-        drop.y = 0 // restart this column from top
-        drop.speed = 0.15 // slow it down for the message
+      const col = Math.floor(1 + Math.random() * (columns.length - 2))
+      const c = columns[col]
+      if (c && c.glitch.length === 0) {
+        c.glitch = msg.split('')
+        c.gi = 0
+        c.gTimer = 0
+        c.gFade = 1.0
+        c.y = Math.random() * 5   // restart near top
+        c.speed = 0.12             // slow down during message
       }
     }
 
     let last = 0
-    let frameCount = 0
+    const draw = (ts: number) => {
+      if (!activeRef.current) return
+      rafRef.current = requestAnimationFrame(draw)
 
-    function draw(ts: number) {
-      if (ts - last < 40) {
-        animRef.current = requestAnimationFrame(draw)
-        return
-      }
+      if (ts - last < 42) return  // ~24fps cap
       last = ts
-      frameCount++
 
-      // Semi-transparent black overlay — keeps trail but never fully blacks out
-      ctx.fillStyle = 'rgba(0, 4, 0, 0.05)'
+      // Gentle fade — keeps persistent trails without ever going pure black
+      ctx.fillStyle = 'rgba(0, 3, 0, 0.04)'
       ctx.fillRect(0, 0, W, H)
 
-      // Trigger hidden messages periodically
-      if (Date.now() > nextMsgTime) {
-        if (Math.random() > 0.3) {
-          triggerVerticalMessage()
-        } else {
-          triggerHiddenMessage()
-        }
-        nextMsgTime = Date.now() + 4000 + Math.random() * 8000
+      // Trigger glitch messages
+      if (Date.now() > nextGlitch) {
+        fireGlitch()
+        nextGlitch = Date.now() + 5000 + Math.random() * 9000
       }
 
-      for (let i = 0; i < stateRef.current.length; i++) {
-        const drop = stateRef.current[i]
-        const x = i * fontSize
-        const y = drop.y * fontSize
+      for (let i = 0; i < columns.length; i++) {
+        const c = columns[i]
+        const x = i * FS
+        const y = c.y * FS
 
-        let charToDraw: string
-        let isMsg = false
+        let ch: string
+        let isGlitch = false
 
-        if (drop.msgActive && drop.msgChars.length > 0) {
-          // This column is displaying a message character
-          const msgChar = drop.msgChars[drop.msgIdx] || drop.msgChars[drop.msgChars.length - 1]
-          charToDraw = msgChar
-          isMsg = true
-          drop.msgTimer--
-          if (drop.msgTimer <= 0 && drop.msgIdx < drop.msgChars.length - 1) {
-            drop.msgIdx++
-            drop.msgTimer = 20
-          } else if (drop.msgTimer <= -120) {
-            // Message done - fade out and reset
-            drop.msgActive = false
-            drop.msgChars = []
-            drop.msgIdx = 0
-            drop.speed = 0.25 + Math.random() * 0.65 // restore speed
+        if (c.glitch.length > 0) {
+          // Advance message timer
+          c.gTimer++
+          if (c.gTimer >= 14 && c.gi < c.glitch.length - 1) {
+            c.gi++
+            c.gTimer = 0
+          } else if (c.gi >= c.glitch.length - 1) {
+            // Linger then clear
+            c.gFade -= 0.008
+            if (c.gFade <= 0) {
+              c.glitch = []; c.gi = 0; c.gFade = 0
+              c.speed = 0.3 + Math.random() * 0.6  // restore speed
+            }
           }
+          ch = c.glitch[c.gi] || ' '
+          isGlitch = true
         } else {
-          charToDraw = ALL_CHARS[Math.floor(Math.random() * ALL_CHARS.length)]
+          ch = CHARS[Math.floor(Math.random() * CHARS.length)]
         }
 
-        // Determine color
-        const rand = Math.random()
-        if (isMsg) {
-          // Glowing white/bright green for messages
-          const glow = Math.max(0, 1 - Math.abs(drop.msgTimer) / 100)
-          if (glow > 0.5) {
-            // Draw glow effect
-            ctx.shadowBlur = 12
-            ctx.shadowColor = '#00ff41'
-            ctx.fillStyle = '#ffffff'
-            ctx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`
-          } else {
-            ctx.shadowBlur = 6
-            ctx.shadowColor = '#00ff41'
-            ctx.fillStyle = '#44ff88'
-            ctx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`
-          }
-        } else if (rand > 0.99) {
-          // Rare super-bright white flash
-          ctx.shadowBlur = 8
-          ctx.shadowColor = '#ffffff'
+        // Set colour & glow
+        const rnd = Math.random()
+        if (isGlitch) {
+          const alpha = Math.max(0.3, c.gFade)
+          ctx.shadowBlur = 14
+          ctx.shadowColor = `rgba(0,255,65,${alpha})`
+          ctx.fillStyle = c.gFade > 0.7
+            ? `rgba(255,255,255,${alpha})`
+            : `rgba(68,255,100,${alpha})`
+          ctx.font = `bold ${FS}px 'Share Tech Mono', monospace`
+        } else if (rnd > 0.993) {
+          ctx.shadowBlur = 8; ctx.shadowColor = '#fff'
           ctx.fillStyle = '#ffffff'
-          ctx.font = `bold ${fontSize}px monospace`
-        } else if (rand > 0.94) {
-          // Brighter green
-          ctx.shadowBlur = 4
-          ctx.shadowColor = '#00ff41'
+          ctx.font = `bold ${FS}px monospace`
+        } else if (rnd > 0.96) {
+          ctx.shadowBlur = 3; ctx.shadowColor = '#00ff41'
           ctx.fillStyle = '#88ff88'
-          ctx.font = `${fontSize}px monospace`
-        } else if (rand > 0.7) {
-          // Medium green
-          ctx.shadowBlur = 0
-          ctx.fillStyle = `rgb(0, ${drop.brightness}, 0)`
-          ctx.font = `${fontSize}px monospace`
+          ctx.font = `${FS}px monospace`
         } else {
-          // Dim green
-          ctx.shadowBlur = 0
-          const dim = Math.floor(drop.brightness * 0.5)
-          ctx.fillStyle = `rgb(0, ${dim}, 0)`
-          ctx.font = `${fontSize}px monospace`
+          const br = 60 + Math.floor(Math.random() * 100)
+          ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'
+          ctx.fillStyle = `rgb(0,${br},0)`
+          ctx.font = `${FS}px monospace`
         }
 
-        ctx.fillText(charToDraw, x, y)
+        ctx.fillText(ch, x, y)
+        if (isGlitch) { ctx.shadowBlur = 0; ctx.shadowColor = 'transparent' }
 
-        // Reset shadow after message chars
-        if (isMsg) {
-          ctx.shadowBlur = 0
-          ctx.shadowColor = 'transparent'
-        }
-
-        // Advance drop
-        if (!drop.msgActive) {
-          if (y > H && Math.random() > 0.97) {
-            drop.y = -Math.floor(Math.random() * 20) // randomize restart
-          }
-          drop.y += drop.speed
-        } else {
-          // Slower advance during message
-          drop.y += drop.speed
+        // Advance position — always reset when past bottom
+        c.y += c.speed
+        if (c.y * FS > H + FS) {
+          c.y = -(1 + Math.random() * 10)  // reset to just above top
         }
       }
     }
 
-    cancelAnimationFrame(animRef.current)
-    animRef.current = requestAnimationFrame(draw)
+    cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(draw)
 
     return () => {
-      cancelAnimationFrame(animRef.current)
-      window.removeEventListener('resize', resize)
+      activeRef.current = false
+      cancelAnimationFrame(rafRef.current)
+      window.removeEventListener('resize', onResize)
     }
-  }, [])
-
-  useEffect(() => {
-    if (!isSimulation) {
-      cancelAnimationFrame(animRef.current)
-      // Clear canvas
-      const el = canvasRef.current
-      if (el) {
-        const ctx = el.getContext('2d')
-        ctx?.clearRect(0, 0, el.width, el.height)
-      }
-      return
-    }
-    const cleanup = startAnimation()
-    return cleanup
-  }, [isSimulation, startAnimation])
+  }, [theme])
 
   return (
     <canvas
       ref={canvasRef}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
+        top: 0, left: 0,
+        width: '100vw', height: '100vh',
         zIndex: 0,
         pointerEvents: 'none',
-        opacity: isSimulation ? 0.55 : 0,
-        transition: 'opacity 1.5s ease',
+        display: 'block',
       }}
     />
   )

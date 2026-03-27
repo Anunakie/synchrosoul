@@ -145,9 +145,7 @@ function DashboardBackground() {
 
   if (theme === 'simulation') {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#000800' }}>
-        <SimulationRain />
-      </div>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#000800' }} />
     )
   }
 
@@ -214,6 +212,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ minHeight: '100vh', background: 'transparent', paddingBottom: '5rem', position: 'relative', overflowX: 'hidden', maxWidth: '100vw' }}>
       <DashboardBackground />
+      {isSim && <SimulationRain />}
 
       {moreOpen && (
         <div

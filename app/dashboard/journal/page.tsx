@@ -3,7 +3,7 @@ import { useTheme } from '@/lib/theme-context'
 import JournalExport from '@/components/JournalExport'
 
 import { useState, useEffect, useMemo } from 'react'
-import { getLogs, saveLog, searchLogs, getStats, AngelLog } from '@/lib/storage'
+import { getLogs, saveLog, searchLogs, getStats, getNumerologyProfile, AngelLog } from '@/lib/storage'
 import { getAngelMeaning } from '@/lib/angel-meanings'
 import VoiceRecorder from '@/components/VoiceRecorder'
 import JournalEntry from '@/components/JournalEntry'
@@ -44,6 +44,8 @@ export default function JournalPage() {
   const [dreamSaving, setDreamSaving] = useState(false)
   const [dreamSaved, setDreamSaved] = useState(false)
   const [expandedDream, setExpandedDream] = useState<string | null>(null)
+  const [interpretations, setInterpretations] = useState<Record<string, string>>({})
+  const [interpretingId, setInterpretingId] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -348,6 +350,23 @@ export default function JournalPage() {
                         <p style={{ fontSize: '0.8rem', color: 'rgba(220,200,255,0.7)', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>{dream.reading}</p>
                       </div>
                     )}
+                    {/* AI Interpretation */}
+                    {interpretations[dream.id] && (
+                      <div style={{ padding: '0.875rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,40,0,0.4)' : 'rgba(80,40,160,0.12)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(160,100,255,0.25)', marginBottom: '0.75rem' }}>
+                        <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: isSim ? 'rgba(0,255,65,0.5)' : 'rgba(200,180,255,0.4)', marginBottom: '0.5rem', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> MEMORY FRAGMENT ANALYSIS' : '✦ AI Dream Interpretation'}</p>
+                        <p style={{ fontSize: '0.82rem', color: isSim ? 'rgba(100,255,120,0.85)' : 'rgba(220,200,255,0.8)', lineHeight: 1.65, margin: 0, fontFamily: isSim ? 'monospace' : 'inherit' }}>{interpretations[dream.id]}</p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => interpretDream(dream)}
+                      disabled={interpretingId === dream.id}
+                      style={{ display: 'block', width: '100%', padding: '0.65rem', marginBottom: '0.75rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,255,65,0.08)' : 'rgba(120,80,220,0.15)', border: isSim ? '1px solid rgba(0,255,65,0.25)' : '1px solid rgba(160,100,255,0.3)', color: isSim ? 'rgba(0,255,65,0.8)' : 'rgba(200,170,255,0.9)', cursor: interpretingId === dream.id ? 'not-allowed' : 'pointer', fontSize: '0.82rem', fontWeight: 600, fontFamily: isSim ? 'monospace' : 'inherit', opacity: interpretingId === dream.id ? 0.6 : 1, letterSpacing: isSim ? '0.05em' : 'normal' }}>
+                      {interpretingId === dream.id
+                        ? (isSim ? '>> PROCESSING MEMORY FRAGMENT...' : '✦ Interpreting your dream...')
+                        : interpretations[dream.id]
+                          ? (isSim ? '>> RE-ANALYZE FRAGMENT' : '✦ Re-interpret Dream')
+                          : (isSim ? '>> ANALYZE MEMORY FRAGMENT' : '✦ Interpret This Dream with AI')}
+                    </button>
                     <button onClick={() => { deleteDream(dream.id); getDreams().then(setDreams); setExpandedDream(null) }} style={{ fontSize: '0.7rem', color: 'rgba(231,76,60,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete dream</button>
                   </div>
                 )}
@@ -364,6 +383,38 @@ export default function JournalPage() {
         ) : null}
       </div>
     )
+  }
+
+
+  async function interpretDream(dream: DreamEntry) {
+    if (interpretingId) return
+    setInterpretingId(dream.id)
+    try {
+      const numProfile = getNumerologyProfile()
+      const recentLogs = logs.slice(0, 5)
+      const res = await fetch('/api/dreams/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: dream.title,
+          description: dream.description,
+          symbols: dream.symbols,
+          moods: dream.moods,
+          angelNumbers: dream.angelNumbers,
+          recentLogs,
+          numerologyProfile: numProfile,
+          mode: isSim ? 'simulation' : 'spiritual',
+        })
+      })
+      const data = await res.json()
+      if (data.interpretation) {
+        setInterpretations(prev => ({ ...prev, [dream.id]: data.interpretation }))
+      }
+    } catch {
+      setInterpretations(prev => ({ ...prev, [dream.id]: 'Interpretation unavailable. Please try again.' }))
+    } finally {
+      setInterpretingId(null)
+    }
   }
 
   // ── THOUGHT ANCHOR LIST ───────────────────────────────────────────────────
