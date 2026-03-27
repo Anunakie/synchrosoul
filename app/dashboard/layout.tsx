@@ -309,6 +309,12 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      <main style={{ position: 'relative', zIndex: 1, overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>{children}</main>
+
+      <ThemeSwitcher />
+      <NotificationBell />
+      <InstallPrompt />
+
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
         background: isSim ? 'rgba(0,8,0,0.97)' : 'rgba(5,5,16,0.92)',
         backdropFilter: 'blur(24px)',
