@@ -5,6 +5,7 @@ import { saveLog, AngelLog } from '@/lib/storage'
 import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/lib/theme-context'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -31,6 +32,7 @@ function isPremium(tier: string): boolean {
 }
 
 export default function AngelLogger({ onLogged }: Props) {
+  const { theme } = useTheme()
   const [selected, setSelected] = useState<string>('')
   const [custom, setCustom] = useState<string>('')
   const [thought, setThought] = useState<string>('')
@@ -99,7 +101,12 @@ export default function AngelLogger({ onLogged }: Props) {
           const res = await fetch('/api/oracle/instant', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number: activeNumber, thoughtAnchor: thought.trim(), numerologyProfile }),
+            body: JSON.stringify({
+              number: activeNumber,
+              thoughtAnchor: thought.trim(),
+              numerologyProfile,
+              mode: theme === 'simulation' ? 'simulation' : 'spiritual'
+            }),
           })
           if (res.ok) {
             const data = await res.json()
