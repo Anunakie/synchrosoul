@@ -1,6 +1,6 @@
 // lib/dream-storage.ts
 import { getDreamReading } from './dream-meanings'
-import { getCurrentUserId, getDreamsFromDB, saveDreamToDB, deleteDreamFromDB } from './supabase-db'
+import { getCurrentUserId, getDreamsFromDB, saveDreamToDB, deleteDreamFromDB, updateDreamReadingInDB } from './supabase-db'
 
 export interface DreamEntry {
   id: string
@@ -116,6 +116,28 @@ export async function saveDream(data: {
   const existing = getLocalDreams()
   localStorage.setItem(DREAM_KEY, JSON.stringify([dream, ...existing]))
   return dream
+}
+
+
+export async function updateDreamReading(id: string, reading: string): Promise<void> {
+  // Update localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const local = JSON.parse(localStorage.getItem(DREAM_KEY) || '[]') as DreamEntry[]
+      const idx = local.findIndex(d => d.id === id)
+      if (idx !== -1) {
+        local[idx] = { ...local[idx], reading }
+        localStorage.setItem(DREAM_KEY, JSON.stringify(local))
+      }
+    } catch {}
+  }
+  // Update Supabase
+  try {
+    const userId = await getCurrentUserId()
+    if (userId) {
+      await updateDreamReadingInDB(id, reading)
+    }
+  } catch {}
 }
 
 export async function deleteDream(id: string): Promise<void> {

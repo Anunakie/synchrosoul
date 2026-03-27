@@ -258,6 +258,23 @@ export async function saveDreamToDB(data: {
   }
 }
 
+
+
+export async function updateDreamReadingInDB(id: string, reading: string): Promise<boolean> {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+    const { error } = await supabase
+      .from('dreams')
+      .update({ reading })
+      .eq('id', id)
+      .eq('user_id', user.id)
+    return !error
+  } catch {
+    return false
+  }
+}
 export async function deleteDreamFromDB(id: string): Promise<boolean> {
   try {
     const supabase = createClient()

@@ -7,7 +7,7 @@ import { getLogs, saveLog, searchLogs, getStats, getNumerologyProfile, AngelLog 
 import { getAngelMeaning } from '@/lib/angel-meanings'
 import VoiceRecorder from '@/components/VoiceRecorder'
 import JournalEntry from '@/components/JournalEntry'
-import { getDreams, saveDream, deleteDream, DreamEntry } from '@/lib/dream-storage'
+import { getDreams, saveDream, deleteDream, updateDreamReading, DreamEntry } from '@/lib/dream-storage'
 
 const DREAM_SYMBOLS = ['🌊','🔥','🌙','⭐','🦋','🐍','🌹','🏔️','🌊','💎','🦅','🌸','🌀','⚡','🌿','🕊️','🐉','🌺']
 const DREAM_MOODS = ['Peaceful','Anxious','Joyful','Mysterious','Fearful','Transcendent','Confused','Blissful','Melancholic','Energized']
@@ -51,7 +51,7 @@ export default function JournalPage() {
     setMounted(true)
     getLogs().then(setLogs)
     getStats().then(setStats)
-    getDreams().then(setDreams)
+    getDreams().then(d => { setDreams(d); const existing: Record<string, string> = {}; d.forEach(dream => { if (dream.reading) existing[dream.id] = dream.reading; }); setInterpretations(existing); })
   }, [])
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export default function JournalPage() {
     await new Promise(r => setTimeout(r, 600))
     const nums = dreamNumbers.split(/[,\s]+/).map(n => n.replace(/\D/g, '')).filter(Boolean)
     saveDream({ title: dreamTitle || 'Untitled Dream', description: dreamDesc, symbols: dreamSymbols, moods: dreamMoods, angelNumbers: nums, voiceNoteUrl: dreamVoice })
-    getDreams().then(setDreams)
+    getDreams().then(d => { setDreams(d); const existing: Record<string, string> = {}; d.forEach(dream => { if (dream.reading) existing[dream.id] = dream.reading; }); setInterpretations(existing); })
     setDreamSaving(false)
     setDreamSaved(true)
     setTimeout(() => {
@@ -367,7 +367,7 @@ export default function JournalPage() {
                           ? (isSim ? '>> RE-ANALYZE FRAGMENT' : '✦ Re-interpret Dream')
                           : (isSim ? '>> ANALYZE MEMORY FRAGMENT' : '✦ Interpret This Dream with AI')}
                     </button>
-                    <button onClick={() => { deleteDream(dream.id); getDreams().then(setDreams); setExpandedDream(null) }} style={{ fontSize: '0.7rem', color: 'rgba(231,76,60,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete dream</button>
+                    <button onClick={() => { deleteDream(dream.id); getDreams().then(d => { setDreams(d); const existing: Record<string, string> = {}; d.forEach(dream => { if (dream.reading) existing[dream.id] = dream.reading; }); setInterpretations(existing); }); setExpandedDream(null) }} style={{ fontSize: '0.7rem', color: 'rgba(231,76,60,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete dream</button>
                   </div>
                 )}
               </div>
@@ -409,6 +409,8 @@ export default function JournalPage() {
       const data = await res.json()
       if (data.interpretation) {
         setInterpretations(prev => ({ ...prev, [dream.id]: data.interpretation }))
+        // Persist the interpretation to the dream entry
+        await updateDreamReading(dream.id, data.interpretation)
       }
     } catch {
       setInterpretations(prev => ({ ...prev, [dream.id]: 'Interpretation unavailable. Please try again.' }))
