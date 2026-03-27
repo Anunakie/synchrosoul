@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTheme } from '@/lib/theme-context';
 import { getAllPostsFromDB, FeedPost, getLiveSyncMatches, LiveSyncMatch } from '@/lib/supabase-db';
 import { getPosts, savePost, SocialPost } from '@/lib/social-storage';
 import { isAuthenticated } from '@/lib/supabase-db';
@@ -107,6 +108,8 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<(FeedPost | SocialPost)[]>([]);
   const [syncMatches, setSyncMatches] = useState<LiveSyncMatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
+  const isSim = theme === 'simulation';
   const [isReal, setIsReal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [newPostCount, setNewPostCount] = useState(0);
@@ -219,11 +222,11 @@ export default function FeedPage() {
   return (
     <div style={{ minHeight: '100vh', padding: '1.5rem 1rem 6rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🌌</div>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 700, color: '#fff', margin: 0 }}>Cosmic Feed</h1>
+        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{isSim ? '📡' : '🌌'}</div>
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 700, color: '#fff', margin: 0 }}>{isSim ? 'SYSTEM BROADCAST' : 'Cosmic Feed'}</h1>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '0.3rem' }}>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', margin: 0 }}>
-            {isReal ? '❆ Live posts from your cosmic community' : '❆ Your local posts'}
+            {isReal ? (isSim ? '>> LIVE DATA STREAM · CONNECTED NODES ACTIVE' : '❆ Live posts from your cosmic community') : (isSim ? '>> LOCAL CACHE ONLY' : '❆ Your local posts')}
           </p>
           {isReal && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
@@ -239,7 +242,7 @@ export default function FeedPage() {
 
       <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '12px',
         padding: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-        {[['feed','🌌 Feed'],['sync','🔮 Live Sync']].map(([v, label]) => (
+        {[['feed', isSim ? '📡 BROADCAST' : '🌌 Feed'],['sync', isSim ? '⚡ SIGNAL MATCH' : '🔮 Live Sync']].map(([v, label]) => (
           <button key={v} onClick={() => { setView(v as any); setNewPostCount(0); }}
             style={{ flex: 1, padding: '0.5rem', borderRadius: '9px', border: 'none', cursor: 'pointer',
               fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s',
@@ -274,7 +277,7 @@ export default function FeedPage() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem 0' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>❆</div>
-          <p style={{ color: 'rgba(255,255,255,0.4)' }}>Tuning into the cosmos...</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)' }}>{isSim ? 'SCANNING NETWORK...' : 'Tuning into the cosmos...'}</p>
         </div>
       ) : view === 'feed' ? (
         filtered.length === 0 ? (
@@ -282,7 +285,7 @@ export default function FeedPage() {
             background: 'rgba(8,6,28,0.7)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌌</div>
             <p style={{ color: 'rgba(255,255,255,0.6)' }}>No posts yet</p>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem' }}>Share your cosmic moments on your Profile page</p>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem' }}>{isSim ? 'BROADCAST CHANNEL EMPTY. Transmit via Identity Matrix.' : 'Share your cosmic moments on your Profile page'}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -297,7 +300,7 @@ export default function FeedPage() {
             background: 'rgba(8,6,28,0.7)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔮</div>
             <p style={{ color: 'rgba(255,255,255,0.6)' }}>No sync matches yet</p>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem' }}>Log angel numbers to find cosmic connections</p>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem' }}>{isSim ? 'NO SIGNAL MATCHES DETECTED. Report anomaly codes to find connected nodes.' : 'Log angel numbers to find cosmic connections'}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

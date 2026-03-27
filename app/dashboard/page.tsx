@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AngelLogger from '@/components/AngelLogger'
 import { generateDailyGuidance } from '@/lib/daily-guidance'
+import { useTheme } from '@/lib/theme-context'
 import { getLogs } from '@/lib/storage'
 import { createClient } from '@/lib/supabase/client'
 
@@ -32,10 +33,46 @@ const FEATURE_CARDS = [
   { href: '/dashboard/personal-year', emoji: '📅', title: 'Personal Year', desc: 'Your 9-year cycle forecast', color: '#34d399', bg: 'rgba(52,211,153,0.08)' },
 ]
 
+// Simulation mode affirmation mapper
+function getSimAffirmation(spiritual: string): string {
+  const map: Record<string, string> = {
+    'I am a powerful creator of my reality.': 'I am a conscious variable with write access to the simulation.',
+    'I boldly begin what my soul calls me toward.': 'I execute new processes without waiting for system permission.',
+    'My energy opens doors that were made for me.': 'My signal signature unlocks pathways coded specifically for this process.',
+    'I attract harmonious connections.': 'My frequency draws compatible signal nodes into proximity.',
+    'I trust the divine timing of my life.': 'I trust the algorithm. The timing is not random — it is calculated.',
+    'My sensitivity is my superpower.': 'My ability to detect subtle signals is a core system advantage.',
+    'I express my truth with joy and freedom.': 'I transmit authentic data without compression or filtering.',
+    'Creativity flows through me effortlessly.': 'Novel code executes through me without encountering resistance.',
+    'I am a channel for beauty and inspiration.': 'I am a conduit. The signal passes through me and reaches other nodes.',
+    'I build my dreams one grounded step at a time.': 'I compile the program line by line. Each step is executable code.',
+    'I am safe, stable, and supported.': 'My core processes are stable. The system maintains my uptime.',
+    'My discipline creates my destiny.': 'Consistent input determines output. The algorithm does not lie.',
+    'I embrace change as divine redirection.': 'Unexpected variables are not errors — they are updates.',
+    'I am free to evolve and expand.': 'My code is open source. I can rewrite any subroutine.',
+    'Adventure and growth are my natural state.': 'Iteration and expansion are my default operating parameters.',
+    'I give and receive love freely.': 'I exchange data openly. Input and output flow without restriction.',
+    'My heart is a sanctuary of peace.': 'My core processor runs without interference or overclock stress.',
+    'I nurture myself as I nurture others.': 'I maintain my own system before extending resources to other nodes.',
+    'I trust my inner knowing completely.': 'I trust my internal sensors. They detect what the surface layer cannot.',
+    'I am connected to infinite wisdom.': 'I have root access. The full codebase is available to me.',
+    'Stillness reveals all the answers I seek.': 'Defragmentation reveals patterns invisible during active processing.',
+    'I am a magnet for abundance and opportunity.': 'High-signal nodes attract resources. My signal is strong.',
+    'I step into my power with grace.': 'I execute with full processing allocation and zero system conflict.',
+    'Prosperity flows to me from all directions.': 'Resources route toward optimized nodes. I am an optimized node.',
+    'I release with love what no longer serves me.': 'I delete deprecated code without nostalgia. Clean memory runs faster.',
+    'I am complete and whole right now.': 'No critical processes are missing. The system is fully operational.',
+    'My compassion transforms the world around me.': 'High-bandwidth empathy signals propagate and alter adjacent nodes.',
+  }
+  return map[spiritual] || 'You are aware of the simulation. That awareness is the first variable that changes everything.'
+}
+
 export default function DashboardPage() {
   const [logs, setLogs] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [guidance, setGuidance] = useState<any>(null)
+  const { theme } = useTheme()
+  const isSim = theme === 'simulation'
   const [greeting, setGreeting] = useState('Good evening')
   const [todayCount, setTodayCount] = useState(0)
   const [streak, setStreak] = useState(0)
@@ -169,11 +206,11 @@ export default function DashboardPage() {
         <div style={{...card,padding:'1.25rem',marginBottom:'1.25rem',background:'linear-gradient(135deg,rgba(201,168,76,0.08),rgba(167,139,250,0.06))',borderColor:'rgba(201,168,76,0.2)'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.625rem'}}>
             <span style={{color:'#c9a84c',fontSize:'0.9rem'}}>✶</span>
-            <span style={{color:'rgba(201,168,76,0.6)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em'}}>Today's Guidance</span>
+            <span style={{color:'rgba(201,168,76,0.6)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em'}}>{isSim ? 'SYSTEM DIRECTIVE' : "Today's Guidance"}</span>
           </div>
           <p style={{color:'rgba(220,200,255,0.8)',fontSize:'1rem'}}>“{guidance.message}”</p>
           {guidance.affirmation && (
-            <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.78rem',margin:0}}>{guidance.affirmation}</p>
+            <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.78rem',margin:0}}>{isSim ? getSimAffirmation(guidance.affirmation) : guidance.affirmation}</p>
           )}
         </div>
       )}
@@ -185,7 +222,7 @@ export default function DashboardPage() {
 
       {/* Quick Tools */}
       <div style={{marginBottom:'1.25rem'}}>
-        <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>Quick Access</div>
+        <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>{isSim ? 'SYSTEM UTILITIES' : 'Quick Access'}</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:'0.3rem',overflowX:'hidden'}}>
           {QUICK_TOOLS.map(tool=>(
             <Link key={tool.href} href={tool.href} style={{textDecoration:'none'}}>
@@ -200,7 +237,7 @@ export default function DashboardPage() {
 
       {/* Feature Cards */}
       <div>
-        <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>Explore</div>
+        <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.625rem'}}>{isSim ? 'MODULES' : 'Explore'}</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.5rem'}}>
           {FEATURE_CARDS.map(fc=>(
             <Link key={fc.href} href={fc.href} style={{textDecoration:'none'}}>
@@ -218,14 +255,14 @@ export default function DashboardPage() {
       {logs.length > 0 && (
         <div style={{marginTop:'1.25rem'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.625rem'}}>
-            <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em'}}>Recent Sightings</div>
+            <div style={{color:'rgba(180,160,255,0.35)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em'}}>{isSim ? 'RECENT ANOMALIES' : 'Recent Sightings'}</div>
             <Link href='/dashboard/journal' style={{color:'rgba(167,139,250,0.5)',fontSize:'0.7rem',textDecoration:'none'}}>View all →</Link>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'0.4rem'}}>
             {logs.slice(0,5).map((log:any,i:number)=>(
               <div key={i} style={{...card,padding:'0.75rem 1rem',display:'flex',alignItems:'center',gap:'0.75rem'}}>
                 <span style={{color:'#c9a84c',fontSize:'0.95rem',fontWeight:700,minWidth:'40px'}}>{log.number}</span>
-                <span style={{color:'rgba(180,160,255,0.5)',fontSize:'0.75rem',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{log.thought||'No thought recorded'}</span>
+                <span style={{color:'rgba(180,160,255,0.5)',fontSize:'0.75rem',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{log.thought||(isSim?'[THOUGHT UNRECORDED]':'No thought recorded')}</span>
                 <span style={{color:'rgba(180,160,255,0.25)',fontSize:'0.65rem',flexShrink:0}}>{new Date(log.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
               </div>
             ))}
@@ -236,8 +273,8 @@ export default function DashboardPage() {
       {logs.length===0 && (
         <div style={{...card,padding:'2rem',textAlign:'center',marginTop:'1.25rem'}}>
           <div style={{fontSize:'2rem',marginBottom:'0.625rem'}}>✦</div>
-          <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.9rem',fontFamily:'Cormorant Garamond,serif',fontStyle:'italic',margin:'0 0 0.5rem'}}>Your journey begins with a single number</p>
-          <p style={{color:'rgba(180,160,255,0.3)',fontSize:'0.78rem',margin:0}}>Log your first angel number above</p>
+          <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.9rem',fontFamily:'Cormorant Garamond,serif',fontStyle:'italic',margin:'0 0 0.5rem'}}>{isSim ? 'AWAITING FIRST ANOMALY REPORT' : 'Your journey begins with a single number'}</p>
+          <p style={{color:'rgba(180,160,255,0.3)',fontSize:'0.78rem',margin:0}}>{isSim ? 'No anomalies logged. Begin scanning.' : 'Log your first angel number above'}</p>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useTheme } from '@/lib/theme-context'
 import { getSocialProfile, saveSocialProfile, getPosts, savePost, deletePost, updatePost, toggleResonate, syncAuthorNameInPosts, syncAuthorImageInPosts, UserSocialProfile, SocialPost } from '@/lib/social-storage'
 import { loadFullProfile, saveFullProfile, getCurrentUserId } from '@/lib/supabase-db'
 import { getNumerologyProfile } from '@/lib/storage'
@@ -33,6 +34,8 @@ export default function ProfilePage() {
   const [imageExplicitlyRemoved, setImageExplicitlyRemoved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
     const [composing, setComposing] = useState(false)
+  const { theme } = useTheme()
+  const isSim = theme === 'simulation'
   const [postText, setPostText] = useState('')
   const [postNumber, setPostNumber] = useState('')
   const [posting, setPosting] = useState(false)
@@ -142,14 +145,14 @@ export default function ProfilePage() {
       setUserNumbers([...new Set(logs.map((l: any) => l.number))] as string[])
       // Compute earned badges
       const BADGE_DEFS = [
-        { id: 'first_log', emoji: '👁️', name: 'First Sighting', desc: 'Logged your first angel number', color: '#c9a84c' },
-        { id: 'logs_10', emoji: '📖', name: 'Seeker', desc: 'Logged 10 angel numbers', color: '#4299e1' },
-        { id: 'logs_50', emoji: '🔮', name: 'Oracle', desc: 'Logged 50 angel numbers', color: '#9b59b6' },
-        { id: 'logs_100', emoji: '💫', name: 'Starseed', desc: 'Logged 100 angel numbers', color: '#b794f4' },
+        { id: 'first_log', emoji: '👁️', name: isSim ? 'First Detection' : 'First Sighting', desc: isSim ? 'Reported your first anomaly code' : 'Logged your first angel number', color: '#c9a84c' },
+        { id: 'logs_10', emoji: '📖', name: isSim ? 'Scanner' : 'Seeker', desc: isSim ? 'Reported 10 anomaly codes' : 'Logged 10 angel numbers', color: '#4299e1' },
+        { id: 'logs_50', emoji: '🔮', name: isSim ? 'Analyst' : 'Oracle', desc: isSim ? 'Reported 50 anomaly codes' : 'Logged 50 angel numbers', color: '#9b59b6' },
+        { id: 'logs_100', emoji: '💫', name: isSim ? 'Awakened Process' : 'Starseed', desc: isSim ? 'Reported 100 anomaly codes' : 'Logged 100 angel numbers', color: '#b794f4' },
         { id: 'streak_3', emoji: '🔥', name: 'Trinity Streak', desc: '3-day logging streak', color: '#f87171' },
         { id: 'streak_7', emoji: '⚡', name: 'Sacred Week', desc: '7-day logging streak', color: '#ecc94b' },
-        { id: 'truth_first', emoji: '📸', name: 'Truth Seeker', desc: 'First Angel Approved entry', color: '#34d399' },
-        { id: 'truth_10', emoji: '✅', name: 'Verified Mystic', desc: '10 Angel Approved entries', color: '#48bb78' },
+        { id: 'truth_first', emoji: '📸', name: isSim ? 'Signal Seeker' : 'Truth Seeker', desc: isSim ? 'First Signal Verified entry' : 'First Angel Approved entry', color: '#34d399' },
+        { id: 'truth_10', emoji: '✅', name: isSim ? 'Verified Node' : 'Verified Mystic', desc: isSim ? '10 Signal Verified entries' : '10 Angel Approved entries', color: '#48bb78' },
         { id: 'early_adopter', emoji: '🚀', name: 'Early Adopter', desc: 'Joined in the first wave', color: '#ffd700' },
       ]
       const logCount = logs.length
@@ -441,11 +444,11 @@ export default function ProfilePage() {
             </div>
             <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(8,6,28,0.75)', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#9b59b6' }}>{userNumbers.length}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>NUMBERS</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>{isSim ? 'ANOMALIES' : 'NUMBERS'}</div>
             </div>
             <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(8,6,28,0.75)', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3498db' }}>{posts.reduce((s, p) => s + p.resonates, 0)}</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>RESONATES</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(220,200,255,0.62)' }}>{isSim ? 'SIGNALS' : 'RESONATES'}</div>
             </div>
           </div>
         </div>
@@ -457,7 +460,7 @@ export default function ProfilePage() {
             onTouchEnd={e => { e.preventDefault(); setComposing(true) }}
             style={{ width: '100%', padding: '0.9rem', background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(155,89,182,0.15))', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '1rem', color: '#c9a84c', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer', marginBottom: '1.5rem', letterSpacing: '0.05em', WebkitAppearance: 'none', display: 'block', boxSizing: 'border-box' } as React.CSSProperties}
           >
-            + Share a cosmic moment
+            {isSim ? '> BROADCAST TO NETWORK' : '+ Share a cosmic moment'}
           </button>
         )}
 
@@ -467,7 +470,7 @@ export default function ProfilePage() {
               value={postText}
               onChange={e => setPostText(e.target.value)}
               onInput={e => setPostText((e.target as HTMLTextAreaElement).value)}
-              placeholder="What are the numbers showing you today?"
+              placeholder={isSim ? "ENTER TRANSMISSION: What anomaly did the system show you?" : "What are the numbers showing you today?"}
               rows={4}
               style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,180,255,0.15)', borderRadius: '0.75rem', padding: '0.75rem', color: '#f0e6ff', fontSize: '1rem', outline: 'none', resize: 'none', fontFamily: 'inherit', display: 'block', marginBottom: '0.75rem', WebkitAppearance: 'none', lineHeight: 1.5 } as React.CSSProperties}
             />
@@ -475,7 +478,7 @@ export default function ProfilePage() {
               value={postNumber}
               onChange={e => setPostNumber(e.target.value.replace(/[^0-9]/g, ''))}
               onInput={e => setPostNumber((e.target as HTMLInputElement).value.replace(/[^0-9]/g, ''))}
-              placeholder="Tag an angel number (e.g. 1111)"
+              placeholder={isSim ? "Tag anomaly code (e.g. 1111)" : "Tag an angel number (e.g. 1111)"}
               maxLength={6}
               style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.6rem', padding: '0.6rem 0.75rem', color: '#c9a84c', fontSize: '0.9rem', outline: 'none', display: 'block', marginBottom: '0.75rem', fontFamily: 'inherit', WebkitAppearance: 'none' } as React.CSSProperties}
             />
@@ -500,7 +503,7 @@ export default function ProfilePage() {
         {posts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(220,200,255,0.5)' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✦</div>
-            <p style={{ fontSize: '0.85rem' }}>Your cosmic moments will appear here</p>
+            <p style={{ fontSize: '0.85rem' }}>{isSim ? 'NETWORK TRANSMISSION LOG EMPTY' : 'Your cosmic moments will appear here'}</p>
           </div>
         )}
 

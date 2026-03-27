@@ -1,4 +1,5 @@
-'use client';
+'use client'
+import { useTheme } from '@/lib/theme-context';
 import { useState, useEffect } from 'react';
 import { getLogs } from '@/lib/storage';
 import { getDreams } from '@/lib/dream-storage';
@@ -13,9 +14,9 @@ const allBadges = [
   { id: 'streak_7', emoji: '⚡', name: 'Sacred Week', desc: '7-day logging streak', category: 'Streak', color: '#ecc94b', requirement: '7 days in a row' },
   { id: 'streak_30', emoji: '🌕', name: 'Moon Cycle', desc: '30-day logging streak', category: 'Streak', color: '#c9a84c', requirement: '30 days in a row' },
   { id: 'streak_100', emoji: '👑', name: 'Cosmic Crown', desc: '100-day logging streak', category: 'Streak', color: '#ffd700', requirement: '100 days in a row' },
-  { id: 'truth_first', emoji: '📸', name: 'Truth Seeker', desc: 'First Angel Approved entry', category: 'Truth', color: '#34d399', requirement: 'Upload first screenshot' },
-  { id: 'truth_10', emoji: '✅', name: 'Verified Mystic', desc: '10 Angel Approved entries', category: 'Truth', color: '#48bb78', requirement: '10 verified entries' },
-  { id: 'truth_50', emoji: '🏆', name: 'Angel Champion', desc: '50 Angel Approved entries', category: 'Truth', color: '#c9a84c', requirement: '50 verified entries' },
+  { id: 'truth_first', emoji: '📸', name: 'Truth Seeker', desc: 'First Angel Approved entry', simName: 'Signal Seeker', simDesc: 'First Signal Verified entry', category: 'Truth', color: '#34d399', requirement: 'Upload first screenshot' },
+  { id: 'truth_10', emoji: '✅', name: 'Verified Mystic', desc: '10 Angel Approved entries', simName: 'Verified Node', simDesc: '10 Signal Verified entries', category: 'Truth', color: '#48bb78', requirement: '10 verified entries' },
+  { id: 'truth_50', emoji: '🏆', name: 'Angel Champion', desc: '50 Angel Approved entries', simName: 'System Champion', simDesc: '50 Signal Verified entries', category: 'Truth', color: '#c9a84c', requirement: '50 verified entries' },
   { id: 'number_1111', emoji: '🌠', name: '1111 Portal', desc: 'Logged 1111 five times', category: 'Numbers', color: '#ffd700', requirement: 'Log 1111 x 5' },
   { id: 'number_777', emoji: '🍀', name: 'Lucky Seven', desc: 'Logged 777 three times', category: 'Numbers', color: '#c9a84c', requirement: 'Log 777 x 3' },
   { id: 'number_all', emoji: '🎯', name: 'Number Master', desc: 'Logged all 12 common numbers', category: 'Numbers', color: '#ed8936', requirement: 'Log all 12 numbers' },
@@ -43,7 +44,9 @@ export default function BadgesPage() {
   const [dreamCount, setDreamCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('All');
-  const categories = ['All', ...Array.from(new Set(allBadges.map(b => b.category)))];
+  const categories = ['All', ...Array.from(new Set(allBadges.map(b => b.category)))]
+  const { theme } = useTheme();
+  const isSim = theme === 'simulation';
 
   useEffect(() => {
     async function load() {
@@ -125,7 +128,7 @@ export default function BadgesPage() {
           return (
             <div key={badge.id} style={{ background: isUnlocked ? 'rgba(8,6,28,0.9)' : 'rgba(8,6,28,0.5)', border: isUnlocked ? '1px solid ' + badge.color + '55' : '1px solid rgba(255,255,255,0.06)', borderRadius: '1rem', padding: '1.1rem 0.75rem', textAlign: 'center', opacity: isUnlocked ? 1 : 0.45, transition: 'all 0.2s' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.4rem', filter: isUnlocked ? 'drop-shadow(0 0 8px ' + badge.color + '88)' : 'grayscale(1)' }}>{badge.emoji}</div>
-              <div style={{ color: isUnlocked ? badge.color : 'rgba(255,255,255,0.4)', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.25rem' }}>{badge.name}</div>
+              <div style={{ color: isUnlocked ? badge.color : 'rgba(255,255,255,0.4)', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.25rem' }}>{isSim && (badge as any).simName ? (badge as any).simName : badge.name}</div>
               <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.65rem', lineHeight: 1.3 }}>{isUnlocked ? badge.desc : badge.requirement}</div>
               {isUnlocked && <div style={{ marginTop: '0.4rem', fontSize: '0.6rem', color: badge.color }}>✓ Earned</div>}
             </div>

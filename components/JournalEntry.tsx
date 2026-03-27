@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTheme } from '@/lib/theme-context'
 import { AngelLog, deleteLog, toggleShare } from '@/lib/storage'
 import { speakText, stopSpeaking } from './VoiceRecorder'
 
@@ -24,6 +25,8 @@ function timeAgo(iso: string): string {
 
 export default function JournalEntry({ log, onDelete, onToggleShare }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const { theme } = useTheme()
+  const isSim = theme === 'simulation'
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
 
@@ -101,7 +104,7 @@ export default function JournalEntry({ log, onDelete, onToggleShare }: Props) {
                 fontSize: '0.7rem', padding: '0.15rem 0.6rem', borderRadius: '9999px',
                 background: 'rgba(68,255,170,0.1)', color: '#44ffaa',
                 border: '1px solid rgba(68,255,170,0.25)',
-              }}>✦ Angel Approved</span>
+              }}>{isSim ? '>> SIGNAL VERIFIED' : '✦ Angel Approved'}</span>
             )}
             {log.shared && (
               <span style={{

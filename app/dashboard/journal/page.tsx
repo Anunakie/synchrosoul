@@ -1,4 +1,5 @@
 'use client'
+import { useTheme } from '@/lib/theme-context'
 import JournalExport from '@/components/JournalExport'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -12,6 +13,8 @@ const DREAM_SYMBOLS = ['🌊','🔥','🌙','⭐','🦋','🐍','🌹','🏔️'
 const DREAM_MOODS = ['Peaceful','Anxious','Joyful','Mysterious','Fearful','Transcendent','Confused','Blissful','Melancholic','Energized']
 
 export default function JournalPage() {
+  const { theme } = useTheme()
+  const isSim = theme === 'simulation'
   const [activeTab, setActiveTab] = useState<'anchor' | 'dreams'>('anchor')
 
   // ── THOUGHT ANCHOR STATE ─────────────────────────────────────────────────
@@ -212,13 +215,13 @@ export default function JournalPage() {
             )}
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.5)', marginBottom: '0.5rem' }}>Screenshot <span style={{ color: 'rgba(100,220,100,0.6)', marginLeft: '0.5rem' }}>+Angel Approved Badge</span></label>
+            <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.5)', marginBottom: '0.5rem' }}>Screenshot <span style={{ color: 'rgba(100,220,100,0.6)', marginLeft: '0.5rem' }}>{isSim ? '+Signal Verified' : '+Angel Approved Badge'}</span></label>
             <label style={{ display: 'block', cursor: 'pointer' }}>
               <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
               {entryScreenshot ? (
                 <div style={{ position: 'relative', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(100,220,100,0.3)' }}>
                   <img src={entryScreenshot} alt="screenshot" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }} />
-                  <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', background: 'rgba(0,180,80,0.85)', fontSize: '0.7rem', color: 'white', fontWeight: 600 }}>✓ Angel Approved</div>
+                  <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', background: 'rgba(0,180,80,0.85)', fontSize: '0.7rem', color: 'white', fontWeight: 600 }}>{isSim ? '✓ SIGNAL VERIFIED' : '✓ Angel Approved'}</div>
                 </div>
               ) : (
                 <div style={{ borderRadius: '0.75rem', padding: '1.5rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,180,255,0.2)', color: 'rgba(200,180,255,0.4)', fontSize: '0.875rem' }}>

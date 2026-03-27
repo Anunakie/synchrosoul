@@ -33,6 +33,7 @@ function isPremium(tier: string): boolean {
 
 export default function AngelLogger({ onLogged }: Props) {
   const { theme } = useTheme()
+  const isSim = theme === 'simulation'
   const [selected, setSelected] = useState<string>('')
   const [custom, setCustom] = useState<string>('')
   const [thought, setThought] = useState<string>('')
@@ -207,7 +208,7 @@ export default function AngelLogger({ onLogged }: Props) {
             padding: '0.5rem 1.25rem', borderRadius: '9999px', marginBottom: '1.5rem',
             background: 'rgba(68,255,170,0.1)', border: '1px solid rgba(68,255,170,0.3)',
             color: '#44ffaa', fontSize: '0.8rem', fontWeight: 500,
-          }}>✦ Angel Approved · Truth Score Verified</div>
+          }}>{isSim ? '>> SIGNAL VERIFIED · DATA INTEGRITY CONFIRMED' : '✦ Angel Approved · Truth Score Verified'}</div>
         )}
 
         {/* Upgrade teaser for free users who entered a thought */}
@@ -344,7 +345,7 @@ export default function AngelLogger({ onLogged }: Props) {
         {/* Screenshot / Truth Score */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.5)', marginBottom: '0.5rem' }}>
-            Screenshot Proof <span style={{ color: 'rgba(68,255,170,0.7)' }}>→ Angel Approved Badge</span>
+            {isSim ? 'UPLOAD PROOF FILE' : 'Screenshot Proof'} <span style={{ color: 'rgba(68,255,170,0.7)' }}>{isSim ? '→ SIGNAL VERIFIED STATUS' : '→ Angel Approved Badge'}</span>
           </label>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
           {screenshot ? (
@@ -355,7 +356,7 @@ export default function AngelLogger({ onLogged }: Props) {
             }}>
               <img src={screenshot} alt="proof" style={{ width: '3rem', height: '3rem', borderRadius: '0.5rem', objectFit: 'cover' }} />
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#44ffaa', fontSize: '0.8rem', fontWeight: 600 }}>❖ Angel Approved · Truth Score Active</p>
+                <p style={{ color: '#44ffaa', fontSize: '0.8rem', fontWeight: 600 }}>{isSim ? '>> ANOMALY CONFIRMED · SIGNAL LOCKED' : '❖ Angel Approved · Truth Score Active'}</p>
                 <p style={{ color: 'rgba(200,180,255,0.4)', fontSize: '0.7rem' }}>{screenshotName}</p>
               </div>
               <button onClick={() => { setScreenshot(null); setScreenshotName('') }}
@@ -366,7 +367,7 @@ export default function AngelLogger({ onLogged }: Props) {
               width: '100%', padding: '1rem', borderRadius: '0.75rem',
               background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(200,180,255,0.2)',
               color: 'rgba(200,180,255,0.4)', cursor: 'pointer', fontSize: '0.875rem',
-            }}>📸 Upload screenshot for Angel Approved badge (optional)</button>
+            }}>{isSim ? '>> UPLOAD PROOF FILE — SIGNAL VERIFIED STATUS (optional)' : '📸 Upload screenshot for Angel Approved badge (optional)'}</button>
           )}
         </div>
 
@@ -377,7 +378,7 @@ export default function AngelLogger({ onLogged }: Props) {
           cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.95rem',
           fontWeight: 500, letterSpacing: '0.05em', opacity: saving ? 0.7 : 1,
         }}>
-          {saving ? '❖ Channeling your reading...' : 'Log This Number ❖'}
+          {saving ? isSim ? '>> PROCESSING ANOMALY...' : '❖ Channeling your reading...' : isSim ? '>> SUBMIT ANOMALY CODE' : 'Log This Number ❖'}
         </button>
       </div>
     )
@@ -391,10 +392,10 @@ export default function AngelLogger({ onLogged }: Props) {
       position: 'relative', zIndex: 10, overflowX: 'hidden' as const,
     }}>
       <h2 style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.5rem', textAlign: 'center', marginBottom: '0.25rem', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>
-        What did you see?
+        {isSim ? 'ANOMALY DETECTED' : 'What did you see?'}
       </h2>
       <p style={{ textAlign: 'center', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.35)', marginBottom: '2rem' }}>
-        Tap a number or enter your own
+        {isSim ? 'SELECT OR ENTER ANOMALY CODE' : 'Tap a number or enter your own'}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.375rem', marginBottom: '1.5rem' }}>
         {QUICK_NUMBERS.map(num => {
