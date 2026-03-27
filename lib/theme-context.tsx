@@ -113,11 +113,17 @@ function injectSimulationStyles() {
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
     /* SIMULATION MODE - THE CODE IS EVERYWHERE */
-    .theme-simulation,
-    .theme-simulation body,
-    .theme-simulation #__next,
-    .theme-simulation main {
+    .theme-simulation {
       background: #000800 !important;
+    }
+
+    .theme-simulation body,
+    .theme-simulation #__next {
+      background: transparent !important;
+    }
+
+    .theme-simulation main {
+      background: transparent !important;
       color: #00ff41 !important;
       font-family: 'Share Tech Mono', 'Courier New', monospace !important;
     }
@@ -153,15 +159,21 @@ function injectSimulationStyles() {
       color: #00cc33 !important;
     }
 
-    /* All dark backgrounds -> deep black-green */
+    /* All dark backgrounds -> semi-transparent dark green so rain shows through */
     .theme-simulation *[style*="background: rgba"] {
-      background: rgba(0, 20, 0, 0.85) !important;
-      border-color: rgba(0, 255, 65, 0.25) !important;
+      background: rgba(0, 12, 0, 0.72) !important;
+      border-color: rgba(0, 255, 65, 0.2) !important;
     }
 
     .theme-simulation *[style*="background: linear-gradient"] {
-      background: linear-gradient(135deg, rgba(0,15,0,0.95) 0%, rgba(0,25,0,0.9) 100%) !important;
-      border-color: rgba(0, 255, 65, 0.3) !important;
+      background: linear-gradient(135deg, rgba(0,10,0,0.75) 0%, rgba(0,18,0,0.72) 100%) !important;
+      border-color: rgba(0, 255, 65, 0.25) !important;
+    }
+
+    /* Page-level wrappers should be transparent so rain is visible */
+    .theme-simulation > div,
+    .theme-simulation main > div {
+      background: transparent !important;
     }
 
     /* All cards get terminal style */
