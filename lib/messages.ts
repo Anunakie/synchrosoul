@@ -85,18 +85,39 @@ export async function getOrCreateConversation(
 ): Promise<string | null> {
   try {
     const supabase = createClient()
-    const { data, error } = await supabase.rpc('get_or_create_conversation', {
-      other_user_id: otherUserId,
-      my_name: myName,
-      my_avatar: myAvatar,
-      other_name: otherName,
-      other_avatar: otherAvatar,
-    })
+    const myId = await getCurrentUserId()
+    if (!myId) return null
+
+    // Check if conversation already exists (in either user order)
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`and(user1_id.eq.${myId},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${myId})`)
+      .maybeSingle()
+
+    if (existing?.id) return existing.id
+
+    // Create new conversation
+    const { data: created, error } = await supabase
+      .from('conversations')
+      .insert({
+        user1_id: myId,
+        user2_id: otherUserId,
+        user1_name: myName,
+        user2_name: otherName,
+        user1_avatar: myAvatar,
+        user2_avatar: otherAvatar,
+        last_message_at: new Date().toISOString(),
+        last_message_preview: '',
+      })
+      .select('id')
+      .single()
+
     if (error) {
-      console.error('[Messages] getOrCreateConversation error:', error)
+      console.error('[Messages] create conversation error:', error)
       return null
     }
-    return data as string
+    return created?.id || null
   } catch (e) {
     console.error('[Messages] getOrCreateConversation exception:', e)
     return null

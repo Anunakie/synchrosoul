@@ -46,6 +46,8 @@ export default function JournalPage() {
   const [expandedDream, setExpandedDream] = useState<string | null>(null)
   const [interpretations, setInterpretations] = useState<Record<string, string>>({})
   const [interpretingId, setInterpretingId] = useState<string | null>(null)
+  const [sharedDreams, setSharedDreams] = useState<Record<string, boolean>>({})
+  const [sharingDreamId, setSharingDreamId] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -367,7 +369,23 @@ export default function JournalPage() {
                           ? (isSim ? '>> RE-ANALYZE FRAGMENT' : '✦ Re-interpret Dream')
                           : (isSim ? '>> ANALYZE MEMORY FRAGMENT' : '✦ Interpret This Dream with AI')}
                     </button>
-                    <button onClick={() => { deleteDream(dream.id); getDreams().then(d => { setDreams(d); const existing: Record<string, string> = {}; d.forEach(dream => { if (dream.reading) existing[dream.id] = dream.reading; }); setInterpretations(existing); }); setExpandedDream(null) }} style={{ fontSize: '0.7rem', color: 'rgba(231,76,60,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete dream</button>
+                    <button
+                      onClick={async () => {
+                        setSharingDreamId(dream.id)
+                        const newState = !sharedDreams[dream.id]
+                        try {
+                          const res = await fetch('/api/dreams/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dreamId: dream.id, isShared: newState, title: dream.title, description: dream.description, symbols: dream.symbols }) })
+                          if (res.ok) setSharedDreams(prev => ({ ...prev, [dream.id]: newState }))
+                        } finally { setSharingDreamId(null) }
+                      }}
+                      disabled={sharingDreamId === dream.id}
+                      style={{ display: 'block', width: '100%', padding: '0.65rem', marginBottom: '0.5rem', borderRadius: '0.75rem', background: sharedDreams[dream.id] ? (isSim ? 'rgba(0,255,65,0.2)' : 'rgba(240,192,64,0.15)') : 'transparent', border: isSim ? '1px solid rgba(0,255,65,0.3)' : '1px solid rgba(240,192,64,0.3)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(240,192,64,0.9)', cursor: sharingDreamId === dream.id ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: isSim ? 'monospace' : 'inherit', letterSpacing: isSim ? '0.05em' : 'normal', opacity: sharingDreamId === dream.id ? 0.6 : 1 }}>
+                      {sharingDreamId === dream.id
+                        ? (isSim ? '>> TRANSMITTING...' : '✦ Updating...')
+                        : sharedDreams[dream.id]
+                          ? (isSim ? '>> BROADCASTING — TAP TO STOP' : '🌐 Shared — tap to unshare')
+                          : (isSim ? '>> BROADCAST TO NETWORK' : '🌐 Share This Dream')}
+                    </button>
                   </div>
                 )}
               </div>
