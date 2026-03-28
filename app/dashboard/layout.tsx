@@ -86,6 +86,7 @@ const MORE_SECTIONS = [
     color: '#f472b6',
     items: [
       { href: '/dashboard/dreams', label: 'Dreams', emoji: '🌙' },
+      { href: '/dashboard/dream-resonances', label: 'Dream Resonances', emoji: '🔮' },
       { href: '/dashboard/gratitude', label: 'Gratitude', emoji: '🙏' },
       { href: '/dashboard/manifestations', label: 'Manifestations', emoji: '🌱' },
       { href: '/dashboard/vision-board', label: 'Vision Board', emoji: '🖼️' },
