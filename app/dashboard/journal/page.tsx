@@ -344,10 +344,10 @@ export default function JournalPage() {
                         {dream.angelNumbers.map(n => <span key={n} style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '9999px', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#c9a84c', fontWeight: 600 }}>{n}</span>)}
                       </div>
                     )}
-                    {dream.reading && (
-                      <div style={{ padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(120,80,220,0.1)', border: '1px solid rgba(120,80,220,0.2)', marginBottom: '0.75rem' }}>
-                        <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(200,180,255,0.4)', marginBottom: '0.4rem' }}>Cosmic Reading</p>
-                        <p style={{ fontSize: '0.8rem', color: 'rgba(220,200,255,0.7)', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>{dream.reading}</p>
+                    {dream.reading && !interpretations[dream.id] && (
+                      <div style={{ padding: '0.75rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,30,0,0.3)' : 'rgba(120,80,220,0.1)', border: isSim ? '1px solid rgba(0,255,65,0.15)' : '1px solid rgba(120,80,220,0.2)', marginBottom: '0.75rem' }}>
+                        <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: isSim ? 'rgba(0,255,65,0.4)' : 'rgba(200,180,255,0.4)', marginBottom: '0.4rem', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> RESIDUAL MEMORY DATA' : 'Cosmic Reading'}</p>
+                        <p style={{ fontSize: '0.8rem', color: isSim ? 'rgba(100,255,120,0.7)' : 'rgba(220,200,255,0.7)', lineHeight: 1.6, fontStyle: isSim ? 'normal' : 'italic', margin: 0, fontFamily: isSim ? 'monospace' : 'inherit' }}>{dream.reading}</p>
                       </div>
                     )}
                     {/* AI Interpretation */}
