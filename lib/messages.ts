@@ -84,40 +84,19 @@ export async function getOrCreateConversation(
   otherAvatar: string
 ): Promise<string | null> {
   try {
-    const supabase = createClient()
-    const myId = await getCurrentUserId()
-    if (!myId) return null
-
-    // Check if conversation already exists (in either user order)
-    const { data: existing } = await supabase
-      .from('conversations')
-      .select('id')
-      .or(`and(user1_id.eq.${myId},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${myId})`)
-      .maybeSingle()
-
-    if (existing?.id) return existing.id
-
-    // Create new conversation
-    const { data: created, error } = await supabase
-      .from('conversations')
-      .insert({
-        user1_id: myId,
-        user2_id: otherUserId,
-        user1_name: myName,
-        user2_name: otherName,
-        user1_avatar: myAvatar,
-        user2_avatar: otherAvatar,
-        last_message_at: new Date().toISOString(),
-        last_message_preview: '',
-      })
-      .select('id')
-      .single()
-
-    if (error) {
-      console.error('[Messages] create conversation error:', error)
+    // Use server-side API route to bypass RLS limitations
+    const res = await fetch('/api/messages/create-conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otherUserId, myName, myAvatar, otherName, otherAvatar }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      console.error('[Messages] create-conversation API error:', res.status, err)
       return null
     }
-    return created?.id || null
+    const data = await res.json()
+    return data.conversationId || null
   } catch (e) {
     console.error('[Messages] getOrCreateConversation exception:', e)
     return null
