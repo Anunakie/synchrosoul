@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
-    const userId = params.userId
+    const { userId } = await params
     if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
 
     // Use service role to bypass RLS

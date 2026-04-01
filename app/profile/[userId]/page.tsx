@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 
 const LIFE_PATH_ARCHETYPES: Record<number, string> = {
   1: 'The Pioneer', 2: 'The Peacemaker', 3: 'The Creator', 4: 'The Builder',
@@ -7,7 +7,8 @@ const LIFE_PATH_ARCHETYPES: Record<number, string> = {
   9: 'The Humanitarian', 11: 'The Illuminator', 22: 'The Master Builder', 33: 'The Master Teacher'
 }
 
-export default function PublicProfilePage({ params }: { params: { userId: string } }) {
+export default function PublicProfilePage({ params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = use(params)
   const [profile, setProfile] = useState<any>(null)
   const [topNumbers, setTopNumbers] = useState<string[]>([])
   const [totalLogs, setTotalLogs] = useState(0)
@@ -17,7 +18,7 @@ export default function PublicProfilePage({ params }: { params: { userId: string
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch('/api/profile/' + params.userId)
+        const res = await fetch('/api/profile/' + userId)
         if (!res.ok) {
           setNotFound(true)
           setLoading(false)
@@ -34,7 +35,7 @@ export default function PublicProfilePage({ params }: { params: { userId: string
       }
     }
     load()
-  }, [params.userId])
+  }, [userId])
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#050510', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
