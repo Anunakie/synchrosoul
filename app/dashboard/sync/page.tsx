@@ -229,27 +229,23 @@ export default function SyncPage() {
                   </p>
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button
-                      onClick={() => handleSignal(m.userId || String(i), m.sharedNumbers, m.syncScore)}
-                      disabled={!!signaled[m.userId || String(i)]}
+                      onClick={(e) => { e.stopPropagation(); handleMessage(m); }}
+                      disabled={messagingId === m.userId}
                       style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
-                        background: signaled[m.userId || String(i)] === 'sent'
-                          ? 'rgba(74,222,128,0.15)'
-                          : signaled[m.userId || String(i)] === 'error'
-                          ? 'rgba(239,68,68,0.15)'
-                          : 'rgba(201,168,76,0.2)',
-                        color: signaled[m.userId || String(i)] === 'sent' ? '#4ade80'
-                          : signaled[m.userId || String(i)] === 'error' ? '#f87171' : '#c9a84c',
+                        background: 'rgba(201,168,76,0.2)',
+                        color: '#c9a84c',
                         fontWeight: 600, fontSize: '0.85rem',
-                        cursor: signaled[m.userId || String(i)] ? 'default' : 'pointer',
+                        cursor: messagingId === m.userId ? 'default' : 'pointer',
                         transition: 'all 0.3s' }}>
-                      {signaled[m.userId || String(i)] === 'sending' ? '⏳ Sending...'
-                        : signaled[m.userId || String(i)] === 'sent' ? '✓ Signal Sent!'
-                        : signaled[m.userId || String(i)] === 'error' ? '✕ Failed'
-                        : '💌 Send Sync Signal'}
+                      {messagingId === m.userId ? '\u23F3 Connecting...' : '\uD83D\uDCAC Send Message'}
                     </button>
-                    <button style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
-                      background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)',
-                      fontSize: '0.85rem', cursor: 'pointer' }}>👁 View Profile</button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push('/profile/' + m.userId); }}
+                      style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
+                        background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)',
+                        fontSize: '0.85rem', cursor: 'pointer' }}>
+                      {'\uD83D\uDC41 View Profile'}
+                    </button>
                   </div>
                 </div>
               )}
