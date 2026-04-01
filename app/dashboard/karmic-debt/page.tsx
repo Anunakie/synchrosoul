@@ -143,7 +143,7 @@ function KarmicDebtPageInner() {
       {calculated && (
         debts.length === 0 ? (
           <div style={{ background: 'rgba(34,197,94,0.08)', borderRadius: '1.5rem', border: '1px solid rgba(34,197,94,0.2)', padding: '2rem', textAlign: 'center', backdropFilter: 'blur(12px)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>&#10024;</div>
+            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>✨</div>
             <h3 style={{ color: '#22c55e', fontWeight: 700, fontSize: '1.2rem', fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.5rem' }}>No Karmic Debt Found</h3>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', lineHeight: 1.7 }}>Your chart shows no karmic debt numbers across your Birthday, Life Path, Destiny, or Soul Urge. Your soul enters this life with a clean slate, free to focus on your life path purpose without heavy karmic burdens. This is genuinely rare and beautiful.</p>
           </div>

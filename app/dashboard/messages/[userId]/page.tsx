@@ -149,7 +149,7 @@ function ChatPageInner() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: '480px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'rgba(8,6,28,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 10 }}>
-        <button onClick={() => router.push(isSoulTwin ? '/dashboard/soul-twin' : '/dashboard/messages')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>&#8592;</button>
+        <button onClick={() => router.push(isSoulTwin ? '/dashboard/soul-twin' : '/dashboard/messages')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>←</button>
         <Avatar name={otherName} size={38} />
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -159,10 +159,10 @@ function ChatPageInner() {
             )}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem' }}>
-            {isSoulTwin && sharedNumbers.length > 0 ? `Shared: ${sharedNumbers.join(', ')}` : '&#10022; Cosmic connection'}
+            {isSoulTwin && sharedNumbers.length > 0 ? `Shared: ${sharedNumbers.join(', ')}` : '✦ Cosmic connection'}
           </div>
         </div>
-        <div style={{ fontSize: '1.2rem' }}>{isSoulTwin ? '&#129392;' : '&#10024;'}</div>
+        <div style={{ fontSize: '1.2rem' }}>{isSoulTwin ? '🥰' : '✨'}</div>
       </div>
 
       {/* Messages area */}
@@ -175,12 +175,12 @@ function ChatPageInner() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {isSoulTwin ? (
               <div style={{ background: 'linear-gradient(135deg, rgba(244,114,182,0.08), rgba(167,139,250,0.08))', border: '1px solid rgba(244,114,182,0.2)', borderRadius: '1.25rem', padding: '1.5rem', textAlign: 'center', margin: '0.5rem 0' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>&#129392;</div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🥰</div>
                 <p style={{ color: 'rgba(244,114,182,0.9)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.4rem' }}>Soul Twin Connection</p>
                 {sharedNumbers.length > 0 && (
                   <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
                     {sharedNumbers.map(n => (
-                      <span key={n} style={{ background: 'rgba(244,114,182,0.15)', border: '1px solid rgba(244,114,182,0.3)', borderRadius: '0.5rem', padding: '0.2rem 0.6rem', fontSize: '0.75rem', color: '#f472b6' }}>&#10022; {n}</span>
+                      <span key={n} style={{ background: 'rgba(244,114,182,0.15)', border: '1px solid rgba(244,114,182,0.3)', borderRadius: '0.5rem', padding: '0.2rem 0.6rem', fontSize: '0.75rem', color: '#f472b6' }}>✦ {n}</span>
                     ))}
                   </div>
                 )}
@@ -190,7 +190,7 @@ function ChatPageInner() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'rgba(255,255,255,0.3)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>&#10022;</div>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✦</div>
                 <p style={{ fontSize: '0.85rem', lineHeight: 1.6 }}>The universe brought you together.<br />Say hello to begin your cosmic journey.</p>
               </div>
             )}
@@ -224,7 +224,7 @@ function ChatPageInner() {
                   <div style={{ maxWidth: '72%' }}>
                     {msg.angelNumber && (
                       <div style={{ textAlign: isMe ? 'right' : 'left', marginBottom: '0.2rem' }}>
-                        <span style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', padding: '0.1rem 0.5rem', fontSize: '0.65rem', color: '#c9a84c', letterSpacing: '0.05em' }}>&#10022; {msg.angelNumber}</span>
+                        <span style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', padding: '0.1rem 0.5rem', fontSize: '0.65rem', color: '#c9a84c', letterSpacing: '0.05em' }}>✦ {msg.angelNumber}</span>
                       </div>
                     )}
                     <div style={{
@@ -265,13 +265,13 @@ function ChatPageInner() {
       <div style={{ padding: '0.75rem 1rem', background: 'rgba(8,6,28,0.95)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
         {angelTag && (
           <div style={{ marginBottom: '0.4rem' }}>
-            <span style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', padding: '0.15rem 0.5rem', fontSize: '0.7rem', color: '#c9a84c' }}>&#10022; {angelTag}</span>
+            <span style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', padding: '0.15rem 0.5rem', fontSize: '0.7rem', color: '#c9a84c' }}>✦ {angelTag}</span>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
           <button onClick={() => setShowAngelPicker(p => !p)}
             style={{ background: showAngelPicker ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (showAngelPicker ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'), borderRadius: '0.75rem', color: showAngelPicker ? '#c9a84c' : 'rgba(255,255,255,0.4)', padding: '0.6rem 0.7rem', fontSize: '0.85rem', cursor: 'pointer', flexShrink: 0 }}>
-            &#10022;
+            ✦
           </button>
           <textarea
             ref={inputRef}
@@ -287,7 +287,7 @@ function ChatPageInner() {
             onClick={() => handleSend()}
             onTouchEnd={e => { e.preventDefault(); handleSend() }}
             style={{ background: sending ? 'rgba(124,58,237,0.3)' : 'linear-gradient(135deg, #7c3aed, #9333ea)', border: 'none', borderRadius: '0.875rem', color: '#fff', padding: '0.6rem 0.875rem', fontSize: '0.9rem', cursor: 'pointer', flexShrink: 0, opacity: sending ? 0.6 : 1 }}>
-            {sending ? '...' : '&#10148;'}
+            {sending ? '...' : '➤'}
           </button>
         </div>
       </div>

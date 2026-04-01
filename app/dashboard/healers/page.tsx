@@ -318,7 +318,7 @@ function HealerCard({ healer, userLifePath }: { healer: HealerProfile; userLifeP
               cursor: 'pointer', color: 'rgba(255,255,255,0.2)', fontSize: '0.8rem' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'rgba(239,68,68,0.7)')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.2)')}
-          >&#9873;</button>
+          >⚑</button>
         </div>
 
         {/* Expanded content */}

@@ -1,12 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/lib/theme-context';
-import { getAllPostsFromDB, FeedPost, getLiveSyncMatches, LiveSyncMatch } from '@/lib/supabase-db';
+import { getAllPostsFromDB, FeedPost, getLiveSyncMatches, LiveSyncMatch, getCurrentUserId } from '@/lib/supabase-db';
 import { getPosts, savePost, SocialPost } from '@/lib/social-storage';
 import { isAuthenticated } from '@/lib/supabase-db';
 import { createClient } from '@/lib/supabase/client';
 import ReportModal from '@/components/ReportModal';
 import BlockUserButton from '@/components/BlockUserButton';
+import { getOrCreateConversation } from '@/lib/messages';
+import { getNumerologyProfile } from '@/lib/storage';
 
 function timeAgo(ts: string) {
   const diff = Date.now() - new Date(ts).getTime();
@@ -104,6 +107,7 @@ function PostCard({ post, onResonate }: { post: FeedPost | SocialPost; onResonat
 }
 
 export default function FeedPage() {
+  const router = useRouter();
   const [view, setView] = useState<'feed' | 'sync'>('feed');
   const [posts, setPosts] = useState<(FeedPost | SocialPost)[]>([]);
   const [syncMatches, setSyncMatches] = useState<LiveSyncMatch[]>([]);
@@ -113,8 +117,23 @@ export default function FeedPage() {
   const [isReal, setIsReal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [newPostCount, setNewPostCount] = useState(0);
+  const [messagingId, setMessagingId] = useState<string | null>(null);
   const channelRef = useRef<any>(null);
   const postsRef = useRef<(FeedPost | SocialPost)[]>([]);
+
+  const handleMessage = async (m: LiveSyncMatch) => {
+    setMessagingId(m.userId)
+    try {
+      const profile = await getNumerologyProfile()
+      const myName = (profile as any)?.name || (profile as any)?.displayName || 'Soul'
+      const myAvatar = typeof window !== 'undefined' ? (localStorage.getItem('synchrosoul_avatar_image') || '') : ''
+      const convId = await getOrCreateConversation(m.userId, myName, myAvatar, m.displayName, m.avatarUrl || '')
+      if (convId) {
+        router.push('/dashboard/messages/' + m.userId + '?convId=' + convId + '&name=' + encodeURIComponent(m.displayName))
+      }
+    } catch (e) { console.error('handleMessage error:', e) }
+    setMessagingId(null)
+  }
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -313,7 +332,7 @@ export default function FeedPage() {
                     border: '2px solid rgba(255,255,255,0.12)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '1.2rem', overflow: 'hidden', flexShrink: 0 }}>
-                    {m.avatarUrl ? <img src={m.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '✨'}
+                    {m.avatarUrl ? <img src={m.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '\u2728'}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ color: '#fff', fontWeight: 700 }}>{m.displayName}</div>
@@ -329,6 +348,24 @@ export default function FeedPage() {
                       fontFamily: 'Cormorant Garamond, serif' }}>{m.syncScore}%</div>
                     <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>sync</div>
                   </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <button
+                    onClick={() => handleMessage(m)}
+                    disabled={messagingId === m.userId}
+                    style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
+                      background: 'rgba(201,168,76,0.2)', color: '#c9a84c',
+                      fontWeight: 600, fontSize: '0.85rem',
+                      cursor: messagingId === m.userId ? 'default' : 'pointer' }}>
+                    {messagingId === m.userId ? '\u23F3 Connecting...' : '\uD83D\uDCAC Send Message'}
+                  </button>
+                  <button
+                    onClick={() => router.push('/profile/' + m.userId)}
+                    style={{ flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
+                      background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)',
+                      fontSize: '0.85rem', cursor: 'pointer' }}>
+                    {'\uD83D\uDC41 View Profile'}
+                  </button>
                 </div>
               </div>
             ))}

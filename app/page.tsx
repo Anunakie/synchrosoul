@@ -164,7 +164,7 @@ export default function HomePage() {
                   <div style={{ fontSize: '0.85rem', color: 'rgba(220,200,255,0.8)', fontWeight: 500 }}>{name}</div>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(201,168,76,0.6)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Verified Member</div>
                 </div>
-                <div style={{ marginLeft: 'auto', color: 'rgba(201,168,76,0.5)', fontSize: '1rem' }}>&#10022;</div>
+                <div style={{ marginLeft: 'auto', color: 'rgba(201,168,76,0.5)', fontSize: '1rem' }}>✦</div>
               </div>
               <p style={{
                 color: 'rgba(180,160,255,0.65)',
@@ -764,7 +764,7 @@ export default function HomePage() {
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.9rem' }}>&#10022;</span>
+            <span style={{ color: 'rgba(201,168,76,0.6)', fontSize: '0.9rem' }}>✦</span>
             <span style={{ fontFamily: 'Cormorant Garamond, serif', color: 'rgba(200,180,255,0.5)', fontSize: '1.1rem' }}>SynchroSoul</span>
           </div>
           <p style={{ color: 'rgba(200,180,255,0.3)', fontSize: '0.8rem', letterSpacing: '0.08em', textAlign: 'center', marginBottom: '1.5rem' }}>
