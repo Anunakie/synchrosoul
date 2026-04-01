@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 const LIFE_PATH_ARCHETYPES: Record<number, string> = {
   1: 'The Pioneer', 2: 'The Peacemaker', 3: 'The Creator', 4: 'The Builder',
@@ -18,30 +17,16 @@ export default function PublicProfilePage({ params }: { params: { userId: string
   useEffect(() => {
     async function load() {
       try {
-        const supabase = createClient()
-        // Fetch profile
-        const { data: prof, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', params.userId)
-          .single()
-        if (error || !prof) { setNotFound(true); setLoading(false); return }
-        // Don't show private profiles
-        if (prof.privacy_mode) { setNotFound(true); setLoading(false); return }
-        setProfile(prof)
-        // Fetch angel logs for top numbers
-        const { data: logs } = await supabase
-          .from('angel_logs')
-          .select('number')
-          .eq('user_id', params.userId)
-          .order('created_at', { ascending: false })
-          .limit(100)
-        if (logs && logs.length > 0) {
-          setTotalLogs(logs.length)
-          const freq: Record<string, number> = {}
-          logs.forEach((l: any) => { freq[l.number] = (freq[l.number] || 0) + 1 })
-          setTopNumbers(Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([n]) => n))
+        const res = await fetch('/api/profile/' + params.userId)
+        if (!res.ok) {
+          setNotFound(true)
+          setLoading(false)
+          return
         }
+        const data = await res.json()
+        setProfile(data.profile)
+        setTopNumbers(data.topNumbers || [])
+        setTotalLogs(data.totalLogs || 0)
       } catch (e) {
         setNotFound(true)
       } finally {
