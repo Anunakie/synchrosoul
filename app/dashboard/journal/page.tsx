@@ -505,7 +505,9 @@ export default function JournalPage() {
   async function handleSendToConversation(dream: DreamEntry, convoId: string) {
     setShareProcessing(true)
     try {
-      const msg = `🌙 Shared Dream: ${dream.description || dream.title}`
+      const reading = interpretations[dream.id] || dream.reading
+      let msg = `🌙 Shared Dream: ${dream.title}\n\n${dream.description || ''}`
+      if (reading) msg += `\n\n✨ AI Interpretation:\n${reading}`
       await sendMessage({ conversationId: convoId, content: msg })
       setShareStep('success')
       setShareSuccessMsg(isSim ? '>> DREAM TRANSMITTED TO CHANNEL' : '✨ Dream sent to conversation!')
@@ -517,7 +519,10 @@ export default function JournalPage() {
   async function handlePostToFeed(dream: DreamEntry) {
     setShareProcessing(true)
     try {
-      await savePost({ content: `🌙 ${dream.title}\n\n${dream.description}` })
+      const reading = interpretations[dream.id] || dream.reading
+      let content = `🌙 ${dream.title}\n\n${dream.description}`
+      if (reading) content += `\n\n✨ AI Interpretation:\n${reading}`
+      await savePost({ content })
       setShareStep('success')
       setShareSuccessMsg(isSim ? '>> DREAM POSTED TO NETWORK FEED' : '✨ Dream posted to Cosmic Feed!')
     } catch {
@@ -525,16 +530,24 @@ export default function JournalPage() {
       setShareStep('success')
     } finally { setShareProcessing(false) }
   }
-  function handleCopyToClipboard(dream: DreamEntry) {
-    const dateStr = new Date(dream.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    const text = `🌙 Dream from ${dateStr}: ${dream.description || dream.title}`
-    navigator.clipboard.writeText(text).then(() => {
+  async function handleCopyToClipboard(dream: DreamEntry) {
+    try {
+      // First mark dream as shared so the public link works
+      await fetch('/api/dreams/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dreamId: dream.id, isShared: true, title: dream.title, description: dream.description, symbols: dream.symbols })
+      })
+      setSharedDreams(prev => ({ ...prev, [dream.id]: true }))
+      const url = `https://synchrosoul.app/dream/${dream.id}`
+      const text = `🌙 Check out my dream on SynchroSoul:\n${url}`
+      await navigator.clipboard.writeText(text)
       setShareStep('success')
-      setShareSuccessMsg(isSim ? '>> COPIED TO BUFFER' : '📋 Copied to clipboard!')
-    }).catch(() => {
+      setShareSuccessMsg(isSim ? '>> LINK COPIED TO BUFFER' : '📋 Link copied! Anyone with this link can read your dream.')
+    } catch {
       setShareStep('success')
       setShareSuccessMsg(isSim ? '>> BUFFER COPY FAILED' : '❌ Copy failed. Try again.')
-    })
+    }
   }
   async function handleShareToResonances(dream: DreamEntry) {
     setShareProcessing(true)
