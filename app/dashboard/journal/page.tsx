@@ -540,7 +540,8 @@ export default function JournalPage() {
       })
       setSharedDreams(prev => ({ ...prev, [dream.id]: true }))
       const url = `https://synchrosoul.app/dream/${dream.id}`
-      const text = `🌙 Check out my dream on SynchroSoul:\n${url}`
+      const snippet = (dream.description || dream.title || '').slice(0, 120) + ((dream.description || '').length > 120 ? '...' : '')
+      const text = `🌙 Check out my dream on SynchroSoul:\n"${snippet}"\n${url}`
       await navigator.clipboard.writeText(text)
       setShareStep('success')
       setShareSuccessMsg(isSim ? '>> LINK COPIED TO BUFFER' : '📋 Link copied! Anyone with this link can read your dream.')
