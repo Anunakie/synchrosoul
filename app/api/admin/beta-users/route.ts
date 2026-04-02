@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Get ALL users from auth
-    const { data: usersData, error } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    const { data: usersData, error } = await getSupabase().auth.admin.listUsers({ perPage: 1000 })
     if (error) throw error
 
     // Filter ONLY users who were manually granted beta access by admin
@@ -46,13 +48,13 @@ export async function POST(req: NextRequest) {
     // Handle single-user toggle (userId + action) from toggle button
     if (body.userId && body.action) {
       const { userId, action, tier = 'twin-flame' } = body
-      const { data: userData } = await supabase.auth.admin.getUserById(userId)
+      const { data: userData } = await getSupabase().auth.admin.getUserById(userId)
       if (!userData?.user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
       if (action === 'revoke') {
         // Revoke beta access
-        await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
-        await supabase.auth.admin.updateUserById(userId, {
+        await getSupabase().from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
+        await getSupabase().auth.admin.updateUserById(userId, {
           user_metadata: {
             ...userData.user.user_metadata,
             beta_granted: false,
@@ -63,8 +65,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, action: 'revoked' })
       } else {
         // Grant beta access
-        await supabase.from('profiles').update({ subscription_tier: tier }).eq('id', userId)
-        await supabase.auth.admin.updateUserById(userId, {
+        await getSupabase().from('profiles').update({ subscription_tier: tier }).eq('id', userId)
+        await getSupabase().auth.admin.updateUserById(userId, {
           user_metadata: {
             ...userData.user.user_metadata,
             beta_granted: true,
@@ -82,11 +84,11 @@ export async function POST(req: NextRequest) {
 
     const results = []
     for (const userId of userIds) {
-      const { data: userData } = await supabase.auth.admin.getUserById(userId)
+      const { data: userData } = await getSupabase().auth.admin.getUserById(userId)
       if (!userData?.user) continue
 
-      await supabase.from('profiles').update({ subscription_tier: tier }).eq('id', userId)
-      await supabase.auth.admin.updateUserById(userId, {
+      await getSupabase().from('profiles').update({ subscription_tier: tier }).eq('id', userId)
+      await getSupabase().auth.admin.updateUserById(userId, {
         user_metadata: {
           ...userData.user.user_metadata,
           beta_granted: true,
@@ -112,11 +114,11 @@ export async function DELETE(req: NextRequest) {
     if (!userIds?.length) return NextResponse.json({ error: 'No users specified' }, { status: 400 })
 
     for (const userId of userIds) {
-      const { data: userData } = await supabase.auth.admin.getUserById(userId)
+      const { data: userData } = await getSupabase().auth.admin.getUserById(userId)
       if (!userData?.user) continue
 
-      await supabase.from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
-      await supabase.auth.admin.updateUserById(userId, {
+      await getSupabase().from('profiles').update({ subscription_tier: 'free' }).eq('id', userId)
+      await getSupabase().auth.admin.updateUserById(userId, {
         user_metadata: {
           ...userData.user.user_metadata,
           beta_granted: false,

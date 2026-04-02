@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+};
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() { return new Resend(process.env.RESEND_API_KEY); }
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for duplicate
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('beta_signups')
       .select('id, status')
       .eq('email', email.toLowerCase().trim())
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert signup
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('beta_signups')
       .insert({
         email: email.toLowerCase().trim(),
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Send confirmation email
     try {
-      await resend.emails.send({
+      await getResend().emails.send({
         from: 'SynchroSoul <hello@synchrosoul.app>',
         to: email,
         subject: 'You are on the SynchroSoul Beta List!',
@@ -108,7 +110,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const { count } = await supabase
+  const { count } = await getSupabase()
     .from('beta_signups')
     .select('*', { count: 'exact', head: true });
   return NextResponse.json({ count: count || 0 });

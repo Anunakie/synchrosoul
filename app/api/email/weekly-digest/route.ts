@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sendWeeklyDigestEmail } from "@/lib/email";
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+function getGroq() { return new Groq({ apiKey: process.env.GROQ_API_KEY }); }
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     if (process.env.GROQ_API_KEY && topNumbers?.length > 0) {
       try {
-        const completion = await groq.chat.completions.create({
+        const completion = await getGroq().chat.completions.create({
           model: "llama-3.3-70b-versatile",
           messages: [
             {

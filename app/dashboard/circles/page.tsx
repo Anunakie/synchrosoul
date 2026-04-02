@@ -122,6 +122,7 @@ export default function CirclesPage() {
       }, async (payload) => {
         const m = payload.new as { id: string; user_id: string; content: string; angel_number: string; created_at: string; author_name: string }
         const { data: { user } } = await supabase.auth.getUser()
+        const isOwn = m.user_id === user?.id
         const newMessage: Message = {
           id: m.id,
           author: m.author_name || 'Cosmic Soul',
@@ -129,9 +130,22 @@ export default function CirclesPage() {
           text: m.content,
           time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           angelNumber: m.angel_number,
-          isOwn: m.user_id === user?.id,
+          isOwn,
         }
-        setMessages(prev => [...prev, newMessage])
+        setMessages(prev => {
+          // If this is our own message, replace the optimistic temp message
+          if (isOwn) {
+            const tempIdx = prev.findIndex(msg => msg.id.startsWith('temp-') && msg.text === m.content)
+            if (tempIdx !== -1) {
+              const updated = [...prev]
+              updated[tempIdx] = newMessage
+              return updated
+            }
+          }
+          // Skip if already in list (exact ID match)
+          if (prev.some(msg => msg.id === m.id)) return prev
+          return [...prev, newMessage]
+        })
         setLiveCount(c => c + 1)
       })
       .subscribe()

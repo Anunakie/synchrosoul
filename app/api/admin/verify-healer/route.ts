@@ -5,10 +5,12 @@ import { createClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const serviceClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     // Bump truth score when verified
     if (verified) {
-      const { data: current } = await serviceClient
+      const { data: current } = await getSupabase()
         .from('healers')
         .select('truth_score')
         .eq('id', healerId)
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
       updateData.truth_score = Math.min((current?.truth_score || 40) + 10, 100);
     }
 
-    const { data, error } = await serviceClient
+    const { data, error } = await getSupabase()
       .from('healers')
       .update(updateData)
       .eq('id', healerId)

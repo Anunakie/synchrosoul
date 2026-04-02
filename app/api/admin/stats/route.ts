@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const serviceClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -14,11 +16,11 @@ export async function GET(req: NextRequest) {
 
   try {
     // Total users
-    const { data: allUsersData } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
+    const { data: allUsersData } = await getSupabase().auth.admin.listUsers({ perPage: 1000 })
     const totalUsers = allUsersData?.users?.length ?? 0
 
     // Subscription breakdown from profiles
-    const { data: profiles } = await serviceClient
+    const { data: profiles } = await getSupabase()
       .from('profiles')
       .select('id, display_name, subscription_tier, created_at');
 
@@ -35,7 +37,7 @@ export async function GET(req: NextRequest) {
     })
 
     // Recent 10 signups with email + tier
-    const { data: recentUsersRaw } = await serviceClient.auth.admin.listUsers({ perPage: 1000 })
+    const { data: recentUsersRaw } = await getSupabase().auth.admin.listUsers({ perPage: 1000 })
     const sortedUsers = (recentUsersRaw?.users ?? [])
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 10)
@@ -48,17 +50,17 @@ export async function GET(req: NextRequest) {
       subscription_tier: (profileTierMap[u.id] && profileTierMap[u.id] !== 'free') ? profileTierMap[u.id] : (u.user_metadata?.beta_tier || profileTierMap[u.id] || 'free')
     }))
 
-    const { data: recentLogs } = await serviceClient
+    const { data: recentLogs } = await getSupabase()
       .from('angel_logs')
       .select('id, number, created_at')
       .order('created_at', { ascending: false })
       .limit(10)
 
-    const { count: totalLogs } = await serviceClient
+    const { count: totalLogs } = await getSupabase()
       .from('angel_logs')
       .select('id', { count: 'exact', head: true })
 
-    const { count: totalPosts } = await serviceClient
+    const { count: totalPosts } = await getSupabase()
       .from('posts')
       .select('id', { count: 'exact', head: true })
 

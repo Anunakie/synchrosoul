@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 async function findUserByEmail(email: string) {
   // listUsers is paginated - loop through all pages to find the user
   let page = 1
   const perPage = 1000
   while (true) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage })
+    const { data, error } = await getSupabase().auth.admin.listUsers({ page, perPage })
     if (error) throw error
     const user = data.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
     if (user) return user
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update their profile subscription_tier
-    const { error: updateError } = await supabase
+    const { error: updateError } = await getSupabase()
       .from('profiles')
       .update({ subscription_tier: tier })
       .eq('id', user.id)
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (updateError) throw updateError
 
     // Mark user as beta_granted in auth user_metadata so we can filter them
-    const { error: metaError } = await supabase.auth.admin.updateUserById(user.id, {
+    const { error: metaError } = await getSupabase().auth.admin.updateUserById(user.id, {
       user_metadata: {
         ...user.user_metadata,
         beta_granted: true,
@@ -84,7 +86,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Revoke subscription tier
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .update({ subscription_tier: 'free' })
       .eq('id', user.id)
@@ -92,7 +94,7 @@ export async function DELETE(req: NextRequest) {
     if (error) throw error
 
     // Remove beta_granted flag from user_metadata
-    const { error: metaError } = await supabase.auth.admin.updateUserById(user.id, {
+    const { error: metaError } = await getSupabase().auth.admin.updateUserById(user.id, {
       user_metadata: {
         ...user.user_metadata,
         beta_granted: false,

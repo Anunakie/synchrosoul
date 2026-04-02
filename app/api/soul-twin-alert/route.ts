@@ -5,14 +5,21 @@ import { sendSoulTwinAlertEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || 'mailto:hello@synchrosoul.app',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let vapidConfigured = false;
+function ensureVapid() {
+  if (!vapidConfigured) {
+    webpush.setVapidDetails(
+      process.env.VAPID_EMAIL || 'mailto:hello@synchrosoul.app',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+      process.env.VAPID_PRIVATE_KEY!
+    );
+    vapidConfigured = true;
+  }
+}
 
 export async function POST(request: Request) {
   try {
+    ensureVapid();
     const { number, userId } = await request.json();
 
     if (!number || !userId) {

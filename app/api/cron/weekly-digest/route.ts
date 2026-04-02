@@ -4,7 +4,7 @@ import { sendWeeklyDigestEmail } from "@/lib/email";
 import { createClient } from "@supabase/supabase-js";
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+function getGroq() { return new Groq({ apiKey: process.env.GROQ_API_KEY }); }
 
 export const runtime = "nodejs";
 
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       let weeklyMessage = "The universe has been sending you signs this week. Trust the numbers you see.";
       if (process.env.GROQ_API_KEY && topNumbers.length > 0) {
         try {
-          const completion = await groq.chat.completions.create({
+          const completion = await getGroq().chat.completions.create({
             model: "llama-3.3-70b-versatile",
             messages: [
               { role: "system", content: "You are a mystical numerology guide. Write a short, beautiful weekly cosmic message (2-3 sentences). Be poetic and uplifting. No markdown." },
