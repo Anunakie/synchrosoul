@@ -108,7 +108,7 @@ function PostCard({ post, onResonate }: { post: FeedPost | SocialPost; onResonat
 
 export default function FeedPage() {
   const router = useRouter();
-  const [view, setView] = useState<'feed' | 'sync'>('feed');
+  const [view, setView] = useState<'feed' | 'sync' | 'circles' | 'soul-twin'>('feed');
   const [posts, setPosts] = useState<(FeedPost | SocialPost)[]>([]);
   const [syncMatches, setSyncMatches] = useState<LiveSyncMatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,11 +260,11 @@ export default function FeedPage() {
       </div>
 
       <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '12px',
-        padding: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-        {[['feed', isSim ? '📡 BROADCAST' : '🌌 Feed'],['sync', isSim ? '⚡ SIGNAL MATCH' : '🔮 Live Sync']].map(([v, label]) => (
+        padding: '4px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.08)', overflowX: 'auto' }}>
+        {[['feed', isSim ? '📡 Feed' : '🌌 Feed'],['sync', isSim ? '⚡ Sync' : '🔮 Sync'],['circles', isSim ? '⭕ Nodes' : '⭕ Circles'],['soul-twin', isSim ? '👥 Twin' : '👥 Soul Twin']].map(([v, label]) => (
           <button key={v} onClick={() => { setView(v as any); setNewPostCount(0); }}
             style={{ flex: 1, padding: '0.5rem', borderRadius: '9px', border: 'none', cursor: 'pointer',
-              fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s',
+              fontWeight: 600, fontSize: '0.78rem', transition: 'all 0.2s', whiteSpace: 'nowrap',
               background: view === v ? 'rgba(201,168,76,0.2)' : 'transparent',
               color: view === v ? '#c9a84c' : 'rgba(255,255,255,0.5)', position: 'relative' }}>
             {label}
@@ -313,7 +313,7 @@ export default function FeedPage() {
             ))}
           </div>
         )
-      ) : (
+      ) : view === 'sync' ? (
         syncMatches.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem 1rem',
             background: 'rgba(8,6,28,0.7)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -371,6 +371,28 @@ export default function FeedPage() {
             ))}
           </div>
         )
+      ) : view === 'circles' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <a href="/dashboard/circles" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: '20px', padding: '2rem', backdropFilter: 'blur(16px)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⭕</div>
+              <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.25rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.5rem' }}>Angel Circles</div>
+              <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1rem' }}>Join private spiritual groups with souls who share your angel numbers. Share insights, support each other, and grow together.</p>
+              <span style={{ display: 'inline-block', padding: '0.5rem 1.5rem', borderRadius: '9999px', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316', fontSize: '0.85rem', fontWeight: 600 }}>Enter Circles →</span>
+            </div>
+          </a>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <a href="/dashboard/soul-twin" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(244,114,182,0.2)', borderRadius: '20px', padding: '2rem', backdropFilter: 'blur(16px)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
+              <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.25rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.5rem' }}>Soul Twin</div>
+              <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1rem' }}>Discover your deepest cosmic connections. Find souls whose spiritual fingerprint mirrors yours through advanced numerology matching.</p>
+              <span style={{ display: 'inline-block', padding: '0.5rem 1.5rem', borderRadius: '9999px', background: 'rgba(244,114,182,0.15)', border: '1px solid rgba(244,114,182,0.3)', color: '#f472b6', fontSize: '0.85rem', fontWeight: 600 }}>Find Your Twin →</span>
+            </div>
+          </a>
+        </div>
       )}
     </div>
   );

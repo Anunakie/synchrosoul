@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 const TOOL_SECTIONS = [
   {
@@ -21,6 +22,8 @@ const TOOL_SECTIONS = [
       { href:'/dashboard/oracle', emoji:'✦', name:'Angel Oracle', desc:'Channeled messages from your guides' },
       { href:'/dashboard/tarot', emoji:'🃏', name:'Cosmic Tarot', desc:'Major Arcana readings' },
       { href:'/dashboard/dictionary', emoji:'📖', name:'Number Dictionary', desc:'29 angel sequences decoded' },
+      { href:'/dashboard/saved-readings', emoji:'🔖', name:'Saved Readings', desc:'Your bookmarked readings' },
+      { href:'/dashboard/moon', emoji:'🌙', name:'Moon Phases', desc:'Lunar energy & guidance' },
     ]
   },
   {
@@ -32,8 +35,11 @@ const TOOL_SECTIONS = [
       { href:'/dashboard/stats', emoji:'📈', name:'Statistics', desc:'Visual charts of your activity' },
       { href:'/dashboard/streak', emoji:'🔥', name:'Streak Tracker', desc:'Daily logging streaks & milestones' },
       { href:'/dashboard/calendar', emoji:'🗓️', name:'Cosmic Calendar', desc:'Angel numbers by date' },
-      { href:'/dashboard/moon', emoji:'🌙', name:'Moon Phases', desc:'Lunar energy & guidance' },
       { href:'/dashboard/timeline', emoji:'⏳', name:'Vision Timeline', desc:'Your spiritual journey map' },
+      { href:'/dashboard/synthesis', emoji:'✺', name:'Weekly Synthesis', desc:'AI-powered weekly cosmic report' },
+      { href:'/dashboard/badges', emoji:'🏅', name:'Badges', desc:'30 achievement milestones' },
+      { href:'/dashboard/notifications', emoji:'🔔', name:'Notifications', desc:'Stay updated on your journey' },
+      { href:'/dashboard/cosmic-weather', emoji:'🌌', name:'Cosmic Weather', desc:'Daily cosmic energy forecast' },
     ]
   },
   {
@@ -41,12 +47,17 @@ const TOOL_SECTIONS = [
     emoji: '✨',
     color: '#4ade80',
     tools: [
+      { href:'/dashboard/healing-hub', emoji:'🌿', name:'Healing Hub', desc:'Your holistic wellness center' },
+      { href:'/dashboard/healers', emoji:'🙌', name:'Find a Healer', desc:'Connect with spiritual healers' },
+      { href:'/dashboard/healers/my-listing', emoji:'🌿', name:'My Listing', desc:'Manage your healer profile' },
+      { href:'/dashboard/my-bookings', emoji:'📅', name:'My Bookings', desc:'View your booked sessions' },
       { href:'/dashboard/meditations', emoji:'🧘', name:'Meditations', desc:'Guided angel number meditations' },
       { href:'/dashboard/breathwork', emoji:'💨', name:'Breathwork', desc:'Sacred breathing techniques' },
       { href:'/dashboard/solfeggio', emoji:'🎵', name:'Solfeggio', desc:'Healing frequency guide' },
       { href:'/dashboard/chakras', emoji:'🌈', name:'Chakras', desc:'Energy center alignment' },
       { href:'/dashboard/crystals', emoji:'💎', name:'Crystal Guide', desc:'12 sacred stones & their meanings' },
       { href:'/dashboard/rituals', emoji:'🕯️', name:'Rituals', desc:'Angel number rituals & ceremonies' },
+      { href:'/dashboard/affirmations', emoji:'💫', name:'Affirmations', desc:'Daily affirmation practice' },
     ]
   },
   {
@@ -56,6 +67,7 @@ const TOOL_SECTIONS = [
     tools: [
       { href:'/dashboard/journal', emoji:'📖', name:'Thought Journal', desc:'Angel number thought anchors' },
       { href:'/dashboard/dreams', emoji:'🌙', name:'Dream Journal', desc:'Dream symbols & angel numbers' },
+      { href:'/dashboard/dream-resonances', emoji:'🔮', name:'Dream Resonances', desc:'Shared dream pattern matching' },
       { href:'/dashboard/gratitude', emoji:'🙏', name:'Gratitude', desc:'Daily gratitude practice' },
       { href:'/dashboard/manifestations', emoji:'🌟', name:'Manifestations', desc:'Track your manifestation journey' },
       { href:'/dashboard/vision-board', emoji:'🖼️', name:'Vision Board', desc:'Visual manifestation board' },
@@ -68,32 +80,42 @@ const TOOL_SECTIONS = [
     tools: [
       { href:'/dashboard/sync', emoji:'⟳', name:'Live Sync', desc:'Match with souls seeing your numbers' },
       { href:'/dashboard/soul-twin', emoji:'👥', name:'Soul Twin', desc:'Deep soul compatibility matching' },
-      { href:'/dashboard/feed', emoji:'✧', name:'Cosmic Feed', desc:'Posts from your soul matches' },
       { href:'/dashboard/circles', emoji:'⭕', name:'Angel Circles', desc:'Private spiritual groups' },
       { href:'/dashboard/profile-card', emoji:'🪪', name:'Profile Card', desc:'Share your cosmic identity' },
+      { href:'/dashboard/relationships', emoji:'💞', name:'Soul Connections', desc:'Your cosmic relationship map' },
+      { href:'/dashboard/feed', emoji:'✧', name:'Cosmic Feed', desc:'Posts from your soul matches' },
     ]
   },
   {
-    title: 'Growth',
-    emoji: '🏆',
+    title: 'Account',
+    emoji: '⚙️',
     color: '#818cf8',
     tools: [
-      { href:'/dashboard/badges', emoji:'🏅', name:'Badges', desc:'30 achievement milestones' },
-      { href:'/dashboard/synthesis', emoji:'📋', name:'Weekly Synthesis', desc:'AI-powered weekly cosmic report' },
-      { href:'/dashboard/upgrade', emoji:'⭐', name:'Premium', desc:'Unlock advanced features' },
+      { href:'/dashboard/onboarding', emoji:'✦', name:'Setup', desc:'Complete your onboarding' },
       { href:'/dashboard/settings', emoji:'⚙️', name:'Settings', desc:'Customize your experience' },
+      { href:'/dashboard/upgrade', emoji:'⭐', name:'Upgrade', desc:'Unlock advanced features' },
+      { href:'/dashboard/referrals', emoji:'🌟', name:'Referrals', desc:'Invite friends, earn rewards' },
+      { href:'/dashboard/admin', emoji:'⚡', name:'Admin', desc:'Administration panel' },
     ]
   },
 ]
 
-export default function ToolsPage() {
+export default function ExplorePage() {
   const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
   const totalTools = TOOL_SECTIONS.reduce((a,s)=>a+s.tools.length,0)
 
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+    } catch {}
+    window.location.href = '/'
+  }
+
   return (
     <div style={{maxWidth:'600px',margin:'0 auto',padding:'1.5rem 1rem 2rem',width:'100%',boxSizing:'border-box',overflowX:'hidden'}}>
-      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Cosmic Toolkit</h1>
-      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.75rem'}}>{totalTools} tools for your spiritual journey</p>
+      <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Explore</h1>
+      <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.75rem'}}>{totalTools} features for your spiritual journey</p>
 
       {TOOL_SECTIONS.map(section=>(
         <div key={section.title} style={{marginBottom:'1.75rem'}}>
@@ -118,6 +140,23 @@ export default function ToolsPage() {
               </Link>
             ))}
           </div>
+
+          {/* Logout button in Account section */}
+          {section.title === 'Account' && (
+            <button
+              onClick={handleLogout}
+              style={{
+                width:'100%', marginTop:'0.5rem', display:'flex', alignItems:'center', justifyContent:'center',
+                gap:'0.5rem', padding:'0.75rem', borderRadius:'0.75rem',
+                background:'rgba(255,80,80,0.06)', border:'1px solid rgba(255,80,80,0.15)',
+                cursor:'pointer', color:'rgba(255,120,120,0.7)', fontSize:'0.8rem',
+                textTransform:'uppercase', letterSpacing:'0.1em',
+              }}
+            >
+              <span>⏻</span>
+              <span>Sign Out</span>
+            </button>
+          )}
         </div>
       ))}
     </div>

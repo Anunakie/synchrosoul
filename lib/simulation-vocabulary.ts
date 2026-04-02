@@ -72,7 +72,7 @@ export const SIM_VOCAB: Record<string, string> = {
   'Settings': 'Configuration',
   'Upgrade': 'Access Level',
   'Home': 'Terminal',
-  'Tools': 'Utilities',
+  'Explore': 'Utilities',
   'Healer': 'System Technician',
   'healer': 'system technician',
   'Saved': 'Archived',
@@ -90,7 +90,7 @@ export const SIM_VOCAB: Record<string, string> = {
 export const SIM_NAV: Record<string, string> = {
   'Home': 'TERMINAL',
   'Journal': 'MEMORY',
-  'Tools': 'UTILS',
+  'Explore': 'UTILS',
   'Feed': 'BROADCAST',
   'Messages': 'COMMS',
   'Profile': 'IDENTITY',

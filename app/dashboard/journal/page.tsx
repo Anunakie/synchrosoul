@@ -15,7 +15,7 @@ const DREAM_MOODS = ['Peaceful','Anxious','Joyful','Mysterious','Fearful','Trans
 export default function JournalPage() {
   const { theme } = useTheme()
   const isSim = theme === 'simulation'
-  const [activeTab, setActiveTab] = useState<'anchor' | 'dreams'>('anchor')
+  const [activeTab, setActiveTab] = useState<'anchor' | 'dreams' | 'reflect' | 'vision'>('anchor')
 
   // ── THOUGHT ANCHOR STATE ─────────────────────────────────────────────────
   const [logs, setLogs] = useState<AngelLog[]>([])
@@ -152,21 +152,21 @@ export default function JournalPage() {
 
   // ── TAB BAR ───────────────────────────────────────────────────────────────
   const tabBar = (
-    <div style={{ display: 'flex', gap: '0', marginBottom: '1.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.25rem', border: '1px solid rgba(200,180,255,0.1)' }}>
-      {(['anchor', 'dreams'] as const).map(tab => (
+    <div style={{ display: 'flex', gap: '0', marginBottom: '1.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.875rem', padding: '0.25rem', border: '1px solid rgba(200,180,255,0.1)', overflowX: 'auto' }}>
+      {([['anchor', '✦ Anchor'], ['dreams', '🌙 Dreams'], ['reflect', '🙏 Reflect'], ['vision', '🖼️ Vision']] as const).map(([tab, label]) => (
         <button
           key={tab}
-          onClick={() => { setActiveTab(tab); setView('list'); setDreamView('list') }}
+          onClick={() => { setActiveTab(tab as any); setView('list'); setDreamView('list') }}
           style={{
-            flex: 1, padding: '0.6rem 1rem', borderRadius: '0.65rem', border: 'none',
+            flex: 1, padding: '0.6rem 0.5rem', borderRadius: '0.65rem', border: 'none',
             background: activeTab === tab ? 'rgba(160,100,255,0.2)' : 'transparent',
             color: activeTab === tab ? 'rgba(220,190,255,0.95)' : 'rgba(200,180,255,0.45)',
-            fontSize: '0.85rem', fontWeight: activeTab === tab ? 600 : 400,
+            fontSize: '0.78rem', fontWeight: activeTab === tab ? 600 : 400,
             cursor: 'pointer', transition: 'all 0.2s',
-            letterSpacing: '0.03em'
+            letterSpacing: '0.02em', whiteSpace: 'nowrap'
           }}
         >
-          {tab === 'anchor' ? '✦ Thought Anchor' : '🌙 Dream Journal'}
+          {label}
         </button>
       ))}
     </div>
@@ -315,6 +315,10 @@ export default function JournalPage() {
           </div>
           <button onClick={() => setDreamView('new')} style={{ padding: '0.6rem 1.25rem', borderRadius: '9999px', background: 'linear-gradient(135deg, rgba(60,30,120,0.4), rgba(100,60,180,0.3))', border: '1px solid rgba(120,80,220,0.35)', color: 'rgba(200,170,255,0.9)', cursor: 'pointer', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>+ New Dream</button>
         </div>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          <a href="/dashboard/dreams" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '9999px', background: 'rgba(60,20,40,0.4)', border: '1px solid rgba(200,80,80,0.3)', color: 'rgba(255,160,160,0.9)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 500 }}>🌑 Night Mode</a>
+          <a href="/dashboard/dream-resonances" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '9999px', background: 'rgba(120,80,220,0.1)', border: '1px solid rgba(120,80,220,0.25)', color: 'rgba(200,170,255,0.8)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 500 }}>🔮 Dream Resonances</a>
+        </div>
         {mounted && dreams.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {dreams.map(dream => (
@@ -435,6 +439,61 @@ export default function JournalPage() {
     } finally {
       setInterpretingId(null)
     }
+  }
+
+  // ── REFLECT TAB ──────────────────────────────────────────────────────────
+  if (activeTab === 'reflect') {
+    return (
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem' }}>
+        {tabBar}
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.9)', fontWeight: 300, marginBottom: '0.25rem' }}>Reflect</h1>
+        <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.35)', marginBottom: '1.5rem' }}>Gratitude & manifestation practices</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <a href="/dashboard/gratitude" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(12px)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '0.75rem', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>🙏</div>
+                <div>
+                  <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.1rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif' }}>Gratitude Journal</div>
+                  <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem' }}>Daily gratitude practice</div>
+                </div>
+              </div>
+              <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>Cultivate abundance by acknowledging the blessings in your life. Record what you are grateful for each day.</p>
+            </div>
+          </a>
+          <a href="/dashboard/manifestations" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(12px)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '0.75rem', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>🌱</div>
+                <div>
+                  <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.1rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif' }}>Manifestations</div>
+                  <div style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.75rem' }}>Track your manifestation journey</div>
+                </div>
+              </div>
+              <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>Set intentions, track progress, and watch your dreams become reality through focused cosmic alignment.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  // ── VISION TAB ──────────────────────────────────────────────────────────
+  if (activeTab === 'vision') {
+    return (
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1.5rem 1rem' }}>
+        {tabBar}
+        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: 'rgba(220,200,255,0.9)', fontWeight: 300, marginBottom: '0.25rem' }}>Vision Board</h1>
+        <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(200,180,255,0.35)', marginBottom: '1.5rem' }}>Visualize your cosmic destiny</p>
+        <a href="/dashboard/vision-board" style={{ textDecoration: 'none' }}>
+          <div style={{ background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(129,140,248,0.2)', borderRadius: '1.25rem', padding: '2rem', backdropFilter: 'blur(12px)', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🖼️</div>
+            <div style={{ color: 'rgba(220,200,255,0.9)', fontSize: '1.25rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif', marginBottom: '0.5rem' }}>Open Vision Board</div>
+            <p style={{ color: 'rgba(200,180,255,0.5)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>Create a visual manifestation board with images, affirmations, and cosmic goals. Pin your dreams and watch them materialize.</p>
+          </div>
+        </a>
+      </div>
+    )
   }
 
   // ── THOUGHT ANCHOR LIST ───────────────────────────────────────────────────

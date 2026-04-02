@@ -19,7 +19,7 @@ const QUICK_TOOLS = [
   { href: '/dashboard/rituals', emoji: '✦', label: 'Rituals', color: '#c9a84c' },
   { href: '/dashboard/crystals', emoji: '💎', label: 'Crystals', color: '#818cf8' },
   { href: '/dashboard/gratitude', emoji: '🙏', label: 'Gratitude', color: '#4ade80' },
-  { href: '/dashboard/tools', emoji: '✧', label: 'All Tools', color: 'rgba(200,180,255,0.5)' },
+  { href: '/dashboard/explore', emoji: '✧', label: 'Explore', color: 'rgba(200,180,255,0.5)' },
 ]
 
 const FEATURE_CARDS = [
