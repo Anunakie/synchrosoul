@@ -4,6 +4,8 @@ import JournalExport from '@/components/JournalExport'
 
 import { useState, useEffect, useMemo } from 'react'
 import { getLogs, saveLog, searchLogs, getStats, getNumerologyProfile, AngelLog } from '@/lib/storage'
+import { getConversations, sendMessage, Conversation } from '@/lib/messages'
+import { savePost } from '@/lib/social-storage'
 import { getAngelMeaning } from '@/lib/angel-meanings'
 import VoiceRecorder from '@/components/VoiceRecorder'
 import JournalEntry from '@/components/JournalEntry'
@@ -48,6 +50,12 @@ export default function JournalPage() {
   const [interpretingId, setInterpretingId] = useState<string | null>(null)
   const [sharedDreams, setSharedDreams] = useState<Record<string, boolean>>({})
   const [sharingDreamId, setSharingDreamId] = useState<string | null>(null)
+  const [shareMenuDreamId, setShareMenuDreamId] = useState<string | null>(null)
+  const [shareStep, setShareStep] = useState<'menu' | 'conversations' | 'success'>('menu')
+  const [shareSuccessMsg, setShareSuccessMsg] = useState('')
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [loadingConvos, setLoadingConvos] = useState(false)
+  const [shareProcessing, setShareProcessing] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -373,23 +381,89 @@ export default function JournalPage() {
                           ? (isSim ? '>> RE-ANALYZE FRAGMENT' : '✦ Re-interpret Dream')
                           : (isSim ? '>> ANALYZE MEMORY FRAGMENT' : '✦ Interpret This Dream with AI')}
                     </button>
+                    {/* Share Dream Button */}
                     <button
-                      onClick={async () => {
-                        setSharingDreamId(dream.id)
-                        const newState = !sharedDreams[dream.id]
-                        try {
-                          const res = await fetch('/api/dreams/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dreamId: dream.id, isShared: newState, title: dream.title, description: dream.description, symbols: dream.symbols }) })
-                          if (res.ok) setSharedDreams(prev => ({ ...prev, [dream.id]: newState }))
-                        } finally { setSharingDreamId(null) }
-                      }}
-                      disabled={sharingDreamId === dream.id}
-                      style={{ display: 'block', width: '100%', padding: '0.65rem', marginBottom: '0.5rem', borderRadius: '0.75rem', background: sharedDreams[dream.id] ? (isSim ? 'rgba(0,255,65,0.2)' : 'rgba(240,192,64,0.15)') : 'transparent', border: isSim ? '1px solid rgba(0,255,65,0.3)' : '1px solid rgba(240,192,64,0.3)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(240,192,64,0.9)', cursor: sharingDreamId === dream.id ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: isSim ? 'monospace' : 'inherit', letterSpacing: isSim ? '0.05em' : 'normal', opacity: sharingDreamId === dream.id ? 0.6 : 1 }}>
-                      {sharingDreamId === dream.id
-                        ? (isSim ? '>> TRANSMITTING...' : '✦ Updating...')
-                        : sharedDreams[dream.id]
-                          ? (isSim ? '>> BROADCASTING — TAP TO STOP' : '🌐 Shared — tap to unshare')
-                          : (isSim ? '>> BROADCAST TO NETWORK' : '🌐 Share This Dream')}
+                      onClick={() => openShareMenu(dream.id)}
+                      style={{ display: 'block', width: '100%', padding: '0.65rem', marginBottom: '0.5rem', borderRadius: '0.75rem', background: 'transparent', border: isSim ? '1px solid rgba(0,255,65,0.3)' : '1px solid rgba(240,192,64,0.3)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(240,192,64,0.9)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: isSim ? 'monospace' : 'inherit', letterSpacing: isSim ? '0.05em' : 'normal' }}>
+                      {isSim ? '>> BROADCAST DREAM' : '🌐 Share This Dream'}
                     </button>
+                    {sharedDreams[dream.id] && (
+                      <button
+                        onClick={async () => {
+                          setSharingDreamId(dream.id)
+                          try {
+                            const res = await fetch('/api/dreams/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dreamId: dream.id, isShared: false, title: dream.title, description: dream.description, symbols: dream.symbols }) })
+                            if (res.ok) setSharedDreams(prev => ({ ...prev, [dream.id]: false }))
+                          } finally { setSharingDreamId(null) }
+                        }}
+                        disabled={sharingDreamId === dream.id}
+                        style={{ display: 'block', width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,255,65,0.1)' : 'rgba(240,192,64,0.08)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(240,192,64,0.2)', color: isSim ? 'rgba(0,255,65,0.7)' : 'rgba(240,192,64,0.7)', cursor: 'pointer', fontSize: '0.72rem', fontFamily: isSim ? 'monospace' : 'inherit', opacity: sharingDreamId === dream.id ? 0.5 : 1 }}>
+                        {sharingDreamId === dream.id ? (isSim ? '>> ...' : '...') : (isSim ? '>> REMOVE FROM RESONANCE NETWORK' : '🔮 Unshare from Resonances')}
+                      </button>
+                    )}
+                    {/* ── SHARE MENU MODAL ──────────────────────────────── */}
+                    {shareMenuDreamId === dream.id && (
+                      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={closeShareMenu}>
+                        <div style={{ width: '100%', maxWidth: '380px', background: isSim ? 'rgba(0,8,0,0.97)' : 'rgba(12,8,32,0.97)', border: isSim ? '1px solid rgba(0,255,65,0.3)' : '1px solid rgba(160,100,255,0.35)', borderRadius: '1.25rem', padding: '1.5rem', backdropFilter: 'blur(20px)' }} onClick={e => e.stopPropagation()}>
+                          {shareStep === 'menu' && (<>
+                            <h3 style={{ fontFamily: isSim ? 'monospace' : 'Cormorant Garamond, serif', fontSize: isSim ? '0.9rem' : '1.3rem', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(220,200,255,0.95)', fontWeight: isSim ? 600 : 300, margin: '0 0 1.25rem', textAlign: 'center' }}>{isSim ? '>> SELECT BROADCAST CHANNEL' : '🌙 Share This Dream'}</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                              <button onClick={() => openConversationPicker()} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.85rem 1rem', borderRadius: '0.875rem', background: isSim ? 'rgba(0,255,65,0.06)' : 'rgba(100,160,255,0.08)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(100,160,255,0.25)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(180,210,255,0.95)', cursor: 'pointer', fontSize: '0.85rem', fontFamily: isSim ? 'monospace' : 'inherit', textAlign: 'left' }}>
+                                <span style={{ fontSize: '1.2rem' }}>💬</span>
+                                <div><div style={{ fontWeight: 600 }}>{isSim ? 'Transmit to Channel' : 'Send to Conversation'}</div><div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.15rem' }}>{isSim ? 'Direct channel transmission' : 'Send as a message to a soul'}</div></div>
+                              </button>
+                              <button onClick={() => handlePostToFeed(dream)} disabled={shareProcessing} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.85rem 1rem', borderRadius: '0.875rem', background: isSim ? 'rgba(0,255,65,0.06)' : 'rgba(160,100,255,0.08)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(160,100,255,0.25)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(200,170,255,0.95)', cursor: shareProcessing ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontFamily: isSim ? 'monospace' : 'inherit', textAlign: 'left', opacity: shareProcessing ? 0.5 : 1 }}>
+                                <span style={{ fontSize: '1.2rem' }}>📡</span>
+                                <div><div style={{ fontWeight: 600 }}>{isSim ? 'Post to Network Feed' : 'Post to Cosmic Feed'}</div><div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.15rem' }}>{isSim ? 'Broadcast to all nodes' : 'Share with the cosmic community'}</div></div>
+                              </button>
+                              <button onClick={() => handleCopyToClipboard(dream)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.85rem 1rem', borderRadius: '0.875rem', background: isSim ? 'rgba(0,255,65,0.06)' : 'rgba(100,220,160,0.08)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(100,220,160,0.25)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(160,240,200,0.95)', cursor: 'pointer', fontSize: '0.85rem', fontFamily: isSim ? 'monospace' : 'inherit', textAlign: 'left' }}>
+                                <span style={{ fontSize: '1.2rem' }}>📋</span>
+                                <div><div style={{ fontWeight: 600 }}>{isSim ? 'Copy to Buffer' : 'Copy to Clipboard'}</div><div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.15rem' }}>{isSim ? 'Store in local buffer' : 'Copy formatted dream text'}</div></div>
+                              </button>
+                              <button onClick={() => handleShareToResonances(dream)} disabled={shareProcessing} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.85rem 1rem', borderRadius: '0.875rem', background: isSim ? 'rgba(0,255,65,0.06)' : 'rgba(200,100,255,0.08)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(200,100,255,0.25)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(220,180,255,0.95)', cursor: shareProcessing ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontFamily: isSim ? 'monospace' : 'inherit', textAlign: 'left', opacity: shareProcessing ? 0.5 : 1 }}>
+                                <span style={{ fontSize: '1.2rem' }}>🔮</span>
+                                <div><div style={{ fontWeight: 600 }}>{isSim ? 'Resonance Network' : 'Dream Resonances (AI match)'}</div><div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.15rem' }}>{isSim ? 'AI theme extraction + matching' : 'AI extracts themes & finds matching souls'}</div></div>
+                              </button>
+                            </div>
+                            <button onClick={closeShareMenu} style={{ display: 'block', width: '100%', padding: '0.7rem', marginTop: '0.85rem', borderRadius: '0.75rem', background: 'transparent', border: isSim ? '1px solid rgba(0,255,65,0.15)' : '1px solid rgba(200,180,255,0.15)', color: isSim ? 'rgba(0,255,65,0.5)' : 'rgba(200,180,255,0.5)', cursor: 'pointer', fontSize: '0.8rem', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> CANCEL' : '✕ Cancel'}</button>
+                          </>)}
+                          {shareStep === 'conversations' && (<>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                              <button onClick={() => setShareStep('menu')} style={{ background: 'none', border: 'none', color: isSim ? 'rgba(0,255,65,0.6)' : 'rgba(200,180,255,0.5)', cursor: 'pointer', fontSize: '1.1rem', padding: 0 }}>←</button>
+                              <h3 style={{ fontFamily: isSim ? 'monospace' : 'Cormorant Garamond, serif', fontSize: isSim ? '0.85rem' : '1.15rem', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(220,200,255,0.95)', fontWeight: isSim ? 600 : 300, margin: 0 }}>{isSim ? '>> SELECT CHANNEL' : '💬 Pick a Conversation'}</h3>
+                            </div>
+                            {loadingConvos ? (
+                              <p style={{ textAlign: 'center', color: isSim ? 'rgba(0,255,65,0.5)' : 'rgba(200,180,255,0.5)', fontSize: '0.8rem', padding: '2rem 0', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> LOADING CHANNELS...' : 'Loading conversations...'}</p>
+                            ) : conversations.length === 0 ? (
+                              <p style={{ textAlign: 'center', color: isSim ? 'rgba(0,255,65,0.4)' : 'rgba(200,180,255,0.4)', fontSize: '0.8rem', padding: '2rem 0', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> NO ACTIVE CHANNELS' : 'No active conversations yet'}</p>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '280px', overflowY: 'auto' }}>
+                                {conversations.map(c => (
+                                  <button key={c.id} onClick={() => handleSendToConversation(dream, c.id)} disabled={shareProcessing} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', width: '100%', padding: '0.7rem 0.85rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,255,65,0.05)' : 'rgba(255,255,255,0.04)', border: isSim ? '1px solid rgba(0,255,65,0.15)' : '1px solid rgba(200,180,255,0.12)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(220,200,255,0.9)', cursor: shareProcessing ? 'not-allowed' : 'pointer', fontSize: '0.82rem', fontFamily: isSim ? 'monospace' : 'inherit', textAlign: 'left', opacity: shareProcessing ? 0.5 : 1 }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: isSim ? 'rgba(0,255,65,0.15)' : 'rgba(160,100,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>{c.otherUserAvatar || c.otherUserName.charAt(0).toUpperCase()}</div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.otherUserName}</div>
+                                      {c.lastMessagePreview && <div style={{ fontSize: '0.7rem', opacity: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '0.1rem' }}>{c.lastMessagePreview}</div>}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            <button onClick={closeShareMenu} style={{ display: 'block', width: '100%', padding: '0.6rem', marginTop: '0.75rem', borderRadius: '0.75rem', background: 'transparent', border: isSim ? '1px solid rgba(0,255,65,0.15)' : '1px solid rgba(200,180,255,0.15)', color: isSim ? 'rgba(0,255,65,0.5)' : 'rgba(200,180,255,0.5)', cursor: 'pointer', fontSize: '0.78rem', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> CANCEL' : '✕ Cancel'}</button>
+                          </>)}
+                          {shareStep === 'success' && (
+                            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>{shareSuccessMsg.includes('❌') || shareSuccessMsg.includes('FAILED') ? '😔' : '✨'}</div>
+                              <p style={{ fontFamily: isSim ? 'monospace' : 'Cormorant Garamond, serif', fontSize: isSim ? '0.85rem' : '1.15rem', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(220,200,255,0.9)', fontWeight: isSim ? 600 : 400, marginBottom: '0.5rem' }}>{shareSuccessMsg}</p>
+                              {shareSuccessMsg.includes('Resonances') && !shareSuccessMsg.includes('Removed') && (
+                                <a href="/dashboard/dream-resonances" style={{ display: 'inline-block', marginBottom: '0.75rem', fontSize: '0.78rem', color: isSim ? 'rgba(0,255,65,0.7)' : 'rgba(200,170,255,0.8)', textDecoration: 'underline' }}>{isSim ? '>> VIEW RESONANCES' : 'View Dream Resonances →'}</a>
+                              )}
+                              <button onClick={closeShareMenu} style={{ display: 'block', width: '100%', padding: '0.7rem', marginTop: '0.5rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,255,65,0.1)' : 'rgba(160,100,255,0.15)', border: isSim ? '1px solid rgba(0,255,65,0.25)' : '1px solid rgba(160,100,255,0.3)', color: isSim ? 'rgba(0,255,65,0.9)' : 'rgba(200,170,255,0.9)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> CLOSE' : 'Done'}</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -405,6 +479,79 @@ export default function JournalPage() {
         ) : null}
       </div>
     )
+  }
+
+
+  // ── SHARE MENU HELPERS ──────────────────────────────────────────────────
+  function openShareMenu(dreamId: string) {
+    setShareMenuDreamId(dreamId)
+    setShareStep('menu')
+    setShareSuccessMsg('')
+  }
+  function closeShareMenu() {
+    setShareMenuDreamId(null)
+    setShareStep('menu')
+    setShareSuccessMsg('')
+  }
+  async function openConversationPicker() {
+    setLoadingConvos(true)
+    setShareStep('conversations')
+    try {
+      const convos = await getConversations()
+      setConversations(convos)
+    } catch { setConversations([]) }
+    finally { setLoadingConvos(false) }
+  }
+  async function handleSendToConversation(dream: DreamEntry, convoId: string) {
+    setShareProcessing(true)
+    try {
+      const msg = `🌙 Shared Dream: ${dream.description || dream.title}`
+      await sendMessage({ conversationId: convoId, content: msg })
+      setShareStep('success')
+      setShareSuccessMsg(isSim ? '>> DREAM TRANSMITTED TO CHANNEL' : '✨ Dream sent to conversation!')
+    } catch {
+      setShareSuccessMsg(isSim ? '>> TRANSMISSION FAILED' : '❌ Failed to send. Try again.')
+      setShareStep('success')
+    } finally { setShareProcessing(false) }
+  }
+  async function handlePostToFeed(dream: DreamEntry) {
+    setShareProcessing(true)
+    try {
+      await savePost({ content: `🌙 ${dream.title}\n\n${dream.description}` })
+      setShareStep('success')
+      setShareSuccessMsg(isSim ? '>> DREAM POSTED TO NETWORK FEED' : '✨ Dream posted to Cosmic Feed!')
+    } catch {
+      setShareSuccessMsg(isSim ? '>> FEED POST FAILED' : '❌ Failed to post. Try again.')
+      setShareStep('success')
+    } finally { setShareProcessing(false) }
+  }
+  function handleCopyToClipboard(dream: DreamEntry) {
+    const dateStr = new Date(dream.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const text = `🌙 Dream from ${dateStr}: ${dream.description || dream.title}`
+    navigator.clipboard.writeText(text).then(() => {
+      setShareStep('success')
+      setShareSuccessMsg(isSim ? '>> COPIED TO BUFFER' : '📋 Copied to clipboard!')
+    }).catch(() => {
+      setShareStep('success')
+      setShareSuccessMsg(isSim ? '>> BUFFER COPY FAILED' : '❌ Copy failed. Try again.')
+    })
+  }
+  async function handleShareToResonances(dream: DreamEntry) {
+    setShareProcessing(true)
+    try {
+      const newState = !sharedDreams[dream.id]
+      const res = await fetch('/api/dreams/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dreamId: dream.id, isShared: newState, title: dream.title, description: dream.description, symbols: dream.symbols }) })
+      if (res.ok) {
+        setSharedDreams(prev => ({ ...prev, [dream.id]: newState }))
+        setShareStep('success')
+        setShareSuccessMsg(newState
+          ? (isSim ? '>> DREAM SHARED TO RESONANCE NETWORK' : '🔮 Shared to Dream Resonances!')
+          : (isSim ? '>> REMOVED FROM RESONANCE NETWORK' : '🔮 Removed from Dream Resonances'))
+      }
+    } catch {
+      setShareSuccessMsg(isSim ? '>> RESONANCE SHARE FAILED' : '❌ Failed. Try again.')
+      setShareStep('success')
+    } finally { setShareProcessing(false) }
   }
 
 
