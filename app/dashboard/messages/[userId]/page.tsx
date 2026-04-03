@@ -44,7 +44,7 @@ function ChatPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const otherUserId = params.userId as string
-  const otherName = decodeURIComponent(searchParams.get('name') || 'Soul')
+  const fallbackName = decodeURIComponent(searchParams.get('name') || 'Soul')
   const presetConvId = searchParams.get('convId') || null
   const source = searchParams.get('source') || ''
   const sharedNumbersRaw = searchParams.get('shared') || ''
@@ -59,6 +59,7 @@ function ChatPageInner() {
   const [showAngelPicker, setShowAngelPicker] = useState(false)
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [freshName, setFreshName] = useState<string>(fallbackName)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -70,12 +71,27 @@ function ChatPageInner() {
     const uid = await getCurrentUserId()
     setMyId(uid)
     if (!uid) { setLoading(false); return }
+
+    // Fetch fresh profile name for the other user
+    try {
+      const profRes = await fetch('/api/messages/fresh-profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: [otherUserId] }),
+      })
+      if (profRes.ok) {
+        const profData = await profRes.json()
+        const fresh = profData.profiles?.[otherUserId]
+        if (fresh?.displayName) setFreshName(fresh.displayName)
+      }
+    } catch {}
+
     const profile = await getNumerologyProfile()
     const myName = (profile as any)?.name || (profile as any)?.displayName || 'Soul'
     const myAvatar = typeof window !== 'undefined' ? (localStorage.getItem('synchrosoul_avatar_image') || '') : ''
     let cid = convId
     if (!cid) {
-      cid = await getOrCreateConversation(otherUserId, myName, myAvatar, otherName, '')
+      cid = await getOrCreateConversation(otherUserId, myName, myAvatar, fallbackName, '')
       if (cid) setConvId(cid)
     }
     if (cid) {
@@ -84,7 +100,7 @@ function ChatPageInner() {
       await markMessagesRead(cid)
     }
     setLoading(false)
-  }, [otherUserId, otherName, convId])
+  }, [otherUserId, fallbackName, convId])
 
   useEffect(() => {
     initConversation()
@@ -143,17 +159,17 @@ function ChatPageInner() {
     else grouped.push({ date, msgs: [msg] })
   })
 
-  const starterMessages = getStarterMessages(sharedNumbers, otherName)
+  const starterMessages = getStarterMessages(sharedNumbers, freshName)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: '480px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'rgba(8,6,28,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 10 }}>
         <button onClick={() => router.push(isSoulTwin ? '/dashboard/soul-twin' : '/dashboard/messages')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>←</button>
-        <Avatar name={otherName} size={38} />
+        <Avatar name={freshName} size={38} />
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem' }}>{otherName}</span>
+            <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem' }}>{freshName}</span>
             {isSoulTwin && (
               <span style={{ fontSize: '0.6rem', background: 'rgba(244,114,182,0.15)', border: '1px solid rgba(244,114,182,0.3)', borderRadius: '9999px', padding: '0.1rem 0.45rem', color: '#f472b6', letterSpacing: '0.04em' }}>SOUL TWIN</span>
             )}
@@ -220,7 +236,7 @@ function ChatPageInner() {
               const showAvatar = !isMe && (i === 0 || group.msgs[i-1]?.senderId !== msg.senderId)
               return (
                 <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  {!isMe && <div style={{ width: 28, flexShrink: 0 }}>{showAvatar && <Avatar name={otherName} size={28} />}</div>}
+                  {!isMe && <div style={{ width: 28, flexShrink: 0 }}>{showAvatar && <Avatar name={freshName} size={28} />}</div>}
                   <div style={{ maxWidth: '72%' }}>
                     {msg.angelNumber && (
                       <div style={{ textAlign: isMe ? 'right' : 'left', marginBottom: '0.2rem' }}>

@@ -36,6 +36,24 @@ export async function GET() {
       .eq('is_shared', true)
       .limit(10)
 
+    // Get user's own shared dreams with full details
+    const { data: mySharedDreamsRaw } = await admin
+      .from('dreams')
+      .select('id, title, description, dream_themes, shared_at')
+      .eq('user_id', user.id)
+      .eq('is_shared', true)
+      .order('shared_at', { ascending: false })
+      .limit(10)
+
+    const mySharedDreams = (mySharedDreamsRaw || []).map((d: any) => ({
+      id: d.id,
+      title: d.title || 'Untitled Dream',
+      description: d.description || '',
+      themes: parseThemes(d.dream_themes),
+      sharedAt: d.shared_at,
+    }))
+
+
     const myThemes = new Set<string>()
     ;(myDreams || []).forEach(d => {
       parseThemes(d.dream_themes).forEach(t => myThemes.add(t.toLowerCase()))
@@ -92,7 +110,7 @@ export async function GET() {
       }
     }).sort((a: any, b: any) => b.resonanceScore - a.resonanceScore)
 
-    return NextResponse.json({ resonances })
+    return NextResponse.json({ resonances, mySharedDreams })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

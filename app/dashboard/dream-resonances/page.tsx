@@ -18,19 +18,38 @@ interface DreamResonance {
   matchedThemes: string[]
 }
 
+interface MySharedDream {
+  id: string
+  title: string
+  description: string
+  themes: string[]
+  sharedAt: string
+}
+
 export default function DreamResonancesPage() {
   const { theme } = useTheme()
   const isSim = theme === "simulation"
   const [resonances, setResonances] = useState<DreamResonance[]>([])
+  const [mySharedDreams, setMySharedDreams] = useState<MySharedDream[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<DreamResonance | null>(null)
 
   useEffect(() => {
     fetch("/api/dreams/resonances")
       .then(r => r.json())
-      .then(data => { setResonances(data.resonances || []); setLoading(false) })
+      .then(data => {
+        setResonances(data.resonances || [])
+        setMySharedDreams(data.mySharedDreams || [])
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
+
+  function formatDate(iso: string): string {
+    if (!iso) return ''
+    const d = new Date(iso)
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+  }
 
   const styles = {
     page: { minHeight: "100vh", padding: "1.5rem", color: isSim ? "#00ff41" : "#e2d9f3" },
@@ -51,6 +70,11 @@ export default function DreamResonancesPage() {
     empty: { textAlign: "center" as const, padding: "3rem", color: isSim ? "#00cc33" : "#b8a9d0", fontFamily: isSim ? "monospace" : "inherit" },
     modal: { position: "fixed" as const, inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
     modalInner: { background: isSim ? "rgba(0,15,0,0.98)" : "rgba(20,10,50,0.98)", border: isSim ? "1px solid #00ff41" : "1px solid rgba(240,192,64,0.4)", borderRadius: isSim ? "2px" : "16px", padding: "1.5rem", maxWidth: "500px", width: "100%", maxHeight: "80vh", overflowY: "auto" as const },
+    sectionTitle: { fontSize: "1.1rem", fontWeight: 600, color: isSim ? "#00ff41" : "#9b59b6", fontFamily: isSim ? "monospace" : "inherit", marginBottom: "0.8rem", marginTop: "0.5rem" },
+    myDreamCard: { background: isSim ? "rgba(0,30,0,0.75)" : "rgba(155,89,182,0.12)", border: isSim ? "1px solid #00ff4130" : "1px solid rgba(155,89,182,0.25)", borderRadius: isSim ? "2px" : "10px", padding: "1rem" },
+    myDreamTitle: { fontWeight: 600, color: isSim ? "#88ff88" : "#e2d9f3", fontFamily: isSim ? "monospace" : "inherit", fontSize: "0.95rem" },
+    myDreamDesc: { color: isSim ? "#00cc33" : "#b8a9d0", fontSize: "0.82rem", marginTop: "0.3rem", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" },
+    myDreamDate: { color: isSim ? "#007720" : "rgba(155,89,182,0.6)", fontSize: "0.72rem", marginTop: "0.4rem", fontFamily: isSim ? "monospace" : "inherit" },
   }
 
   return (
@@ -66,11 +90,51 @@ export default function DreamResonancesPage() {
         </p>
       </div>
 
+      {/* Your Shared Dreams Section */}
+      {!loading && mySharedDreams.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h2 style={styles.sectionTitle}>
+            {isSim ? ">> YOUR SHARED MEMORY FRAGMENTS" : "✦ Your Shared Dreams"}
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.75rem" }}>
+            {mySharedDreams.map(d => (
+              <div key={d.id} style={styles.myDreamCard}>
+                <div style={styles.myDreamTitle}>
+                  {isSim ? `> ${d.title.toUpperCase()}` : d.title}
+                </div>
+                {d.description && (
+                  <div style={styles.myDreamDesc}>{d.description}</div>
+                )}
+                {d.themes.length > 0 && (
+                  <div style={styles.themes}>
+                    {d.themes.slice(0, 5).map(t => (
+                      <span key={t} style={styles.theme}>
+                        {isSim ? t.toUpperCase() : t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div style={styles.myDreamDate}>
+                  {isSim ? `SHARED: ${formatDate(d.sharedAt)}` : `Shared ${formatDate(d.sharedAt)}`}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Resonances Section */}
+      {!loading && mySharedDreams.length > 0 && resonances.length > 0 && (
+        <h2 style={{ ...styles.sectionTitle, marginTop: "1rem" }}>
+          {isSim ? ">> MATCHING PATTERNS FROM OTHER SUBJECTS" : "🌌 Dreams Resonating With Yours"}
+        </h2>
+      )}
+
       {loading ? (
         <div style={styles.empty}>
           {isSim ? "SCANNING MEMORY ARCHIVES..." : "✦ Scanning the dream field..."}
         </div>
-      ) : resonances.length === 0 ? (
+      ) : resonances.length === 0 && mySharedDreams.length === 0 ? (
         <div style={styles.empty}>
           <div style={{ fontSize: "2rem", marginBottom: "0.8rem" }}>{isSim ? "//" : "🌌"}</div>
           <div>{isSim ? "NO MATCHING FRAGMENTS DETECTED" : "No resonances found yet"}</div>
@@ -78,6 +142,16 @@ export default function DreamResonancesPage() {
             {isSim
               ? "Share a memory fragment from your archive to enable pattern matching"
               : "Share a dream from your journal to connect with other dreamers"}
+          </div>
+        </div>
+      ) : resonances.length === 0 && mySharedDreams.length > 0 ? (
+        <div style={styles.empty}>
+          <div style={{ fontSize: "2rem", marginBottom: "0.8rem" }}>{isSim ? "//" : "🌌"}</div>
+          <div>{isSim ? "NO EXTERNAL MATCHES YET" : "No resonances from others yet"}</div>
+          <div style={{ fontSize: "0.85rem", marginTop: "0.5rem", opacity: 0.7 }}>
+            {isSim
+              ? "Your fragments are shared — awaiting pattern matches from other subjects"
+              : "Your dreams are shared — other dreamers will resonate soon"}
           </div>
         </div>
       ) : (

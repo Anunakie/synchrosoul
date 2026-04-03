@@ -29,6 +29,20 @@ function Avatar({ name, image, size = 44 }: { name: string; image?: string; size
   )
 }
 
+async function fetchFreshProfiles(userIds: string[]): Promise<Record<string, { displayName: string; avatarUrl: string }>> {
+  if (userIds.length === 0) return {}
+  try {
+    const res = await fetch('/api/messages/fresh-profiles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userIds }),
+    })
+    if (!res.ok) return {}
+    const data = await res.json()
+    return data.profiles || {}
+  } catch { return {} }
+}
+
 export default function MessagesPage() {
   const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -42,7 +56,25 @@ export default function MessagesPage() {
       getUnreadCount(),
       getCurrentUserId(),
     ])
-    setConversations(convs)
+
+    // Fetch fresh profile names to override denormalized conversation names
+    const otherUserIds = [...new Set(convs.map(c => c.otherUserId))]
+    const freshProfiles = await fetchFreshProfiles(otherUserIds)
+
+    // Override stale names with fresh profile data
+    const updatedConvs = convs.map(c => {
+      const fresh = freshProfiles[c.otherUserId]
+      if (fresh && fresh.displayName) {
+        return {
+          ...c,
+          otherUserName: fresh.displayName,
+          otherUserAvatar: fresh.avatarUrl || c.otherUserAvatar,
+        }
+      }
+      return c
+    })
+
+    setConversations(updatedConvs)
     setUnread(count)
     setMyId(uid)
     setLoading(false)
