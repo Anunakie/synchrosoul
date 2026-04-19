@@ -259,13 +259,20 @@ export default function DashboardPage() {
             <Link href='/dashboard/journal' style={{color:'rgba(167,139,250,0.5)',fontSize:'0.7rem',textDecoration:'none'}}>View all →</Link>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:'0.4rem'}}>
-            {logs.slice(0,5).map((log:any,i:number)=>(
+            {logs.slice(0,5).map((log:any,i:number)=>{
+              const rawDate = log.timestamp || log.createdAt || log.created_at
+              const parsedDate = rawDate ? new Date(rawDate) : null
+              const dateLabel = parsedDate && !isNaN(parsedDate.getTime())
+                ? parsedDate.toLocaleDateString('en-US',{month:'short',day:'numeric'})
+                : '—'
+              return (
               <div key={i} style={{...card,padding:'0.75rem 1rem',display:'flex',alignItems:'center',gap:'0.75rem'}}>
                 <span style={{color:'#c9a84c',fontSize:'0.95rem',fontWeight:700,minWidth:'40px'}}>{log.number}</span>
                 <span style={{color:'rgba(180,160,255,0.5)',fontSize:'0.75rem',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{log.thought||(isSim?'[THOUGHT UNRECORDED]':'No thought recorded')}</span>
-                <span style={{color:'rgba(180,160,255,0.25)',fontSize:'0.65rem',flexShrink:0}}>{new Date(log.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                <span style={{color:'rgba(180,160,255,0.25)',fontSize:'0.65rem',flexShrink:0}}>{dateLabel}</span>
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
