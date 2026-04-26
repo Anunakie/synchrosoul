@@ -105,6 +105,7 @@ export async function getLogsFromDB(): Promise<AngelLog[]> {
         readingColor: row.reading_color || (meaning?.color ?? '#9b59b6'),
         createdAt: row.created_at,
         shared: false,
+        songRecommendation: row.song_recommendation ?? null,
       }
     })
   } catch {
@@ -191,6 +192,23 @@ export async function deleteLogFromDB(id: string): Promise<boolean> {
       .from('angel_logs')
       .delete()
       .eq('id', id)
+      .eq('user_id', userId)
+    return !error
+  } catch {
+    return false
+  }
+}
+
+// Update a log's song recommendation in Supabase (for cross-device sync)
+export async function updateLogRecommendation(logId: string, recommendation: Record<string, unknown>): Promise<boolean> {
+  try {
+    const supabase = createClient()
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+    const { error } = await supabase
+      .from('angel_logs')
+      .update({ song_recommendation: recommendation })
+      .eq('id', logId)
       .eq('user_id', userId)
     return !error
   } catch {

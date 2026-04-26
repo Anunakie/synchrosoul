@@ -7,7 +7,10 @@ import {
   deleteLogFromDB,
   upsertProfile,
   getProfile,
+  updateLogRecommendation,
 } from './supabase-db'
+
+export { updateLogRecommendation }
 
 export interface AngelLog {
   id: string
@@ -20,6 +23,7 @@ export interface AngelLog {
   readingColor: string
   createdAt: string
   shared: boolean
+  songRecommendation?: Record<string, unknown> | null
 }
 
 const STORAGE_KEY = 'synchrosoul_logs'

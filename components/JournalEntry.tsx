@@ -33,13 +33,19 @@ export default function JournalEntry({ log, onDelete, onToggleShare }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [savedRec, setSavedRec] = useState<SongRecommendationData | null>(null)
 
-  // Load saved song recommendation when expanded
+  // Load saved song recommendation: Supabase (cross-device) first, localStorage fallback
   useEffect(() => {
     if (expanded) {
-      const rec = getSongRecommendation(log.id)
-      setSavedRec(rec)
+      // Check if recommendation is stored with the log in Supabase
+      if (log.songRecommendation) {
+        setSavedRec(log.songRecommendation as unknown as SongRecommendationData)
+      } else {
+        // Fallback to localStorage (same-device cache)
+        const rec = getSongRecommendation(log.id)
+        setSavedRec(rec)
+      }
     }
-  }, [expanded, log.id])
+  }, [expanded, log.id, log.songRecommendation])
 
   useEffect(() => {
     return () => stopSpeaking()

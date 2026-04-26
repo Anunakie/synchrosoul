@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { saveLog, AngelLog } from '@/lib/storage'
+import { saveLog, AngelLog, updateLogRecommendation } from '@/lib/storage'
 import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
 import { createClient } from '@/lib/supabase/client'
@@ -53,10 +53,12 @@ export default function AngelLogger({ onLogged }: Props) {
 
   const activeNumber = custom || selected
 
-  // Persist song recommendation to localStorage when both log and recommendation are available
+  // Persist song recommendation to Supabase (cross-device) and localStorage (fast cache)
   useEffect(() => {
     if (lastLog && songRec) {
       saveSongRecommendation(lastLog.id, songRec)
+      // Also save to Supabase for cross-device sync
+      updateLogRecommendation(lastLog.id, songRec as unknown as Record<string, unknown>).catch(() => {})
     }
   }, [lastLog, songRec])
   const meaning = activeNumber ? getAngelMeaning(activeNumber) : null
