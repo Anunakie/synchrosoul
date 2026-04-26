@@ -102,13 +102,13 @@ export default function MusicalHealersPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                   <div style={{
                     width: '48px', height: '48px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, rgba(201,168,76,0.3), rgba(167,139,250,0.3))',
+                    background: healer.resolved_avatar_url ? 'transparent' : `linear-gradient(135deg, ${healer.resolved_avatar_color || '#9b59b6'}, rgba(167,139,250,0.3))`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '1.25rem', flexShrink: 0,
                     overflow: 'hidden',
                   }}>
-                    {healer.avatar_url
-                      ? <img src={healer.avatar_url} alt={healer.artist_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {healer.resolved_avatar_url
+                      ? <img src={healer.resolved_avatar_url} alt={healer.artist_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : '🎵'
                     }
                   </div>

@@ -10,6 +10,7 @@ export interface MusicalHealer {
   merch_url: string | null
   spotify_url: string | null
   apple_music_url: string | null
+  amazon_music_url: string | null
   soundcloud_url: string | null
   youtube_url: string | null
   tidal_url: string | null
@@ -35,6 +36,7 @@ export interface MusicalHealerSong {
   duration_seconds: number | null
   spotify_url: string | null
   apple_music_url: string | null
+  amazon_music_url: string | null
   soundcloud_url: string | null
   youtube_url: string | null
   tidal_url: string | null
@@ -59,8 +61,8 @@ export interface SongRecommendation {
   ai_reasoning: string | null
 }
 
-// Fetch all active musical healers
-export async function getMusicalHealers(): Promise<MusicalHealer[]> {
+// Fetch all active musical healers (with main profile avatar fallback)
+export async function getMusicalHealers(): Promise<(MusicalHealer & { resolved_avatar_url: string | null; resolved_avatar_color: string })[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('musical_healers')
@@ -72,11 +74,33 @@ export async function getMusicalHealers(): Promise<MusicalHealer[]> {
     console.error('Error fetching musical healers:', error)
     return []
   }
-  return data || []
+
+  const healers = data || []
+
+  // Fetch main profile avatars for healers that don't have a custom avatar_url
+  const userIds = healers.filter(h => !h.avatar_url).map(h => h.user_id).filter(Boolean)
+  let profileMap: Record<string, { avatar_url: string | null; avatar_color: string | null }> = {}
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, avatar_url, avatar_color')
+      .in('id', userIds)
+
+    for (const p of (profiles || [])) {
+      profileMap[p.id] = { avatar_url: p.avatar_url, avatar_color: p.avatar_color }
+    }
+  }
+
+  return healers.map(h => ({
+    ...h,
+    resolved_avatar_url: h.avatar_url || profileMap[h.user_id]?.avatar_url || null,
+    resolved_avatar_color: profileMap[h.user_id]?.avatar_color || '#9b59b6',
+  }))
 }
 
-// Fetch a single musical healer by ID
-export async function getMusicalHealer(id: string): Promise<MusicalHealer | null> {
+// Fetch a single musical healer by ID (with main profile avatar fallback)
+export async function getMusicalHealer(id: string): Promise<(MusicalHealer & { resolved_avatar_url: string | null; resolved_avatar_color: string }) | null> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('musical_healers')
@@ -89,7 +113,27 @@ export async function getMusicalHealer(id: string): Promise<MusicalHealer | null
     console.error('Error fetching musical healer:', error)
     return null
   }
-  return data
+
+  if (!data) return null
+
+  // If no custom avatar, pull from main profile
+  let resolved_avatar_url = data.avatar_url
+  let resolved_avatar_color = '#9b59b6'
+
+  if (!resolved_avatar_url && data.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url, avatar_color')
+      .eq('id', data.user_id)
+      .single()
+
+    if (profile) {
+      resolved_avatar_url = profile.avatar_url || null
+      resolved_avatar_color = profile.avatar_color || '#9b59b6'
+    }
+  }
+
+  return { ...data, resolved_avatar_url, resolved_avatar_color }
 }
 
 // Fetch songs for a specific healer
@@ -113,6 +157,7 @@ export async function getHealerSongs(healerId: string): Promise<MusicalHealerSon
 export function getSongStreamLink(song: MusicalHealerSong): { url: string; platform: string } | null {
   if (song.spotify_url) return { url: song.spotify_url, platform: 'Spotify' }
   if (song.apple_music_url) return { url: song.apple_music_url, platform: 'Apple Music' }
+  if (song.amazon_music_url) return { url: song.amazon_music_url, platform: 'Amazon Music' }
   if (song.youtube_url) return { url: song.youtube_url, platform: 'YouTube' }
   if (song.soundcloud_url) return { url: song.soundcloud_url, platform: 'SoundCloud' }
   if (song.tidal_url) return { url: song.tidal_url, platform: 'Tidal' }
@@ -120,11 +165,25 @@ export function getSongStreamLink(song: MusicalHealerSong): { url: string; platf
   return null
 }
 
+// Get all streaming links for a song
+export function getSongStreamLinks(song: MusicalHealerSong): { url: string; platform: string; emoji: string }[] {
+  const links: { url: string; platform: string; emoji: string }[] = []
+  if (song.spotify_url) links.push({ url: song.spotify_url, platform: 'Spotify', emoji: '🟢' })
+  if (song.apple_music_url) links.push({ url: song.apple_music_url, platform: 'Apple Music', emoji: '🍎' })
+  if (song.amazon_music_url) links.push({ url: song.amazon_music_url, platform: 'Amazon Music', emoji: '🎧' })
+  if (song.youtube_url) links.push({ url: song.youtube_url, platform: 'YouTube', emoji: '▶️' })
+  if (song.soundcloud_url) links.push({ url: song.soundcloud_url, platform: 'SoundCloud', emoji: '☁️' })
+  if (song.tidal_url) links.push({ url: song.tidal_url, platform: 'Tidal', emoji: '🌊' })
+  if (song.bandcamp_url) links.push({ url: song.bandcamp_url, platform: 'Bandcamp', emoji: '💿' })
+  return links
+}
+
 // Get all streaming links for a healer
 export function getHealerStreamLinks(healer: MusicalHealer): { url: string; platform: string; emoji: string }[] {
   const links: { url: string; platform: string; emoji: string }[] = []
   if (healer.spotify_url) links.push({ url: healer.spotify_url, platform: 'Spotify', emoji: '🟢' })
   if (healer.apple_music_url) links.push({ url: healer.apple_music_url, platform: 'Apple Music', emoji: '🍎' })
+  if (healer.amazon_music_url) links.push({ url: healer.amazon_music_url, platform: 'Amazon Music', emoji: '🎧' })
   if (healer.youtube_url) links.push({ url: healer.youtube_url, platform: 'YouTube', emoji: '▶️' })
   if (healer.soundcloud_url) links.push({ url: healer.soundcloud_url, platform: 'SoundCloud', emoji: '☁️' })
   if (healer.tidal_url) links.push({ url: healer.tidal_url, platform: 'Tidal', emoji: '🌊' })

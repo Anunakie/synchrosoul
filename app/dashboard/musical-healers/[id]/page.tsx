@@ -7,6 +7,7 @@ import {
   getHealerSongs,
   getHealerStreamLinks,
   getSongStreamLink,
+  getSongStreamLinks,
   type MusicalHealer,
   type MusicalHealerSong,
 } from '@/lib/musical-healers'
@@ -39,7 +40,8 @@ const goldPill: React.CSSProperties = {
 
 function SongCard({ song }: { song: MusicalHealerSong }) {
   const [expanded, setExpanded] = useState(false)
-  const streamLink = getSongStreamLink(song)
+  const primaryLink = getSongStreamLink(song)
+  const allLinks = getSongStreamLinks(song)
 
   return (
     <div style={{ ...card, padding: '1rem', transition: 'border-color 0.2s' }}>
@@ -111,10 +113,10 @@ function SongCard({ song }: { song: MusicalHealerSong }) {
         </div>
       )}
 
-      {/* Listen Button */}
-      {streamLink && (
+      {/* Primary Listen Button */}
+      {primaryLink && (
         <a
-          href={streamLink.url}
+          href={primaryLink.url}
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -128,19 +130,26 @@ function SongCard({ song }: { song: MusicalHealerSong }) {
             transition: 'background 0.2s',
           }}
         >
-          ▶ Listen on {streamLink.platform}
+          ▶ Listen on {primaryLink.platform}
         </a>
       )}
 
-      {/* All Stream Links */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-        {song.spotify_url && <a href={song.spotify_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}>🟢 Spotify</a>}
-        {song.apple_music_url && <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}>🍎 Apple</a>}
-        {song.youtube_url && <a href={song.youtube_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}>▶️ YouTube</a>}
-        {song.soundcloud_url && <a href={song.soundcloud_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}>☁️ SoundCloud</a>}
-        {song.tidal_url && <a href={song.tidal_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}>🌊 Tidal</a>}
-        {song.bandcamp_url && <a href={song.bandcamp_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}>💿 Bandcamp</a>}
-      </div>
+      {/* All Streaming Platform Links */}
+      {allLinks.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+          {allLinks.map(link => (
+            <a
+              key={link.platform}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: '0.65rem', color: 'rgba(180,160,255,0.4)', textDecoration: 'none' }}
+            >
+              {link.emoji} {link.platform}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -148,7 +157,7 @@ function SongCard({ song }: { song: MusicalHealerSong }) {
 export default function MusicalHealerProfilePage() {
   const params = useParams()
   const id = params?.id as string
-  const [healer, setHealer] = useState<MusicalHealer | null>(null)
+  const [healer, setHealer] = useState<(MusicalHealer & { resolved_avatar_url: string | null; resolved_avatar_color: string }) | null>(null)
   const [songs, setSongs] = useState<MusicalHealerSong[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -192,16 +201,16 @@ export default function MusicalHealerProfilePage() {
 
       {/* Hero Card */}
       <div style={{ ...card, padding: '1.5rem', textAlign: 'center', marginBottom: '1rem' }}>
-        {/* Avatar */}
+        {/* Avatar — uses custom artist avatar, falls back to main profile avatar, then emoji */}
         <div style={{
           width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 0.75rem',
-          background: 'linear-gradient(135deg, rgba(201,168,76,0.3), rgba(167,139,250,0.3))',
+          background: healer.resolved_avatar_url ? 'transparent' : `linear-gradient(135deg, ${healer.resolved_avatar_color || '#9b59b6'}, rgba(167,139,250,0.3))`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '2rem', overflow: 'hidden',
           border: '2px solid rgba(201,168,76,0.3)',
         }}>
-          {healer.avatar_url
-            ? <img src={healer.avatar_url} alt={healer.artist_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {healer.resolved_avatar_url
+            ? <img src={healer.resolved_avatar_url} alt={healer.artist_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : '🎵'
           }
         </div>
