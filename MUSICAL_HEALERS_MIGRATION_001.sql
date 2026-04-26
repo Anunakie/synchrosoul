@@ -85,9 +85,4 @@ update musical_healer_songs
 set amazon_music_url = 'https://music.amazon.com/albums/B07RW2R8MM?marketplaceId=ATVPDKIKX0DER&musicTerritory=US&ref=dm_sh_v8dUquQRehvv8f7epT15JNLyd&trackAsin=B07RV73WPH'
 where title = 'Sea of Tranquility'
   and healer_id = (select id from musical_healers where artist_name = 'Daniel Ketchum' limit 1);
-
--- Done! Verify:
-select s.title, s.amazon_music_url
-from musical_healer_songs s
-join musical_healers h on h.id = s.healer_id
-where h.artist_name = 'Daniel Ketchum';
+-- Migration complete.
