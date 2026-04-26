@@ -361,6 +361,173 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── DREAM SYNCH ────────────────────────────────────────────────────── */}
+      <section style={{
+        minHeight: '80vh', display: 'flex', alignItems: 'center',
+        padding: '6rem 2rem', position: 'relative', zIndex: 10,
+        borderTop: '1px solid rgba(200,180,255,0.06)',
+        background: 'radial-gradient(ellipse at 50% 30%, rgba(120,80,200,0.06), transparent 70%)',
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+
+          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <div style={{
+              display: 'inline-block', padding: '0.3rem 1rem', borderRadius: '9999px',
+              background: 'rgba(160,120,255,0.08)', border: '1px solid rgba(160,120,255,0.2)',
+              color: 'rgba(160,120,255,0.7)', fontSize: '0.7rem',
+              letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1.5rem',
+            }}>Dream Synch</div>
+            <h2 style={{
+              fontFamily: 'Cormorant Garamond, serif',
+              fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+              fontWeight: 300, color: 'rgba(230,215,255,0.9)',
+              lineHeight: 1.2, marginBottom: '1.5rem',
+            }}>What if someone half a world away<br />dreamed the same dream as you?</h2>
+            <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: 1.7 }}>
+              Every night, millions of people dream. Some of those dreams carry the same symbols, the same emotions, the same unexplainable details. Until now, those people would never know each other existed.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(160,120,255,0.08), rgba(100,60,200,0.04))',
+              border: '1px solid rgba(160,120,255,0.15)',
+              borderRadius: '1.5rem', padding: '2.25rem',
+            }}>
+              <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>🌙</div>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+                AI Dream Journal
+              </h3>
+              <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                Log your dreams with symbols, emotions, and angel numbers. Our AI Oracle interprets the cosmic meaning — revealing messages your subconscious is trying to send you.
+              </p>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(150,120,40,0.04))',
+              border: '1px solid rgba(201,168,76,0.15)',
+              borderRadius: '1.5rem', padding: '2.25rem',
+            }}>
+              <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>🔮</div>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+                Dream Synching
+              </h3>
+              <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                SynchroSoul cross-references dreams across our community. When your dream shares striking similarities with someone else\'s — the same symbols, the same places, the same feeling — we connect you. The universe doesn\'t do coincidences.
+              </p>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(100,200,255,0.08), rgba(60,150,200,0.04))',
+              border: '1px solid rgba(100,200,255,0.15)',
+              borderRadius: '1.5rem', padding: '2.25rem',
+            }}>
+              <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>🌍</div>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+                Across Borders, Beyond Time
+              </h3>
+              <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                Imagine dreaming of a golden temple on a lake — and discovering someone 6,000 miles away dreamed the same thing the same night. That\'s not coincidence. That\'s a soul synch. And now, for the first time, you\'ll know.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── MUSICAL HEALERS ─────────────────────────────────────────────── */}
+      <section style={{
+        minHeight: '80vh', display: 'flex', alignItems: 'center',
+        padding: '6rem 2rem', position: 'relative', zIndex: 10,
+        borderTop: '1px solid rgba(200,180,255,0.06)',
+        background: 'radial-gradient(ellipse at 50% 70%, rgba(201,168,76,0.04), transparent 70%)',
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+
+          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <div style={{
+              display: 'inline-block', padding: '0.3rem 1rem', borderRadius: '9999px',
+              background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)',
+              color: 'rgba(201,168,76,0.7)', fontSize: '0.7rem',
+              letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1.5rem',
+            }}>Musical Healers</div>
+            <h2 style={{
+              fontFamily: 'Cormorant Garamond, serif',
+              fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+              fontWeight: 300, color: 'rgba(230,215,255,0.9)',
+              lineHeight: 1.2, marginBottom: '1.5rem',
+            }}>Your reading prescribes<br />the perfect healing song.</h2>
+            <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: 1.7 }}>
+              The AI Oracle doesn\'t just read your numbers and dreams — it listens to your soul and recommends healing music that resonates with exactly where you are right now.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(150,120,40,0.04))',
+              border: '1px solid rgba(201,168,76,0.15)',
+              borderRadius: '1.5rem', padding: '2.25rem',
+            }}>
+              <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>🎵</div>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+                Smart Song Matching
+              </h3>
+              <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                Every reading comes with a personally selected healing song. The AI cross-references your angel number, your thoughts, and the reading\'s meaning with the spiritual themes and healing intentions of real musicians\' work.
+              </p>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(150,120,40,0.04))',
+              border: '1px solid rgba(201,168,76,0.15)',
+              borderRadius: '1.5rem', padding: '2.25rem',
+            }}>
+              <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>🎹</div>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+                Discover Healing Artists
+              </h3>
+              <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                Browse Musical Healer profiles. Listen to their music. Read their stories. Every artist on SynchroSoul creates music with spiritual intention — and the AI knows exactly when to introduce you to their work.
+              </p>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(150,120,40,0.04))',
+              border: '1px solid rgba(201,168,76,0.15)',
+              borderRadius: '1.5rem', padding: '2.25rem',
+            }}>
+              <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>✨</div>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+                Music Finds You
+              </h3>
+              <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+                You don\'t search for healing music — it finds you through your readings. Log 555 while thinking about change, and the Oracle might prescribe a piano meditation on transformation. Every recommendation feels like it was composed for your moment.
+              </p>
+            </div>
+          </div>
+
+          {/* Artist CTA */}
+          <div style={{
+            background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)',
+            borderRadius: '1.5rem', padding: '2.5rem', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🎵</div>
+            <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
+              Are You a Healing Musician?
+            </h3>
+            <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.95rem', lineHeight: 1.7, maxWidth: '550px', margin: '0 auto 1.5rem' }}>
+              Your music has the power to heal. On SynchroSoul, our AI doesn\'t just recommend your songs randomly — it reads the spiritual themes, healing intentions, and angel number resonance of each track and matches it to users at the exact moment they need it most. Your music reaches the right soul at the right time.
+            </p>
+            <Link href="/auth/signup" style={{
+              display: 'inline-block', padding: '0.75rem 2rem', borderRadius: '9999px',
+              background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)',
+              color: 'rgba(220,200,255,0.9)', textDecoration: 'none',
+              fontSize: '0.85rem', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 500,
+            }}>Join as a Musical Healer →</Link>
+          </div>
+        </div>
+      </section>
+
+
       {/* ── SECTION 3: HOW IT WORKS / CTA ────────────────────────────────── */}
       <section style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center',
