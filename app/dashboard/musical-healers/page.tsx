@@ -13,7 +13,7 @@ function VerifiedBadge({ verified }: { verified: boolean }) {
 }
 
 export default function MusicalHealersPage() {
-  const [healers, setHealers] = useState<MusicalHealer[]>([])
+  const [healers, setHealers] = useState<(MusicalHealer & { resolved_avatar_url: string | null; resolved_avatar_color: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
