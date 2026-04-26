@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { saveLog, AngelLog } from '@/lib/storage'
 import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/lib/theme-context'
 import SongRecommendationCard, { type SongRecommendationData } from './SongRecommendationCard'
+import { saveSongRecommendation } from '@/lib/song-recommendations'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -51,6 +52,13 @@ export default function AngelLogger({ onLogged }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const activeNumber = custom || selected
+
+  // Persist song recommendation to localStorage when both log and recommendation are available
+  useEffect(() => {
+    if (lastLog && songRec) {
+      saveSongRecommendation(lastLog.id, songRec)
+    }
+  }, [lastLog, songRec])
   const meaning = activeNumber ? getAngelMeaning(activeNumber) : null
 
   function handleQuickPick(num: string) {

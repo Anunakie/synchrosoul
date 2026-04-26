@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useTheme } from '@/lib/theme-context'
 import { AngelLog, deleteLog, toggleShare } from '@/lib/storage'
 import { speakText, stopSpeaking } from './VoiceRecorder'
+import SongRecommendationCard, { type SongRecommendationData } from './SongRecommendationCard'
+import { getSongRecommendation } from '@/lib/song-recommendations'
 
 interface Props {
   log: AngelLog
@@ -29,6 +31,15 @@ export default function JournalEntry({ log, onDelete, onToggleShare }: Props) {
   const isSim = theme === 'simulation'
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [savedRec, setSavedRec] = useState<SongRecommendationData | null>(null)
+
+  // Load saved song recommendation when expanded
+  useEffect(() => {
+    if (expanded) {
+      const rec = getSongRecommendation(log.id)
+      setSavedRec(rec)
+    }
+  }, [expanded, log.id])
 
   useEffect(() => {
     return () => stopSpeaking()
@@ -161,6 +172,12 @@ export default function JournalEntry({ log, onDelete, onToggleShare }: Props) {
             <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'rgba(220,200,255,0.7)' }}>{log.miniReading}</p>
           </div>
 
+          {/* Saved Song Recommendation */}
+          {savedRec && (
+            <div style={{ marginBottom: '1rem' }}>
+              <SongRecommendationCard recommendation={savedRec} mode={isSim ? 'simulation' : 'spiritual'} />
+            </div>
+          )}
           {/* Thought anchor */}
           {log.thought && (
             <div style={{ marginBottom: '1rem' }}>
