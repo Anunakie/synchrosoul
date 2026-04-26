@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/lib/theme-context'
+import { getSubscriptionStatus, type SubscriptionTier } from '@/lib/subscription'
 
 const GENRES = ['Ambient Piano', 'Meditation', 'Healing Frequencies', 'New Age', 'Classical', 'Choral', 'Binaural Beats', 'Sound Bath', 'Acoustic', 'Electronic Ambient', 'World Music', 'Jazz', 'Singer-Songwriter', 'Orchestral']
 const HEALING_STYLES = ['meditation', 'piano', 'binaural', 'chanting', 'sound healing', 'breathwork', 'yoga', 'reiki', 'chakra', 'crystal singing bowls', 'nature sounds', 'mantras']
@@ -47,6 +48,19 @@ interface Song {
   embed_url: string | null
   cover_art_url: string | null
   is_active: boolean
+  synch_enabled: boolean
+}
+
+const SYNCH_LIMITS: Record<SubscriptionTier, number> = {
+  'free': 3,
+  'mystic': 10,
+  'twin-flame': Infinity,
+}
+
+const SONG_LIMITS: Record<SubscriptionTier, number> = {
+  'free': 20,
+  'mystic': 50,
+  'twin-flame': Infinity,
 }
 
 export default function ManagePage() {
@@ -59,6 +73,7 @@ export default function ManagePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [editingSong, setEditingSong] = useState<Song | null>(null)
+  const [tier, setTier] = useState<SubscriptionTier>('free')
 
   // Profile form
   const [artistName, setArtistName] = useState('')
@@ -92,7 +107,16 @@ export default function ManagePage() {
   const [songBandcamp, setSongBandcamp] = useState('')
   const [songEmbed, setSongEmbed] = useState('')
 
-  useEffect(() => { loadProfile() }, [])
+  useEffect(() => { loadProfile(); loadTier() }, [])
+
+  async function loadTier() {
+    try {
+      const status = await getSubscriptionStatus()
+      setTier(status.tier)
+    } catch {
+      setTier('free')
+    }
+  }
 
   async function loadProfile() {
     try {
@@ -265,6 +289,23 @@ export default function ManagePage() {
     }
   }
 
+  async function toggleSynch(song: Song) {
+    const synchCount = songs.filter(s => s.synch_enabled).length
+    const limit = SYNCH_LIMITS[tier]
+    if (!song.synch_enabled && synchCount >= limit) {
+      setMessage(`Synch limit reached (${synchCount}/${limit === Infinity ? '∞' : limit}). Upgrade to enable more songs for AI recommendations.`)
+      setTimeout(() => setMessage(''), 4000)
+      return
+    }
+    try {
+      const supabase = createClient()
+      await supabase.from('musical_healer_songs').update({ synch_enabled: !song.synch_enabled }).eq('id', song.id)
+      await loadProfile()
+    } catch {
+      setMessage('Error updating synch status')
+    }
+  }
+
   async function deleteSong(song: Song) {
     if (!confirm(`Delete "${song.title}"? This cannot be undone.`)) return
     try {
@@ -413,7 +454,55 @@ export default function ManagePage() {
       {/* Songs Tab */}
       {view === 'songs' && (
         <div>
-          <button onClick={() => { resetSongForm(); setEditingSong(null); setView('add-song') }} style={{
+          {/* Synch Tier Info Banner */}
+          {(() => {
+            const synchCount = songs.filter(s => s.synch_enabled).length
+            const synchLimit = SYNCH_LIMITS[tier]
+            const songLimit = SONG_LIMITS[tier]
+            const synchLimitStr = synchLimit === Infinity ? '∞' : String(synchLimit)
+            const songLimitStr = songLimit === Infinity ? '∞' : String(songLimit)
+            return (
+              <div style={{
+                background: `${accent}0.08)`, border: `1px solid ${accent}0.2)`,
+                borderRadius: '1rem', padding: '0.75rem 1rem', marginBottom: '1rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: textColor, fontWeight: 600 }}>
+                      {isSim ? 'SYNCH SLOTS' : '🔮 Synch Slots'}: {synchCount}/{synchLimitStr}
+                    </span>
+                    <span style={{ fontSize: '0.65rem', color: mutedColor, marginLeft: '0.5rem' }}>
+                      Songs: {songs.length}/{songLimitStr}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: `${accent}0.12)`, border: `1px solid ${accent}0.25)`, color: textColor, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                    {tier === 'twin-flame' ? '✦ Twin Flame' : tier === 'mystic' ? '✦ Mystic' : 'Free'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.65rem', color: mutedColor, margin: '0.4rem 0 0', lineHeight: 1.4 }}>
+                  {tier === 'twin-flame'
+                    ? (isSim ? 'ALL FREQUENCIES ENABLED FOR SYNCH MATRIX' : 'All your songs are eligible for AI recommendations!')
+                    : `Synched songs appear in AI reading recommendations. ${synchLimit - synchCount > 0 ? `${synchLimit - synchCount} slot${synchLimit - synchCount !== 1 ? 's' : ''} remaining.` : 'Upgrade to synch more songs.'}`
+                  }
+                </p>
+                {tier !== 'twin-flame' && synchCount >= synchLimit && (
+                  <a href="/dashboard/subscription" style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.7rem', padding: '0.3rem 0.75rem', borderRadius: '999px', background: `${accent}0.15)`, border: `1px solid ${accent}0.35)`, color: textColor, textDecoration: 'none', fontWeight: 600 }}>
+                    ✦ Upgrade for more Synch slots
+                  </a>
+                )}
+              </div>
+            )
+          })()}
+
+          <button onClick={() => {
+            const songLimit = SONG_LIMITS[tier]
+            if (songs.length >= songLimit) {
+              setMessage(`Song limit reached (${songs.length}/${songLimit === Infinity ? '∞' : songLimit}). Upgrade to add more songs.`)
+              setTimeout(() => setMessage(''), 4000)
+              return
+            }
+            resetSongForm(); setEditingSong(null); setView('add-song')
+          }} style={{
             width: '100%', padding: '0.75rem', borderRadius: '999px', cursor: 'pointer', marginBottom: '1rem',
             background: `${accent}0.15)`, border: `1px solid ${accent}0.4)`,
             color: textColor, fontSize: '0.9rem', fontWeight: 700,
@@ -421,31 +510,50 @@ export default function ManagePage() {
 
           {songs.length === 0 && <p style={{ textAlign: 'center', color: mutedColor, fontSize: '0.9rem', padding: '2rem 0' }}>No songs yet. Add your first song to get started!</p>}
 
-          {songs.map(song => (
-            <div key={song.id} style={{
-              background: bgCard, borderRadius: '1rem', border: `1px solid ${borderColor}`,
-              padding: '1rem', marginBottom: '0.75rem', opacity: song.is_active ? 1 : 0.5,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1rem', color: textColor, margin: '0 0 0.25rem', fontWeight: 600 }}>{song.title}</h3>
-                  {song.genre && <span style={{ fontSize: '0.7rem', color: mutedColor }}>{song.genre}</span>}
+          {songs.map(song => {
+            const synchCount = songs.filter(s => s.synch_enabled).length
+            const synchLimit = SYNCH_LIMITS[tier]
+            const canSynch = song.synch_enabled || synchCount < synchLimit
+            return (
+              <div key={song.id} style={{
+                background: bgCard, borderRadius: '1rem', border: `1px solid ${song.synch_enabled ? `${accent}0.35)` : borderColor}`,
+                padding: '1rem', marginBottom: '0.75rem', opacity: song.is_active ? 1 : 0.5,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: '1rem', color: textColor, margin: '0 0 0.25rem', fontWeight: 600 }}>
+                      {song.synch_enabled && <span style={{ marginRight: '0.3rem' }}>🔮</span>}
+                      {song.title}
+                    </h3>
+                    {song.genre && <span style={{ fontSize: '0.7rem', color: mutedColor }}>{song.genre}</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+                    {song.synch_enabled && <span style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: `${accent}0.15)`, border: `1px solid ${accent}0.3)`, color: textColor, fontWeight: 600 }}>Synched</span>}
+                    {!song.is_active && <span style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(255,80,80,0.1)', color: 'rgba(255,100,100,0.7)', border: '1px solid rgba(255,80,80,0.2)' }}>Hidden</span>}
+                  </div>
                 </div>
-                {!song.is_active && <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(255,80,80,0.1)', color: 'rgba(255,100,100,0.7)', border: '1px solid rgba(255,80,80,0.2)' }}>Hidden</span>}
-              </div>
-              {song.description && <p style={{ fontSize: '0.8rem', color: mutedColor, lineHeight: 1.5, margin: '0.5rem 0' }}>{song.description.slice(0, 120)}{song.description.length > 120 ? '...' : ''}</p>}
-              {song.angel_numbers?.length > 0 && (
-                <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', margin: '0.5rem 0' }}>
-                  {song.angel_numbers.map(n => <span key={n} style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '999px', background: `${accent}0.1)`, border: `1px solid ${accent}0.25)`, color: textColor, fontWeight: 600 }}>{n}</span>)}
+                {song.description && <p style={{ fontSize: '0.8rem', color: mutedColor, lineHeight: 1.5, margin: '0.5rem 0' }}>{song.description.slice(0, 120)}{song.description.length > 120 ? '...' : ''}</p>}
+                {song.angel_numbers?.length > 0 && (
+                  <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', margin: '0.5rem 0' }}>
+                    {song.angel_numbers.map(n => <span key={n} style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '999px', background: `${accent}0.1)`, border: `1px solid ${accent}0.25)`, color: textColor, fontWeight: 600 }}>{n}</span>)}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                  <button onClick={() => toggleSynch(song)} style={{
+                    padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: canSynch || song.synch_enabled ? 'pointer' : 'not-allowed',
+                    background: song.synch_enabled ? `${accent}0.15)` : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${song.synch_enabled ? `${accent}0.4)` : borderColor}`,
+                    color: song.synch_enabled ? textColor : mutedColor,
+                    fontWeight: song.synch_enabled ? 600 : 400,
+                    opacity: canSynch || song.synch_enabled ? 1 : 0.5,
+                  }}>{song.synch_enabled ? '🔮 Synched' : (canSynch ? '○ Enable Synch' : '🔒 Synch Full')}</button>
+                  <button onClick={() => loadSongForEdit(song)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${borderColor}`, color: mutedColor }}>Edit</button>
+                  <button onClick={() => toggleSongActive(song)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${borderColor}`, color: mutedColor }}>{song.is_active ? 'Hide' : 'Show'}</button>
+                  <button onClick={() => deleteSong(song)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', background: 'rgba(255,80,80,0.05)', border: '1px solid rgba(255,80,80,0.15)', color: 'rgba(255,100,100,0.6)' }}>Delete</button>
                 </div>
-              )}
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                <button onClick={() => loadSongForEdit(song)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${borderColor}`, color: mutedColor }}>Edit</button>
-                <button onClick={() => toggleSongActive(song)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${borderColor}`, color: mutedColor }}>{song.is_active ? 'Hide' : 'Show'}</button>
-                <button onClick={() => deleteSong(song)} style={{ padding: '0.35rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', background: 'rgba(255,80,80,0.05)', border: '1px solid rgba(255,80,80,0.15)', color: 'rgba(255,100,100,0.6)' }}>Delete</button>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
