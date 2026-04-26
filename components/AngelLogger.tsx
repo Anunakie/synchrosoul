@@ -6,6 +6,7 @@ import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/lib/theme-context'
+import SongRecommendationCard, { type SongRecommendationData } from './SongRecommendationCard'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -45,6 +46,8 @@ export default function AngelLogger({ onLogged }: Props) {
   const [saving, setSaving] = useState(false)
   const [upgradeTeaser, setUpgradeTeaser] = useState<string | null>(null)
   const [personalizedReading, setPersonalizedReading] = useState<boolean>(false)
+  const [songRec, setSongRec] = useState<SongRecommendationData | null>(null)
+  const [songRecLoading, setSongRecLoading] = useState<boolean>(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const activeNumber = custom || selected
@@ -115,6 +118,22 @@ export default function AngelLogger({ onLogged }: Props) {
               miniReadingOverride = data.reading
               readingTitleOverride = data.title
               setPersonalizedReading(true)
+
+              // Fire off song recommendation request (non-blocking)
+              setSongRecLoading(true)
+              fetch('/api/musical-healers/recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  number: activeNumber,
+                  thought: thought.trim(),
+                  reading: data.reading,
+                  readingType: 'oracle_instant',
+                  mode: theme === 'simulation' ? 'simulation' : 'spiritual',
+                }),
+              }).then(r => r.json()).then(d => {
+                if (d.recommendation) setSongRec(d.recommendation)
+              }).catch(() => {}).finally(() => setSongRecLoading(false))
             }
           }
         } catch {
@@ -159,7 +178,7 @@ export default function AngelLogger({ onLogged }: Props) {
     setScreenshot(null); setScreenshotName('')
     setVoiceNoteUrl(null)
     setStep('pick'); setLastLog(null)
-    setUpgradeTeaser(null); setPersonalizedReading(false)
+    setUpgradeTeaser(null); setPersonalizedReading(false); setSongRec(null); setSongRecLoading(false)
   }
 
   // DONE
@@ -201,6 +220,16 @@ export default function AngelLogger({ onLogged }: Props) {
         <p style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
           {lastLog.miniReading}
         </p>
+
+        {/* Song Recommendation Card */}
+        {songRec && (
+          <SongRecommendationCard recommendation={songRec} mode={isSim ? 'simulation' : 'spiritual'} />
+        )}
+        {songRecLoading && !songRec && (
+          <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+            <span style={{ color: 'rgba(201,168,76,0.4)', fontSize: '0.7rem' }}>{isSim ? '📡 Scanning audio frequencies...' : '🎵 Finding your healing music...'}</span>
+          </div>
+        )}
 
         {lastLog.truthScore && (
           <div style={{
