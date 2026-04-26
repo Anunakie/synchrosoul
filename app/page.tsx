@@ -75,7 +75,7 @@ export default function HomePage() {
           background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)',
           color: 'rgba(201,168,76,0.7)', fontSize: '0.7rem',
           letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1.5rem',
-        }}>Angel Number Sync Dating</div>
+        }}>Angel Number Soul Synching</div>
 
         <h1 style={{
           fontFamily: 'Cormorant Garamond, serif',
@@ -222,7 +222,7 @@ export default function HomePage() {
               {
                 icon: '✦', color: 'rgba(100,200,255,0.8)',
                 glow: 'rgba(100,200,255,0.15)',
-                title: 'You Find Your Match',
+                title: 'You Find Your Synch',
                 body: 'Someone across the city just logged 1111 too. Your Sync Score lights up. The numbers brought you here — maybe they\'re bringing you to each other.',
               },
             ].map(card => (
@@ -406,7 +406,7 @@ export default function HomePage() {
               },
               {
                 num: '03', color: 'rgba(100,200,255,0.9)',
-                title: 'Meet your sync',
+                title: 'Synch Your Soul',
                 body: 'The Live Sync dashboard shows people who are seeing the same numbers as you — right now. When the numbers align, reach out. The universe already made the introduction.',
               },
             ].map((step, i) => (

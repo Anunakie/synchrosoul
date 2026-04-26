@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Privacy Policy | SynchroSoul',
-  description: 'Privacy Policy for SynchroSoul - Angel Number Sync Dating App',
+  description: 'Privacy Policy for SynchroSoul - Angel Number Soul Synching & Healing App',
 }
 
 export default function PrivacyPage() {
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✨</div>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #a78bfa, #f59e0b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>Privacy Policy</h1>
-          <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>SynchroSoul &mdash; Angel Number Sync Dating App</p>
+          <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>SynchroSoul &mdash; Angel Number Soul Synching & Healing App</p>
           <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.5rem' }}>Last updated: March 14, 2026</p>
         </div>
 

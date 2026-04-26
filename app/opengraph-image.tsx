@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'SynchroSoul — Angel Number Dating & Spiritual Matching'
+export const alt = 'SynchroSoul — Angel Number Synching & Spiritual Healing'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -54,7 +54,7 @@ export default async function Image() {
         <div style={{
           fontSize: '30px', color: 'rgba(180,150,255,0.8)',
           marginBottom: '20px', letterSpacing: '0.01em',
-        }}>Angel Number Dating & Spiritual Matching</div>
+        }}>Angel Number Synching & Spiritual Healing</div>
         {/* Tagline */}
         <div style={{
           fontSize: '20px', color: 'rgba(201,168,76,0.75)',
