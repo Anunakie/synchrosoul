@@ -10,6 +10,7 @@ import { getAngelMeaning } from '@/lib/angel-meanings'
 import VoiceRecorder from '@/components/VoiceRecorder'
 import JournalEntry from '@/components/JournalEntry'
 import { getDreams, saveDream, deleteDream, updateDreamReading, DreamEntry } from '@/lib/dream-storage'
+import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard'
 
 const DREAM_SYMBOLS = ['🌊','🔥','🌙','⭐','🦋','🐍','🌹','🏔️','🌊','💎','🦅','🌸','🌀','⚡','🌿','🕊️','🐉','🌺']
 const DREAM_MOODS = ['Peaceful','Anxious','Joyful','Mysterious','Fearful','Transcendent','Confused','Blissful','Melancholic','Energized']
@@ -56,6 +57,8 @@ export default function JournalPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loadingConvos, setLoadingConvos] = useState(false)
   const [shareProcessing, setShareProcessing] = useState(false)
+  const [dreamRecs, setDreamRecs] = useState<Record<string, SongRecommendationData | null>>({})
+  const [dreamRecLoading, setDreamRecLoading] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -63,6 +66,34 @@ export default function JournalPage() {
     getStats().then(setStats)
     getDreams().then(d => { setDreams(d); const existing: Record<string, string> = {}; d.forEach(dream => { if (dream.reading) existing[dream.id] = dream.reading; }); setInterpretations(existing); })
   }, [])
+
+  // Fetch song recommendation when a dream is expanded and has a reading
+  useEffect(() => {
+    if (!expandedDream) return
+    const dream = dreams.find(d => d.id === expandedDream)
+    const reading = dream?.reading || interpretations[expandedDream]
+    if (!reading || dreamRecs[expandedDream] !== undefined) return
+    setDreamRecLoading(expandedDream)
+    fetch('/api/musical-healers/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        number: dream?.angelNumbers?.[0] || '',
+        thought: (dream?.title || '') + ': ' + (dream?.description || ''),
+        reading: reading,
+        readingType: 'dream',
+        mode: 'spiritual',
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        setDreamRecs(prev => ({ ...prev, [expandedDream]: data.recommendation || null }))
+      })
+      .catch(() => {
+        setDreamRecs(prev => ({ ...prev, [expandedDream]: null }))
+      })
+      .finally(() => setDreamRecLoading(null))
+  }, [expandedDream, dreams, interpretations, dreamRecs])
 
   useEffect(() => {
     if (query) {
@@ -369,6 +400,15 @@ export default function JournalPage() {
                       <div style={{ padding: '0.875rem', borderRadius: '0.75rem', background: isSim ? 'rgba(0,40,0,0.4)' : 'rgba(80,40,160,0.12)', border: isSim ? '1px solid rgba(0,255,65,0.2)' : '1px solid rgba(160,100,255,0.25)', marginBottom: '0.75rem' }}>
                         <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: isSim ? 'rgba(0,255,65,0.5)' : 'rgba(200,180,255,0.4)', marginBottom: '0.5rem', fontFamily: isSim ? 'monospace' : 'inherit' }}>{isSim ? '>> MEMORY FRAGMENT ANALYSIS' : '✦ AI Dream Interpretation'}</p>
                         <p style={{ fontSize: '0.82rem', color: isSim ? 'rgba(100,255,120,0.85)' : 'rgba(220,200,255,0.8)', lineHeight: 1.65, margin: 0, fontFamily: isSim ? 'monospace' : 'inherit' }}>{interpretations[dream.id]}</p>
+                      </div>
+                    )}
+                    {/* Song Recommendation */}
+                    {dreamRecLoading === dream.id && (
+                      <p style={{ color: 'rgba(201,168,76,0.5)', fontSize: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>🎵 Finding your healing music...</p>
+                    )}
+                    {dreamRecs[dream.id] && dreamRecLoading !== dream.id && (
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <SongRecommendationCard recommendation={dreamRecs[dream.id]!} mode={isSim ? 'simulation' : 'spiritual'} />
                       </div>
                     )}
                     <button
