@@ -49,6 +49,7 @@ const TOOL_SECTIONS = [
     tools: [
       { href:'/dashboard/healing-hub', emoji:'🌿', name:'Healing Hub', desc:'Your holistic wellness center' },
       { href:'/dashboard/healers', emoji:'🙌', name:'Find a Healer', desc:'Connect with spiritual healers' },
+      { href:'/dashboard/musical-healers', emoji:'🎵', name:'Musical Healers', desc:'Discover healing music for your journey' },
       { href:'/dashboard/healers/my-listing', emoji:'🌿', name:'My Listing', desc:'Manage your healer profile' },
       { href:'/dashboard/my-bookings', emoji:'📅', name:'My Bookings', desc:'View your booked sessions' },
       { href:'/dashboard/meditations', emoji:'🧘', name:'Meditations', desc:'Guided angel number meditations' },
