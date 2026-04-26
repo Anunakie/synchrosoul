@@ -3,6 +3,7 @@ import FeatureGate from '@/components/FeatureGate'
 import { useState, useEffect } from 'react';
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { askOracle, getOracleHistory, saveOracleReading, OracleReading } from '@/lib/oracle';
+import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard';
 
 const SUGGESTED_QUESTIONS = [
   { text: 'What is my soul calling me toward right now?', category: 'default' },
@@ -26,6 +27,8 @@ function OraclePageInner() {
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [songRec, setSongRec] = useState<SongRecommendationData | null>(null);
+  const [songRecLoading, setSongRecLoading] = useState(false);
 
   useEffect(() => {
     setHistory(getOracleHistory());
@@ -41,13 +44,39 @@ function OraclePageInner() {
       setReading(result);
       setHistory(getOracleHistory());
       setLoading(false);
+      setSongRec(null);
       setTimeout(() => setRevealed(true), 100);
+
+      // Fetch song recommendation (non-blocking)
+      setSongRecLoading(true);
+      try {
+        const recRes = await fetch('/api/musical-healers/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            number: result.guidingNumber,
+            thought: question,
+            reading: result.response,
+            readingType: 'oracle',
+            mode: 'spiritual',
+          }),
+        });
+        const recData = await recRes.json();
+        if (recData.recommendation) {
+          setSongRec(recData.recommendation);
+        }
+      } catch {
+        // Non-critical - reading still shows fine
+      } finally {
+        setSongRecLoading(false);
+      }
     }, 2000);
   };
 
   const handleSuggestion = (q: string) => {
     setQuestion(q);
     setReading(null);
+    setSongRec(null);
   };
 
   return (
@@ -199,8 +228,18 @@ function OraclePageInner() {
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: 1.6 }}>{reading.numerologyNote}</p>
           </div>
 
+          {/* Song Recommendation */}
+          {songRecLoading && (
+            <p style={{ color: 'rgba(201,168,76,0.5)', fontSize: '0.8rem', textAlign: 'center', marginTop: '1rem' }}>🎵 Finding your healing music...</p>
+          )}
+          {songRec && !songRecLoading && (
+            <div style={{ marginTop: '1rem' }}>
+              <SongRecommendationCard recommendation={songRec} mode="spiritual" />
+            </div>
+          )}
+
           {/* Ask another */}
-          <button onClick={() => { setReading(null); setQuestion(''); }} style={{
+          <button onClick={() => { setReading(null); setQuestion(''); setSongRec(null); }} style={{
             width: '100%', marginTop: '1.25rem', padding: '0.65rem',
             borderRadius: '999px', cursor: 'pointer',
             background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)',

@@ -6,6 +6,7 @@ import { DREAM_SYMBOLS, MOOD_TAGS } from '@/lib/dream-meanings'
 import { speakText, stopSpeaking } from '@/components/VoiceRecorder'
 import FeatureGate from '@/components/FeatureGate'
 import SleepSounds from '@/components/SleepSounds'
+import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any
@@ -23,6 +24,8 @@ export default function DreamsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [speakingId, setSpeakingId] = useState<string | null>(null)
   const [nightMode, setNightMode] = useState(false)
+  const [dreamRecs, setDreamRecs] = useState<Record<string, SongRecommendationData | null>>({})
+  const [dreamRecLoading, setDreamRecLoading] = useState<string | null>(null)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -42,6 +45,33 @@ export default function DreamsPage() {
   const descRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { getDreams().then(setDreams) }, [])
+
+  // Fetch song recommendation when a dream is expanded and has a reading
+  useEffect(() => {
+    if (!expandedId) return
+    const dream = dreams.find(d => d.id === expandedId)
+    if (!dream?.reading || dreamRecs[expandedId] !== undefined) return
+    setDreamRecLoading(expandedId)
+    fetch('/api/musical-healers/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        number: dream.angelNumbers?.[0] || '',
+        thought: dream.title + ': ' + (dream.description || ''),
+        reading: dream.reading,
+        readingType: 'dream',
+        mode: 'spiritual',
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        setDreamRecs(prev => ({ ...prev, [expandedId]: data.recommendation || null }))
+      })
+      .catch(() => {
+        setDreamRecs(prev => ({ ...prev, [expandedId]: null }))
+      })
+      .finally(() => setDreamRecLoading(null))
+  }, [expandedId, dreams, dreamRecs])
 
   useEffect(() => {
     if (search.trim()) searchDreams(search).then(setDreams)
@@ -544,6 +574,15 @@ export default function DreamsPage() {
                     <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', padding: '0.75rem', marginBottom: '0.75rem' }}>
                       <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: 'rgba(201,168,76,0.5)', marginBottom: '0.4rem' }}>COSMIC READING</div>
                       <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>{dream.reading}</p>
+                    </div>
+                  )}
+                  {/* Song Recommendation */}
+                  {dreamRecLoading === dream.id && (
+                    <p style={{ color: 'rgba(201,168,76,0.5)', fontSize: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>🎵 Finding your healing music...</p>
+                  )}
+                  {dreamRecs[dream.id] && !dreamRecLoading && (
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <SongRecommendationCard recommendation={dreamRecs[dream.id]!} mode="spiritual" />
                     </div>
                   )}
                   {dream.symbols?.length > 0 && (
