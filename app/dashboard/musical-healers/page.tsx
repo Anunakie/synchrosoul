@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import { getMusicalHealers, getHealerStreamLinks, type MusicalHealer } from '@/lib/musical-healers'
 
 const card: React.CSSProperties = { background: 'rgba(8,6,28,0.88)', border: '1px solid rgba(200,180,255,0.1)', borderRadius: '1.25rem', backdropFilter: 'blur(12px)' }
@@ -16,12 +17,31 @@ export default function MusicalHealersPage() {
   const [healers, setHealers] = useState<(MusicalHealer & { resolved_avatar_url: string | null; resolved_avatar_color: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [isHealer, setIsHealer] = useState(false)
+  const [healerChecked, setHealerChecked] = useState(false)
 
   useEffect(() => {
     getMusicalHealers().then(data => {
       setHealers(data)
       setLoading(false)
     })
+    // Check if current user is already a Musical Healer
+    async function checkHealer() {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase
+            .from('musical_healers')
+            .select('id')
+            .eq('user_id', user.id)
+            .single()
+          if (data) setIsHealer(true)
+        }
+      } catch {}
+      setHealerChecked(true)
+    }
+    checkHealer()
   }, [])
 
   const filtered = healers.filter(h => {
@@ -46,6 +66,24 @@ export default function MusicalHealersPage() {
         <p style={{ color: 'rgba(180,160,255,0.4)', fontSize: '0.78rem', margin: 0 }}>
           Discover musicians whose healing music resonates with your spiritual journey
         </p>
+        {/* Action Buttons */}
+        {healerChecked && (
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {isHealer ? (
+              <Link href="/dashboard/musical-healers/manage" style={{
+                display: 'inline-block', padding: '0.5rem 1.25rem', borderRadius: '999px',
+                background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
+                color: 'rgba(220,200,255,0.9)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600,
+              }}>🎶 Manage Your Music</Link>
+            ) : (
+              <Link href="/dashboard/musical-healers/apply" style={{
+                display: 'inline-block', padding: '0.5rem 1.25rem', borderRadius: '999px',
+                background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
+                color: 'rgba(220,200,255,0.9)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600,
+              }}>✦ Become a Musical Healer</Link>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Search */}
