@@ -106,6 +106,8 @@ export default function ManagePage() {
   const [songTidal, setSongTidal] = useState('')
   const [songBandcamp, setSongBandcamp] = useState('')
   const [songEmbed, setSongEmbed] = useState('')
+  const [originalDesc, setOriginalDesc] = useState('')
+  const [assigningAngels, setAssigningAngels] = useState(false)
 
   useEffect(() => { loadProfile(); loadTier() }, [])
 
@@ -211,6 +213,7 @@ export default function ManagePage() {
     setEditingSong(song)
     setSongTitle(song.title)
     setSongDesc(song.description || '')
+    setOriginalDesc(song.description || '')
     setSongGenre(song.genre || '')
     setSongThemes(song.themes || [])
     setSongMoods(song.moods || [])
@@ -229,17 +232,44 @@ export default function ManagePage() {
   async function saveSong() {
     if (!profile || !songTitle.trim()) { setMessage('Song title is required'); return }
     if (!songDesc.trim()) { setMessage('Song description is required — this is how the AI matches your music'); return }
+    if (songThemes.length > 3) { setMessage('Maximum 3 themes allowed'); return }
+    if (songMoods.length > 3) { setMessage('Maximum 3 moods allowed'); return }
     setSaving(true)
     setMessage('')
+
+    // Determine if we need to assign angel numbers
+    const isNew = !editingSong
+    const descChanged = editingSong && songDesc.trim() !== originalDesc.trim()
+    let assignedAngels = songAngels
+
+    if (isNew || descChanged) {
+      setAssigningAngels(true)
+      setMessage('🔮 Oracle is assigning angel numbers...')
+      try {
+        const res = await fetch('/api/musical-healers/assign-angels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: songTitle.trim(), description: songDesc.trim() }),
+        })
+        const data = await res.json()
+        if (data.angel_numbers && Array.isArray(data.angel_numbers)) {
+          assignedAngels = data.angel_numbers
+        }
+      } catch (err) {
+        console.error('Angel assignment error:', err)
+        // Continue with existing or empty angels if API fails
+      }
+      setAssigningAngels(false)
+    }
 
     const songData = {
       healer_id: profile.id,
       title: songTitle.trim(),
       description: songDesc.trim(),
       genre: songGenre.trim() || null,
-      themes: songThemes,
-      moods: songMoods,
-      angel_numbers: songAngels,
+      themes: songThemes.slice(0, 3),
+      moods: songMoods.slice(0, 3),
+      angel_numbers: assignedAngels,
       spotify_url: songSpotify.trim() || null,
       apple_music_url: songApple.trim() || null,
       amazon_music_url: songAmazon.trim() || null,
@@ -572,7 +602,7 @@ export default function ManagePage() {
           <div style={{ marginBottom: '1rem' }}>
             <label style={labelStyle}>Description / Healing Intention *</label>
             <textarea value={songDesc} onChange={e => setSongDesc(e.target.value)} placeholder="Describe this song's healing intention, mood, and story. The richer the description, the better the AI can match it to users' readings." rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
-            <p style={{ fontSize: '0.65rem', color: mutedColor, marginTop: '0.3rem' }}>💡 The AI uses this description to match your music to readings. Be specific about themes, emotions, and healing intentions.</p>
+            <p style={{ fontSize: '0.65rem', color: mutedColor, marginTop: '0.3rem' }}>💡 The AI uses this description to assign angel numbers and match your music to readings. Be specific about themes, emotions, and healing intentions.</p>
           </div>
           <div style={{ marginBottom: '1rem' }}>
             <label style={labelStyle}>Genre</label>
@@ -580,24 +610,51 @@ export default function ManagePage() {
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={labelStyle}>Themes</label>
+            <label style={labelStyle}>Themes (max 3)</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-              {SPIRITUAL_THEMES.map(t => <button key={t} onClick={() => toggleItem(t, songThemes, setSongThemes)} style={pillBtn(songThemes.includes(t))}>{t}</button>)}
+              {SPIRITUAL_THEMES.map(t => {
+                const selected = songThemes.includes(t)
+                const atLimit = !selected && songThemes.length >= 3
+                return <button key={t} onClick={() => !atLimit && toggleItem(t, songThemes, setSongThemes)} style={{
+                  ...pillBtn(selected),
+                  opacity: atLimit ? 0.3 : 1,
+                  cursor: atLimit ? 'not-allowed' : 'pointer',
+                }}>{t}</button>
+              })}
             </div>
+            {songThemes.length >= 3 && <p style={{ fontSize: '0.6rem', color: `${accent}0.6)`, marginTop: '0.3rem' }}>Maximum 3 themes selected</p>}
           </div>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={labelStyle}>Moods</label>
+            <label style={labelStyle}>Moods (max 3)</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-              {SONG_MOODS.map(m => <button key={m} onClick={() => toggleItem(m, songMoods, setSongMoods)} style={pillBtn(songMoods.includes(m))}>{m}</button>)}
+              {SONG_MOODS.map(m => {
+                const selected = songMoods.includes(m)
+                const atLimit = !selected && songMoods.length >= 3
+                return <button key={m} onClick={() => !atLimit && toggleItem(m, songMoods, setSongMoods)} style={{
+                  ...pillBtn(selected),
+                  opacity: atLimit ? 0.3 : 1,
+                  cursor: atLimit ? 'not-allowed' : 'pointer',
+                }}>{m}</button>
+              })}
             </div>
+            {songMoods.length >= 3 && <p style={{ fontSize: '0.6rem', color: `${accent}0.6)`, marginTop: '0.3rem' }}>Maximum 3 moods selected</p>}
           </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={labelStyle}>Angel Number Associations</label>
-            <p style={{ fontSize: '0.65rem', color: mutedColor, marginBottom: '0.4rem' }}>Which angel numbers resonate with this song? The AI will prioritize matching these.</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-              {COMMON_ANGEL_NUMBERS.map(n => <button key={n} onClick={() => toggleItem(n, songAngels, setSongAngels)} style={pillBtn(songAngels.includes(n))}>{n}</button>)}
+
+          {/* Angel Numbers - AI Assigned (read-only) */}
+          {editingSong && songAngels.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={labelStyle}>🔮 Angel Number Associations</label>
+              <p style={{ fontSize: '0.6rem', color: mutedColor, marginBottom: '0.4rem' }}>Assigned by the Oracle based on your song&apos;s description. Change the description to get new assignments.</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {songAngels.map(n => <span key={n} style={{ padding: '0.25rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', background: `${accent}0.15)`, border: `1px solid ${accent}0.3)`, color: textColor, fontWeight: 600 }}>✦ {n}</span>)}
+              </div>
             </div>
-          </div>
+          )}
+          {!editingSong && (
+            <div style={{ marginBottom: '1rem', padding: '0.75rem', borderRadius: '0.75rem', background: `${accent}0.05)`, border: `1px solid ${accent}0.15)` }}>
+              <p style={{ fontSize: '0.7rem', color: mutedColor, margin: 0 }}>🔮 Angel numbers will be automatically assigned by the Oracle when you save this song, based on your description.</p>
+            </div>
+          )}
 
           <div style={{ height: '1px', background: borderColor, margin: '1.25rem 0' }} />
           <label style={{ ...labelStyle, marginBottom: '0.75rem' }}>Song Streaming Links</label>
