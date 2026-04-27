@@ -211,7 +211,7 @@ export default function HomePage() {
                 icon: '◈', color: 'rgba(180,120,255,0.8)',
                 glow: 'rgba(180,120,255,0.15)',
                 title: 'You See a Number',
-                body: 'You glance at the clock: 11:11. Your receipt total: $3.33. Your eyes keep landing on 555. These aren\'t coincidences — they\'re signals.',
+                body: "You glance at the clock: 11:11. Your receipt total: $3.33. Your eyes keep landing on 555. These aren't coincidences — they're signals.",
               },
               {
                 icon: '◉', color: 'rgba(201,168,76,0.8)',
@@ -223,7 +223,7 @@ export default function HomePage() {
                 icon: '✦', color: 'rgba(100,200,255,0.8)',
                 glow: 'rgba(100,200,255,0.15)',
                 title: 'You Find Your Synch',
-                body: 'Someone across the city just logged 1111 too. Your Sync Score lights up. The numbers brought you here — maybe they\'re bringing you to each other.',
+                body: "Someone across the city just logged 1111 too. Your Sync Score lights up. The numbers brought you here — maybe they're bringing you to each other.",
               },
             ].map(card => (
               <div key={card.title} style={{
@@ -318,7 +318,7 @@ export default function HomePage() {
                   Thought Anchor Journal
                 </h3>
                 <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '1.25rem' }}>
-                  A beautiful private timeline of every number you\'ve seen. Date-grouped entries with your thoughts, mini cosmic readings, and screenshot thumbnails. Searchable by number or keyword.
+                  A beautiful private timeline of every number you've seen. Date-grouped entries with your thoughts, mini cosmic readings, and screenshot thumbnails. Searchable by number or keyword.
                 </p>
                 <div style={{
                   padding: '0.75rem 1rem', borderRadius: '0.75rem',
@@ -396,10 +396,10 @@ export default function HomePage() {
             }}>
               <div style={{ fontSize: '2.25rem', marginBottom: '1rem' }}>🌙</div>
               <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: 'rgba(230,215,255,0.9)', marginBottom: '0.75rem' }}>
-                AI Dream Journal
+                Cosmic Dream Journal
               </h3>
               <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                Log your dreams with symbols, emotions, and angel numbers. Our AI Oracle interprets the cosmic meaning — revealing messages your subconscious is trying to send you.
+                Log your dreams with symbols, emotions, and angel numbers. The Oracle interprets the cosmic meaning — revealing messages your subconscious is trying to send you.
               </p>
             </div>
 
@@ -413,7 +413,7 @@ export default function HomePage() {
                 Dream Synching
               </h3>
               <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                SynchroSoul cross-references dreams across our community. When your dream shares striking similarities with someone else\'s — the same symbols, the same places, the same feeling — we connect you. The universe doesn\'t do coincidences.
+                SynchroSoul cross-references dreams across our community. When your dream shares striking similarities with someone else's — the same symbols, the same places, the same feeling — we connect you. The universe doesn't do coincidences.
               </p>
             </div>
 
@@ -427,7 +427,7 @@ export default function HomePage() {
                 Across Borders, Beyond Time
               </h3>
               <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                Imagine dreaming of a golden temple on a lake — and discovering someone 6,000 miles away dreamed the same thing the same night. That\'s not coincidence. That\'s a soul synch. And now, for the first time, you\'ll know.
+                Imagine dreaming of a golden temple on a lake — and discovering someone 6,000 miles away dreamed the same thing the same night. That's not coincidence. That's a soul synch. And now, for the first time, you'll know.
               </p>
             </div>
           </div>
@@ -457,7 +457,7 @@ export default function HomePage() {
               lineHeight: 1.2, marginBottom: '1.5rem',
             }}>Your reading prescribes<br />the perfect healing song.</h2>
             <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: 1.7 }}>
-              The AI Oracle doesn\'t just read your numbers and dreams — it listens to your soul and recommends healing music that resonates with exactly where you are right now.
+              The Oracle doesn't just read your numbers and dreams — it listens to your soul and recommends healing music that resonates with exactly where you are right now.
             </p>
           </div>
 
@@ -472,7 +472,7 @@ export default function HomePage() {
                 Smart Song Matching
               </h3>
               <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                Every reading comes with a personally selected healing song. The AI cross-references your angel number, your thoughts, and the reading\'s meaning with the spiritual themes and healing intentions of real musicians\' work.
+                Every reading comes with a personally selected healing song. The Oracle cross-references your angel number, your thoughts, and the reading's meaning with the spiritual themes and healing intentions of real musicians' work.
               </p>
             </div>
 
@@ -486,7 +486,7 @@ export default function HomePage() {
                 Discover Healing Artists
               </h3>
               <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                Browse Musical Healer profiles. Listen to their music. Read their stories. Every artist on SynchroSoul creates music with spiritual intention — and the AI knows exactly when to introduce you to their work.
+                Browse Musical Healer profiles. Listen to their music. Read their stories. Every artist on SynchroSoul creates music with spiritual intention — and the Oracle knows exactly when to introduce you to their work.
               </p>
             </div>
 
@@ -500,7 +500,7 @@ export default function HomePage() {
                 Music Finds You
               </h3>
               <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                You don\'t search for healing music — it finds you through your readings. Log 555 while thinking about change, and the Oracle might prescribe a piano meditation on transformation. Every recommendation feels like it was composed for your moment.
+                You don't search for healing music — it finds you through your readings. Log 555 while thinking about change, and the Oracle might prescribe a piano meditation on transformation. Every recommendation feels like it was composed for your moment.
               </p>
             </div>
           </div>
@@ -515,7 +515,7 @@ export default function HomePage() {
               Are You a Healing Musician?
             </h3>
             <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '0.95rem', lineHeight: 1.7, maxWidth: '550px', margin: '0 auto 1.5rem' }}>
-              Your music has the power to heal. On SynchroSoul, our AI doesn\'t just recommend your songs randomly — it reads the spiritual themes, healing intentions, and angel number resonance of each track and matches it to users at the exact moment they need it most. Your music reaches the right soul at the right time.
+              Your music has the power to heal. On SynchroSoul, the Oracle doesn't just recommend your songs randomly — it reads the spiritual themes, healing intentions, and angel number resonance of each track and matches it to users at the exact moment they need it most. Your music reaches the right soul at the right time.
             </p>
             <Link href="/auth/signup" style={{
               display: 'inline-block', padding: '0.75rem 2rem', borderRadius: '9999px',
@@ -620,7 +620,7 @@ export default function HomePage() {
               marginBottom: '1rem',
             }}>The numbers led you here.</h2>
             <p style={{ color: 'rgba(200,180,255,0.45)', fontSize: '1rem', marginBottom: '2.5rem', lineHeight: 1.7 }}>
-              Maybe that wasn\'t an accident either.
+              Maybe that wasn't an accident either.
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/auth/signup" style={{
@@ -801,7 +801,7 @@ export default function HomePage() {
             },
             {
               q: 'Is SynchroSoul free to use?',
-              a: 'Yes! SynchroSoul is free to join. You can log angel numbers, keep a thought anchor journal, view your numerology profile, and browse sync matches at no cost. Premium Mystic and Twin Flame tiers unlock AI Oracle readings, deep numerology reports, and advanced matching features.'
+              a: 'Yes! SynchroSoul is free to join. You can log angel numbers, keep a thought anchor journal, view your numerology profile, and browse sync matches at no cost. Premium Mystic and Twin Flame tiers unlock Oracle readings, deep numerology reports, and advanced matching features.'
             },
             {
               q: 'What is a Truth Score and Angel Approved badge?',
