@@ -22,6 +22,11 @@ const PLANS = [
       'Vision Board (6 items)',
       'Cosmic Feed & profile',
       '3 background themes',
+      '── Musical Healers ──',
+      'Become a Musical Healer',
+      'Themes & Moods tags (3 each)',
+      '3 Oracle-Assigned Tags',
+      '3 Synch Slots · 20 Songs max',
     ],
     cta: 'Current Plan',
   },
@@ -47,6 +52,10 @@ const PLANS = [
       'Manifestation tracker',
       'Streak rewards & badges (30)',
       'Export journal as PDF',
+      '── Musical Healers ──',
+      '+ Healing Styles tags (3 picks)',
+      '6 Oracle-Assigned Tags',
+      '10 Synch Slots · 50 Songs max',
     ],
     cta: 'Start 7-Day Free Trial',
   },
@@ -70,6 +79,10 @@ const PLANS = [
       'Cosmic Calendar with personal transits',
       'Early access to new features',
       'Direct support from founders',
+      '── Musical Healers ──',
+      '+ Spiritual Concepts tags (3 picks)',
+      '9 Oracle-Assigned Tags',
+      'Unlimited Synch Slots & Songs',
     ],
     cta: 'Start 7-Day Free Trial',
   },
@@ -302,10 +315,16 @@ export default function UpgradePage() {
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {plan.features.map((f, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                    <span style={{ color: plan.color, flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
-                    {f}
-                  </li>
+                  f.startsWith('──') ? (
+                    <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: plan.color, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', margin: '0.5rem 0 0.25rem', opacity: 0.8 }}>
+                      🎵 {f.replace(/──\s?/g, '').trim()}
+                    </li>
+                  ) : (
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
+                      <span style={{ color: plan.color, flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
+                      {f}
+                    </li>
+                  )
                 ))}
               </ul>
               <button

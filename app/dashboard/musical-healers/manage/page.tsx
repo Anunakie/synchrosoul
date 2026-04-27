@@ -30,6 +30,7 @@ interface HealerProfile {
   healing_styles: string[]
   spiritual_themes: string[]
   is_verified: boolean
+  avatar_url: string | null
 }
 
 interface Song {
@@ -116,6 +117,11 @@ export default function ManagePage() {
   const [songHealingStyles, setSongHealingStyles] = useState<string[]>([])
   const [songSpiritualConcepts, setSongSpiritualConcepts] = useState<string[]>([])
   const [songOracleTags, setSongOracleTags] = useState<string[]>([])
+  const [artistAvatarFile, setArtistAvatarFile] = useState<File | null>(null)
+  const [artistAvatarPreview, setArtistAvatarPreview] = useState<string | null>(null)
+  const [songCoverFile, setSongCoverFile] = useState<File | null>(null)
+  const [songCoverPreview, setSongCoverPreview] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => { loadProfile(); loadTier() }, [])
 
@@ -175,10 +181,47 @@ export default function ManagePage() {
     setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item])
   }
 
+  async function uploadImage(file: File, folder: string): Promise<string | null> {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
+      const ext = file.name.split('.').pop() || 'jpg'
+      const fileName = `${user.id}/${folder}/${Date.now()}.${ext}`
+      const { data, error } = await supabase.storage
+        .from('musical-healers')
+        .upload(fileName, file, { contentType: file.type, upsert: true })
+      if (error || !data) { console.error('Upload error:', error); return null }
+      const { data: urlData } = supabase.storage
+        .from('musical-healers')
+        .getPublicUrl(data.path)
+      return urlData.publicUrl
+    } catch (err) {
+      console.error('Upload failed:', err)
+      return null
+    }
+  }
+
+  function handleImageSelect(file: File | undefined, setFile: (f: File | null) => void, setPreview: (s: string | null) => void) {
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setMessage('Image must be under 5MB'); return }
+    if (!file.type.startsWith('image/')) { setMessage('File must be an image'); return }
+    setFile(file)
+    const reader = new FileReader()
+    reader.onload = (e) => setPreview(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   async function saveProfile() {
     if (!profile) return
     setSaving(true)
     setMessage('')
+    let avatarUrl = profile.avatar_url
+    if (artistAvatarFile) {
+      setMessage('📷 Uploading profile picture...')
+      const url = await uploadImage(artistAvatarFile, 'avatars')
+      if (url) avatarUrl = url
+    }
     try {
       const supabase = createClient()
       const { error } = await supabase
@@ -197,6 +240,7 @@ export default function ManagePage() {
           bandcamp_url: bandcampUrl.trim() || null,
           genres: selectedGenres,
           healing_styles: selectedStyles,
+          avatar_url: avatarUrl,
           spiritual_themes: selectedThemes,
         })
         .eq('id', profile.id)
@@ -212,7 +256,7 @@ export default function ManagePage() {
 
   function resetSongForm() {
     setSongTitle(''); setSongDesc(''); setSongGenre(''); setSongThemes([])
-    setSongMoods([]); setSongAngels([]); setSongHealingStyles([]); setSongSpiritualConcepts([]); setSongOracleTags([]); setSongSpotify(''); setSongApple('')
+    setSongMoods([]); setSongAngels([]); setSongHealingStyles([]); setSongCoverFile(null); setSongCoverPreview(null); setSongSpiritualConcepts([]); setSongOracleTags([]); setSongSpotify(''); setSongApple('')
     setSongAmazon(''); setSongYoutube(''); setSongSoundcloud(''); setSongTidal('')
     setSongBandcamp(''); setSongEmbed('')
   }
@@ -248,6 +292,12 @@ export default function ManagePage() {
     if (songHealingStyles.length > 3) { setMessage('Maximum 3 healing styles allowed'); return }
     if (songSpiritualConcepts.length > 3) { setMessage('Maximum 3 spiritual concepts allowed'); return }
     setSaving(true)
+    let coverArtUrl = editingSong?.cover_art_url || null
+    if (songCoverFile) {
+      setMessage('🖼️ Uploading cover art...')
+      const url = await uploadImage(songCoverFile, 'covers')
+      if (url) coverArtUrl = url
+    }
     setMessage('')
 
     // Determine if we need to assign angel numbers
@@ -299,6 +349,7 @@ export default function ManagePage() {
       tidal_url: songTidal.trim() || null,
       bandcamp_url: songBandcamp.trim() || null,
       embed_url: songEmbed.trim() || null,
+      cover_art_url: coverArtUrl,
       is_active: true,
     }
 
@@ -442,6 +493,36 @@ export default function ManagePage() {
       {view === 'profile' && (
         <div style={{ background: bgCard, borderRadius: '1.5rem', border: `1px solid ${borderColor}`, padding: '1.5rem' }}>
           <div style={{ marginBottom: '1rem' }}>
+            {/* Artist Profile Picture */}
+            <label style={labelStyle}>Artist Profile Picture</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{
+                width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden',
+                background: `${accent}0.1)`, border: `2px solid ${accent}0.3)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {artistAvatarPreview ? (
+                  <img src={artistAvatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Current" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: '2rem' }}>🎵</span>
+                )}
+              </div>
+              <div>
+                <label style={{
+                  display: 'inline-block', padding: '0.5rem 1rem', borderRadius: '9999px',
+                  background: `${accent}0.1)`, border: `1px solid ${accent}0.3)`,
+                  color: textColor, fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500,
+                }}>
+                  {isSim ? '>> UPLOAD NODE IMAGE' : '📷 Upload Photo'}
+                  <input type="file" accept="image/*" style={{ display: 'none' }}
+                    onChange={(e) => handleImageSelect(e.target.files?.[0], setArtistAvatarFile, setArtistAvatarPreview)} />
+                </label>
+                <p style={{ fontSize: '0.6rem', color: mutedColor, marginTop: '0.3rem' }}>Separate from your main profile picture. Max 5MB.</p>
+              </div>
+            </div>
+
             <label style={labelStyle}>Artist Name</label>
             <input value={artistName} onChange={e => setArtistName(e.target.value)} style={inputStyle} />
           </div>
@@ -625,6 +706,36 @@ export default function ManagePage() {
             <textarea value={songDesc} onChange={e => setSongDesc(e.target.value)} placeholder="Describe this song's healing intention, mood, and story. The richer the description, the better the AI can match it to users' readings." rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
             <p style={{ fontSize: '0.65rem', color: mutedColor, marginTop: '0.3rem' }}>💡 The AI uses this description to assign angel numbers and match your music to readings. Be specific about themes, emotions, and healing intentions.</p>
           </div>
+          {/* Song Cover Art */}
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={labelStyle}>Cover Art</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '0.75rem', overflow: 'hidden',
+                background: `${accent}0.1)`, border: `1px solid ${accent}0.3)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                {songCoverPreview ? (
+                  <img src={songCoverPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : editingSong?.cover_art_url ? (
+                  <img src={editingSong.cover_art_url} alt="Current" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: '1.5rem' }}>🎵</span>
+                )}
+              </div>
+              <label style={{
+                display: 'inline-block', padding: '0.5rem 1rem', borderRadius: '9999px',
+                background: `${accent}0.1)`, border: `1px solid ${accent}0.3)`,
+                color: textColor, fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500,
+              }}>
+                {isSim ? '>> UPLOAD SIGNAL ART' : '🖼️ Upload Cover Art'}
+                <input type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={(e) => handleImageSelect(e.target.files?.[0], setSongCoverFile, setSongCoverPreview)} />
+              </label>
+            </div>
+            <p style={{ fontSize: '0.6rem', color: mutedColor, marginTop: '0.3rem' }}>Album art shown on your song card. Max 5MB.</p>
+          </div>
+
           <div style={{ marginBottom: '1rem' }}>
             <label style={labelStyle}>Genre</label>
             <input value={songGenre} onChange={e => setSongGenre(e.target.value)} placeholder="e.g. ambient piano, healing frequencies" style={inputStyle} />
