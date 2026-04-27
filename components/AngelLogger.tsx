@@ -303,6 +303,81 @@ export default function AngelLogger({ onLogged }: Props) {
           </div>
         )}
 
+        {/* Blurred song recommendation teaser for free users */}
+        {upgradeTeaser && !songRec && (
+          <div style={{
+            margin: '0 0 1.5rem', borderRadius: '1rem', overflow: 'hidden',
+            border: `1px solid ${isSim ? 'rgba(0,255,140,0.2)' : 'rgba(201,168,76,0.2)'}`,
+            background: isSim ? 'rgba(0,255,140,0.04)' : 'rgba(201,168,76,0.04)',
+          }}>
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: isSim ? 'rgba(0,255,140,0.08)' : 'rgba(201,168,76,0.08)',
+              borderBottom: `1px solid ${isSim ? 'rgba(0,255,140,0.15)' : 'rgba(201,168,76,0.15)'}`,
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+            }}>
+              <span style={{ fontSize: '1rem' }}>{isSim ? '📡' : '🎵'}</span>
+              <span style={{
+                color: isSim ? 'rgba(0,255,140,0.8)' : 'rgba(201,168,76,0.8)',
+                fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+              }}>
+                {isSim ? 'Audio Frequency Match Detected' : 'A Healing Song Was Chosen For This Moment'}
+              </span>
+            </div>
+            <div style={{ padding: '1.25rem', position: 'relative' }}>
+              {/* Blurred fake song preview */}
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <div style={{
+                  width: '50px', height: '50px', borderRadius: '0.75rem',
+                  background: isSim ? 'rgba(0,255,140,0.1)' : 'rgba(201,168,76,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  filter: 'blur(3px)',
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>{isSim ? '📡' : '🎵'}</span>
+                </div>
+                <div style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>
+                  <div style={{
+                    color: 'rgba(220,200,255,0.8)', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem',
+                  }}>Sands of Tranquility</div>
+                  <div style={{
+                    color: 'rgba(200,180,255,0.5)', fontSize: '0.8rem',
+                  }}>by Celestial Artist</div>
+                </div>
+              </div>
+              <div style={{
+                filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none',
+                color: 'rgba(200,180,255,0.5)', fontSize: '0.8rem', lineHeight: 1.6, fontStyle: 'italic',
+                marginBottom: '1rem',
+              }}>
+                This contemplative piece resonates deeply with the energy of your reading, weaving together themes of transformation and inner peace...
+              </div>
+              {/* Lock overlay */}
+              <div style={{
+                position: 'absolute', top: '0.75rem', left: 0, right: 0, bottom: '3.5rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: '0.25rem',
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>🔒</span>
+              </div>
+              <a href="/dashboard/upgrade" style={{
+                display: 'block', width: '100%', padding: '0.75rem',
+                borderRadius: '9999px', textAlign: 'center', textDecoration: 'none',
+                background: isSim
+                  ? 'linear-gradient(135deg, rgba(0,255,140,0.2), rgba(0,200,120,0.15))'
+                  : 'linear-gradient(135deg, rgba(201,168,76,0.2), rgba(180,140,50,0.15))',
+                border: `1px solid ${isSim ? 'rgba(0,255,140,0.35)' : 'rgba(201,168,76,0.35)'}`,
+                color: isSim ? 'rgba(0,255,140,0.9)' : 'rgba(201,168,76,0.9)',
+                fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em',
+              }}>
+                {isSim ? 'Unlock Audio Frequency Match ✦' : 'Unlock Your Healing Song ✦'}
+              </a>
+              <p style={{ color: 'rgba(200,180,255,0.3)', fontSize: '0.7rem', marginTop: '0.5rem', textAlign: 'center' }}>
+                Mystic tier · $6.99/mo · Cancel anytime
+              </p>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
           <button onClick={handleReset} style={{
             padding: '0.6rem 1.5rem', borderRadius: '9999px',
