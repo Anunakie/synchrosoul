@@ -9,6 +9,8 @@ const GENRES = ['Ambient Piano', 'Meditation', 'Healing Frequencies', 'New Age',
 const HEALING_STYLES = ['meditation', 'piano', 'binaural', 'chanting', 'sound healing', 'breathwork', 'yoga', 'reiki', 'chakra', 'crystal singing bowls', 'nature sounds', 'mantras']
 const SPIRITUAL_THEMES = ['transformation', 'grounding', 'heart-opening', 'release', 'abundance', 'protection', 'awakening', 'peace', 'love', 'healing', 'courage', 'destiny', 'intuition', 'connection', 'gratitude', 'surrender']
 const SONG_MOODS = ['peaceful', 'uplifting', 'introspective', 'empowering', 'melancholic', 'joyful', 'transcendent', 'grounding', 'energizing', 'calming', 'mysterious', 'emotional']
+const SONG_HEALING_STYLES = ['meditation', 'breathwork', 'yoga', 'sound bath', 'chakra work', 'reiki', 'visualization', 'prayer', 'journaling', 'ceremony', 'sleep', 'movement', 'grounding', 'manifestation']
+const SONG_SPIRITUAL_CONCEPTS = ['synchronicity', 'divine timing', 'karma', 'soul contracts', 'past lives', 'akashic records', 'sacred geometry', 'higher self', 'ascension', 'kundalini', 'shadow work', 'inner child', 'divine feminine', 'divine masculine']
 const COMMON_ANGEL_NUMBERS = ['111', '222', '333', '444', '555', '666', '777', '888', '999', '1010', '1111', '1212', '1234']
 
 interface HealerProfile {
@@ -49,6 +51,9 @@ interface Song {
   cover_art_url: string | null
   is_active: boolean
   synch_enabled: boolean
+  healing_styles: string[]
+  spiritual_concepts: string[]
+  oracle_tags: string[]
 }
 
 const SYNCH_LIMITS: Record<SubscriptionTier, number> = {
@@ -108,6 +113,9 @@ export default function ManagePage() {
   const [songEmbed, setSongEmbed] = useState('')
   const [originalDesc, setOriginalDesc] = useState('')
   const [assigningAngels, setAssigningAngels] = useState(false)
+  const [songHealingStyles, setSongHealingStyles] = useState<string[]>([])
+  const [songSpiritualConcepts, setSongSpiritualConcepts] = useState<string[]>([])
+  const [songOracleTags, setSongOracleTags] = useState<string[]>([])
 
   useEffect(() => { loadProfile(); loadTier() }, [])
 
@@ -204,7 +212,7 @@ export default function ManagePage() {
 
   function resetSongForm() {
     setSongTitle(''); setSongDesc(''); setSongGenre(''); setSongThemes([])
-    setSongMoods([]); setSongAngels([]); setSongSpotify(''); setSongApple('')
+    setSongMoods([]); setSongAngels([]); setSongHealingStyles([]); setSongSpiritualConcepts([]); setSongOracleTags([]); setSongSpotify(''); setSongApple('')
     setSongAmazon(''); setSongYoutube(''); setSongSoundcloud(''); setSongTidal('')
     setSongBandcamp(''); setSongEmbed('')
   }
@@ -218,6 +226,9 @@ export default function ManagePage() {
     setSongThemes((song.themes || []).filter(t => SPIRITUAL_THEMES.includes(t)).slice(0, 3))
     setSongMoods((song.moods || []).filter(m => SONG_MOODS.includes(m)).slice(0, 3))
     setSongAngels(song.angel_numbers || [])
+    setSongHealingStyles((song.healing_styles || []).filter(s => SONG_HEALING_STYLES.includes(s)).slice(0, 3))
+    setSongSpiritualConcepts((song.spiritual_concepts || []).filter(s => SONG_SPIRITUAL_CONCEPTS.includes(s)).slice(0, 3))
+    setSongOracleTags(song.oracle_tags || [])
     setSongSpotify(song.spotify_url || '')
     setSongApple(song.apple_music_url || '')
     setSongAmazon(song.amazon_music_url || '')
@@ -234,6 +245,8 @@ export default function ManagePage() {
     if (!songDesc.trim()) { setMessage('Song description is required — this is how the AI matches your music'); return }
     if (songThemes.length > 3) { setMessage('Maximum 3 themes allowed'); return }
     if (songMoods.length > 3) { setMessage('Maximum 3 moods allowed'); return }
+    if (songHealingStyles.length > 3) { setMessage('Maximum 3 healing styles allowed'); return }
+    if (songSpiritualConcepts.length > 3) { setMessage('Maximum 3 spiritual concepts allowed'); return }
     setSaving(true)
     setMessage('')
 
@@ -241,19 +254,24 @@ export default function ManagePage() {
     const isNew = !editingSong
     const descChanged = editingSong && songDesc.trim() !== originalDesc.trim()
     let assignedAngels = songAngels
+    let assignedOracleTags = songOracleTags
 
     if (isNew || descChanged) {
       setAssigningAngels(true)
-      setMessage('🔮 Oracle is assigning angel numbers...')
+      setMessage("🔮 Oracle is reading your song's energy...")
       try {
         const res = await fetch('/api/musical-healers/assign-angels', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: songTitle.trim(), description: songDesc.trim() }),
+          body: JSON.stringify({ title: songTitle.trim(), description: songDesc.trim(), tier }),
         })
         const data = await res.json()
         if (data.angel_numbers && Array.isArray(data.angel_numbers)) {
           assignedAngels = data.angel_numbers
+        }
+        if (data.oracle_tags && Array.isArray(data.oracle_tags)) {
+          setSongOracleTags(data.oracle_tags)
+          assignedOracleTags = data.oracle_tags
         }
       } catch (err) {
         console.error('Angel assignment error:', err)
@@ -270,6 +288,9 @@ export default function ManagePage() {
       themes: songThemes.slice(0, 3),
       moods: songMoods.slice(0, 3),
       angel_numbers: assignedAngels,
+      healing_styles: songHealingStyles.slice(0, 3),
+      spiritual_concepts: songSpiritualConcepts.slice(0, 3),
+      oracle_tags: assignedOracleTags,
       spotify_url: songSpotify.trim() || null,
       apple_music_url: songApple.trim() || null,
       amazon_music_url: songAmazon.trim() || null,
@@ -640,6 +661,58 @@ export default function ManagePage() {
             {songMoods.length >= 3 && <p style={{ fontSize: '0.6rem', color: `${accent}0.6)`, marginTop: '0.3rem' }}>Maximum 3 moods selected</p>}
           </div>
 
+          {/* Healing Styles - Mystic+ only */}
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={labelStyle}>Healing Styles (max 3) {tier === 'free' ? <span style={{ fontSize: '0.6rem', color: 'rgba(255,180,80,0.7)' }}>— 🔒 Mystic tier</span> : ''}</label>
+            {tier === 'free' ? (
+              <div style={{ padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,180,80,0.05)', border: '1px solid rgba(255,180,80,0.15)' }}>
+                <p style={{ fontSize: '0.7rem', color: 'rgba(255,180,80,0.6)', margin: 0 }}>🔒 Upgrade to Mystic to add healing style tags. These help the Oracle match your music to users seeking specific healing modalities.</p>
+                <a href="/dashboard/upgrade" style={{ fontSize: '0.65rem', color: 'rgba(255,180,80,0.8)', marginTop: '0.3rem', display: 'inline-block' }}>Upgrade →</a>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                  {SONG_HEALING_STYLES.map(s => {
+                    const selected = songHealingStyles.includes(s)
+                    const atLimit = !selected && songHealingStyles.length >= 3
+                    return <button key={s} onClick={() => !atLimit && toggleItem(s, songHealingStyles, setSongHealingStyles)} style={{
+                      ...pillBtn(selected),
+                      opacity: atLimit ? 0.3 : 1,
+                      cursor: atLimit ? 'not-allowed' : 'pointer',
+                    }}>{s}</button>
+                  })}
+                </div>
+                {songHealingStyles.length >= 3 && <p style={{ fontSize: '0.6rem', color: `${accent}0.6)`, marginTop: '0.3rem' }}>Maximum 3 healing styles selected</p>}
+              </>
+            )}
+          </div>
+
+          {/* Spiritual Concepts - Twin Flame only */}
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={labelStyle}>Spiritual Concepts (max 3) {tier !== 'twin-flame' ? <span style={{ fontSize: '0.6rem', color: 'rgba(255,180,80,0.7)' }}>— 🔒 Twin Flame tier</span> : ''}</label>
+            {tier !== 'twin-flame' ? (
+              <div style={{ padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,180,80,0.05)', border: '1px solid rgba(255,180,80,0.15)' }}>
+                <p style={{ fontSize: '0.7rem', color: 'rgba(255,180,80,0.6)', margin: 0 }}>🔒 Upgrade to Twin Flame to add spiritual concept tags. These connect your music to deeper metaphysical themes in users' readings.</p>
+                <a href="/dashboard/upgrade" style={{ fontSize: '0.65rem', color: 'rgba(255,180,80,0.8)', marginTop: '0.3rem', display: 'inline-block' }}>Upgrade →</a>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                  {SONG_SPIRITUAL_CONCEPTS.map(c => {
+                    const selected = songSpiritualConcepts.includes(c)
+                    const atLimit = !selected && songSpiritualConcepts.length >= 3
+                    return <button key={c} onClick={() => !atLimit && toggleItem(c, songSpiritualConcepts, setSongSpiritualConcepts)} style={{
+                      ...pillBtn(selected),
+                      opacity: atLimit ? 0.3 : 1,
+                      cursor: atLimit ? 'not-allowed' : 'pointer',
+                    }}>{c}</button>
+                  })}
+                </div>
+                {songSpiritualConcepts.length >= 3 && <p style={{ fontSize: '0.6rem', color: `${accent}0.6)`, marginTop: '0.3rem' }}>Maximum 3 spiritual concepts selected</p>}
+              </>
+            )}
+          </div>
+
           {/* Angel Numbers - AI Assigned (read-only) */}
           {editingSong && songAngels.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
@@ -652,7 +725,18 @@ export default function ManagePage() {
           )}
           {!editingSong && (
             <div style={{ marginBottom: '1rem', padding: '0.75rem', borderRadius: '0.75rem', background: `${accent}0.05)`, border: `1px solid ${accent}0.15)` }}>
-              <p style={{ fontSize: '0.7rem', color: mutedColor, margin: 0 }}>🔮 Angel numbers will be automatically assigned by the Oracle when you save this song, based on your description.</p>
+              <p style={{ fontSize: '0.7rem', color: mutedColor, margin: 0 }}>🔮 Angel numbers and Oracle tags will be automatically assigned when you save this song, based on your description.</p>
+            </div>
+          )}
+
+          {/* Oracle-Assigned Tags (read-only) */}
+          {editingSong && songOracleTags.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={labelStyle}>🔮 Oracle-Assigned Tags</label>
+              <p style={{ fontSize: '0.6rem', color: mutedColor, marginBottom: '0.4rem' }}>Automatically generated from your song description. Change the description to get new tags. Your tier determines how many tags are assigned (Free: 3, Mystic: 6, Twin Flame: 9).</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {songOracleTags.map(t => <span key={t} style={{ padding: '0.25rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', background: 'rgba(160,120,255,0.12)', border: '1px solid rgba(160,120,255,0.25)', color: textColor, fontWeight: 500, fontStyle: 'italic' }}>✦ {t}</span>)}
+              </div>
             </div>
           )}
 

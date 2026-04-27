@@ -1,15 +1,26 @@
--- Musical Healers Migration 002: Add Synch Tier System
--- Run this in Supabase SQL Editor
+-- Musical Healers Migration 002: Hybrid Tier-Based Pill System
+-- Adds healing_styles, spiritual_concepts, and oracle_tags columns
+-- Updates get_candidate_songs() to score against all pill types
 
--- Add synch_enabled column to songs
+-- Add new columns to songs table
 alter table musical_healer_songs
-  add column if not exists synch_enabled boolean default false;
+  add column if not exists healing_styles text[] default '{}',
+  add column if not exists spiritual_concepts text[] default '{}',
+  add column if not exists oracle_tags text[] default '{}';
 
--- Enable synch for all existing songs (Daniel Ketchum's 3 songs)
+-- Update existing songs with oracle_tags from their current extra themes/moods
+-- (preserving the rich tags from the original seed)
 update musical_healer_songs
-set synch_enabled = true;
+set oracle_tags = array(
+  select unnest(themes) 
+  except 
+  select unnest(ARRAY['transformation','grounding','heart-opening','release','abundance','protection','awakening','peace','love','healing','courage','destiny','intuition','connection','gratitude','surrender'])
+)
+where array_length(themes, 1) > 3;
 
--- Update the get_candidate_songs function to only return synch-enabled songs
+-- Drop and recreate the candidate songs function with all pill types
+drop function if exists get_candidate_songs(text[], text[], text[], int);
+
 create or replace function get_candidate_songs(
   p_themes text[] default '{}',
   p_moods text[] default '{}',
@@ -54,18 +65,37 @@ as $$
     s.soundcloud_url,
     s.cover_art_url,
     (
+      -- Angel number matches (highest weight)
       coalesce((
         select count(*) from unnest(s.angel_numbers) a
         where a = any(p_angel_numbers)
       ), 0) * 5 +
+      -- Theme matches
       coalesce((
         select count(*) from unnest(s.themes) t
         where t = any(p_themes)
       ), 0) * 3 +
+      -- Mood matches
       coalesce((
         select count(*) from unnest(s.moods) m
         where m = any(p_moods)
       ), 0) * 2 +
+      -- Healing style matches
+      coalesce((
+        select count(*) from unnest(s.healing_styles) hs
+        where hs = any(p_themes)
+      ), 0) * 2 +
+      -- Spiritual concept matches
+      coalesce((
+        select count(*) from unnest(s.spiritual_concepts) sc
+        where sc = any(p_themes)
+      ), 0) * 2 +
+      -- Oracle-assigned tag matches (AI-generated rich tags)
+      coalesce((
+        select count(*) from unnest(s.oracle_tags) ot
+        where ot = any(p_themes)
+      ), 0) * 3 +
+      -- Random jitter for variety
       random() * 2
     )::float as relevance_score
   from musical_healer_songs s

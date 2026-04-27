@@ -103,15 +103,31 @@ function SongCard({ song }: { song: MusicalHealerSong }) {
         </div>
       )}
 
-      {/* Themes + Moods */}
-      {(song.themes.length > 0 || song.moods.length > 0) && (
+      {/* Themes + Moods + Healing Styles + Spiritual Concepts */}
+      {(song.themes.length > 0 || song.moods.length > 0 || (song.healing_styles && song.healing_styles.length > 0) || (song.spiritual_concepts && song.spiritual_concepts.length > 0)) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.5rem' }}>
           {song.themes.map(t => <span key={`t-${t}`} style={pillStyle}>{t}</span>)}
           {song.moods.map(m => (
             <span key={`m-${m}`} style={{ ...pillStyle, background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', color: 'rgba(96,165,250,0.7)' }}>{m}</span>
           ))}
+          {(song.healing_styles || []).map(s => (
+            <span key={`hs-${s}`} style={{ ...pillStyle, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', color: 'rgba(74,222,128,0.7)' }}>{s}</span>
+          ))}
+          {(song.spiritual_concepts || []).map(c => (
+            <span key={`sc-${c}`} style={{ ...pillStyle, background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.2)', color: 'rgba(236,72,153,0.7)' }}>{c}</span>
+          ))}
         </div>
       )}
+
+      {/* Oracle-Assigned Tags */}
+      {song.oracle_tags && song.oracle_tags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.35rem' }}>
+          {song.oracle_tags.map(t => (
+            <span key={`ot-${t}`} style={{ ...pillStyle, background: 'rgba(160,120,255,0.1)', border: '1px solid rgba(160,120,255,0.2)', color: 'rgba(160,120,255,0.7)', fontStyle: 'italic' }}>✦ {t}</span>
+          ))}
+        </div>
+      )}
+
 
       {/* Primary Listen Button */}
       {primaryLink && (

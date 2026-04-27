@@ -31,6 +31,9 @@ export interface MusicalHealerSong {
   description: string | null
   themes: string[]
   moods: string[]
+  healing_styles: string[]
+  spiritual_concepts: string[]
+  oracle_tags: string[]
   angel_numbers: string[]
   genre: string | null
   duration_seconds: number | null
