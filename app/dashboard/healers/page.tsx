@@ -367,9 +367,10 @@ export default function HealersPage() {
   const [userLifePath, setUserLifePath] = useState(7);
 
   useEffect(() => {
-    const allHealers = getHealers();
-    setHealers(allHealers);
-    setFiltered(allHealers);
+    getHealers().then(allHealers => {
+      setHealers(allHealers);
+      setFiltered(allHealers);
+    });
     getNumerologyProfile().then(p => { if (p?.lifePath) setUserLifePath(p.lifePath); });
   }, []);
 

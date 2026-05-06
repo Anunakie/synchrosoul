@@ -1,5 +1,7 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
+
 export interface HealerProfile {
   id: string;
   name: string;
@@ -26,9 +28,6 @@ export interface HealerProfile {
   isDemo?: boolean;
 }
 
-const HEALERS_KEY = 'synchrosoul_healers';
-const MY_HEALER_KEY = 'synchrosoul_my_healer_profile';
-
 export const MODALITIES = [
   'Reiki',
   'Sound Healing',
@@ -52,218 +51,203 @@ export const MODALITIES = [
   'Hypnotherapy',
 ];
 
-export const DEMO_HEALERS: HealerProfile[] = [
-  {
-    id: 'demo-1',
-    name: 'Luna Starweaver',
-    title: 'Reiki Master & Sound Healer',
-    bio: 'I have been walking the path of energy healing for over 12 years. My sessions combine Usui Reiki with 432Hz crystal singing bowls to clear energetic blockages and restore your natural flow. I specialize in angel number activations and helping clients decode the messages their guides are sending.',
-    location: 'Los Angeles, CA',
-    city: 'Los Angeles',
-    state: 'CA',
-    country: 'US',
-    modalities: ['Reiki', 'Sound Healing', 'Crystal Healing', 'Chakra Balancing'],
-    angelNumbers: ['1111', '444', '777'],
-    lifePathNumber: 7,
-    photo: '',
-    website: 'https://example.com',
-    email: 'luna@example.com',
-    instagram: '@lunastarweaver',
-    sessionTypes: ['both'],
-    priceRange: '$80 - $150',
-    verified: true,
-    truthScore: 92,
-    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-    isDemo: true,
-  },
-  {
-    id: 'demo-2',
-    name: 'Dr. Sage Moonfield',
-    title: 'Naturopathic Physician & Numerologist',
-    bio: 'Board-certified naturopathic doctor with a deep passion for the intersection of science and spirituality. I use numerology to create personalized wellness protocols, combining herbal medicine, nutrition, and energy work. My practice is guided by the belief that your angel numbers hold the key to your healing path.',
-    location: 'Portland, OR',
-    city: 'Portland',
-    state: 'OR',
-    country: 'US',
-    modalities: ['Naturopathic Medicine', 'Numerology', 'Herbalism', 'Ayurveda'],
-    angelNumbers: ['333', '888', '222'],
-    lifePathNumber: 11,
-    photo: '',
-    website: 'https://example.com',
-    email: 'sage@example.com',
-    sessionTypes: ['both'],
-    priceRange: '$120 - $200',
-    verified: true,
-    truthScore: 98,
-    createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
-    isDemo: true,
-  },
-  {
-    id: 'demo-3',
-    name: 'River Celestine',
-    title: 'Shamanic Healer & Breathwork Facilitator',
-    bio: 'Trained in traditional Peruvian shamanic practices and modern breathwork modalities. I guide clients through transformational journeys to release trauma, connect with spirit guides, and align with their soul purpose. Each session is uniquely tailored to the angel numbers you have been receiving.',
-    location: 'Sedona, AZ',
-    city: 'Sedona',
-    state: 'AZ',
-    country: 'US',
-    modalities: ['Shamanic Healing', 'Breathwork', 'Past Life Regression', 'Meditation Coaching'],
-    angelNumbers: ['555', '999', '1212'],
-    lifePathNumber: 9,
-    photo: '',
-    website: 'https://example.com',
-    email: 'river@example.com',
-    instagram: '@rivercelestine',
-    sessionTypes: ['in-person'],
-    priceRange: '$150 - $300',
-    verified: true,
-    truthScore: 88,
-    createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
-    isDemo: true,
-  },
-  {
-    id: 'demo-4',
-    name: 'Aria Goldensun',
-    title: 'Crystal Healer & Tarot Reader',
-    bio: 'Certified crystal healer and intuitive tarot reader with 8 years of experience. I create custom crystal grids aligned to your numerology profile and angel number patterns. My readings combine traditional tarot with angel oracle cards for deeply personalized guidance.',
-    location: 'Austin, TX',
-    city: 'Austin',
-    state: 'TX',
-    country: 'US',
-    modalities: ['Crystal Healing', 'Tarot & Oracle', 'Numerology', 'Chakra Balancing'],
-    angelNumbers: ['222', '444', '888'],
-    lifePathNumber: 6,
-    photo: '',
-    email: 'aria@example.com',
-    instagram: '@ariagoldensun',
-    sessionTypes: ['virtual'],
-    priceRange: '$60 - $120',
-    verified: false,
-    truthScore: 75,
-    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-    isDemo: true,
-  },
-  {
-    id: 'demo-5',
-    name: 'Zephyr Nightbloom',
-    title: 'Quantum Healer & Human Design Analyst',
-    bio: 'I combine quantum healing techniques with Human Design to help you understand your energetic blueprint. My sessions reveal how your angel numbers interact with your Human Design type and authority, creating a roadmap for aligned living and accelerated spiritual growth.',
-    location: 'New York, NY',
-    city: 'New York',
-    state: 'NY',
-    country: 'US',
-    modalities: ['Quantum Healing', 'Human Design', 'EFT / Tapping', 'Somatic Therapy'],
-    angelNumbers: ['1111', '1212', '777'],
-    lifePathNumber: 3,
-    photo: '',
-    website: 'https://example.com',
-    email: 'zephyr@example.com',
-    sessionTypes: ['virtual'],
-    priceRange: '$100 - $180',
-    verified: true,
-    truthScore: 85,
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    isDemo: true,
-  },
-];
-
-export function getHealers(): HealerProfile[] {
-  if (typeof window === 'undefined') return DEMO_HEALERS;
-  try {
-    const stored = JSON.parse(localStorage.getItem(HEALERS_KEY) || '[]');
-    return [...DEMO_HEALERS, ...stored];
-  } catch {
-    return DEMO_HEALERS;
-  }
-}
-
-export function saveHealerProfile(profile: Omit<HealerProfile, 'id' | 'createdAt' | 'verified' | 'truthScore'>): HealerProfile {
-  const newProfile: HealerProfile = {
-    ...profile,
-    id: 'healer-' + Date.now() + '-' + Math.random().toString(36).slice(2),
-    createdAt: new Date().toISOString(),
-    verified: false,
-    truthScore: calculateHealerTruthScore(profile),
+function mapDbToProfile(row: Record<string, unknown>): HealerProfile {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    title: row.title as string || '',
+    bio: row.bio as string || '',
+    location: `${row.city || ''}, ${row.state || ''}`.replace(/^,\s*|,\s*$/g, ''),
+    city: row.city as string || '',
+    state: row.state as string || '',
+    country: row.country as string || '',
+    modalities: (row.modalities as string[]) || [],
+    angelNumbers: (row.angel_numbers as string[]) || [],
+    lifePathNumber: row.life_path_number as number | undefined,
+    photo: row.photo as string | undefined,
+    website: row.website as string | undefined,
+    email: row.email as string | undefined,
+    phone: row.phone as string | undefined,
+    instagram: row.instagram as string | undefined,
+    sessionTypes: (row.session_types as ('in-person' | 'virtual' | 'both')[]) || [],
+    priceRange: row.price_range as string || '',
+    verified: row.is_verified as boolean || false,
+    truthScore: row.truth_score as number || 50,
+    createdAt: row.created_at as string || new Date().toISOString(),
+    userId: row.user_id as string | undefined,
+    isDemo: false,
   };
-  if (typeof window !== 'undefined') {
-    const existing = JSON.parse(localStorage.getItem(HEALERS_KEY) || '[]');
-    existing.push(newProfile);
-    localStorage.setItem(HEALERS_KEY, JSON.stringify(existing));
-    localStorage.setItem(MY_HEALER_KEY, JSON.stringify(newProfile));
-  }
-  return newProfile;
 }
 
-export function getMyHealerProfile(): HealerProfile | null {
-  if (typeof window === 'undefined') return null;
+export async function getHealers(): Promise<HealerProfile[]> {
   try {
-    const stored = localStorage.getItem(MY_HEALER_KEY);
-    return stored ? JSON.parse(stored) : null;
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('healers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error || !data) return [];
+    return data.map(mapDbToProfile);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveHealerProfile(
+  profile: Omit<HealerProfile, 'id' | 'createdAt' | 'verified' | 'truthScore'>
+): Promise<HealerProfile | null> {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const insertData = {
+      user_id: user.id,
+      name: profile.name,
+      title: profile.title,
+      bio: profile.bio,
+      city: profile.city,
+      state: profile.state,
+      country: profile.country,
+      modalities: profile.modalities,
+      angel_numbers: profile.angelNumbers,
+      life_path_number: profile.lifePathNumber || null,
+      photo: profile.photo || null,
+      website: profile.website || null,
+      email: profile.email || null,
+      phone: profile.phone || null,
+      instagram: profile.instagram || null,
+      session_types: profile.sessionTypes,
+      price_range: profile.priceRange,
+      truth_score: calculateHealerTruthScore(profile),
+    };
+
+    const { data, error } = await supabase
+      .from('healers')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error || !data) { console.error('Save healer error:', error); return null; }
+    return mapDbToProfile(data);
+  } catch (err) {
+    console.error('Save healer failed:', err);
+    return null;
+  }
+}
+
+export async function getMyHealerProfile(): Promise<HealerProfile | null> {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from('healers')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error || !data) return null;
+    return mapDbToProfile(data);
   } catch {
     return null;
   }
 }
 
-export function updateMyHealerProfile(updates: Partial<HealerProfile>): void {
-  if (typeof window === 'undefined') return;
-  const current = getMyHealerProfile();
-  if (!current) return;
-  const updated = { ...current, ...updates };
-  localStorage.setItem(MY_HEALER_KEY, JSON.stringify(updated));
-  const all = JSON.parse(localStorage.getItem(HEALERS_KEY) || '[]');
-  const idx = all.findIndex((h: HealerProfile) => h.id === current.id);
-  if (idx >= 0) {
-    all[idx] = updated;
-    localStorage.setItem(HEALERS_KEY, JSON.stringify(all));
+export async function updateMyHealerProfile(updates: Partial<HealerProfile>): Promise<void> {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const updateData: Record<string, unknown> = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.bio !== undefined) updateData.bio = updates.bio;
+    if (updates.city !== undefined) updateData.city = updates.city;
+    if (updates.state !== undefined) updateData.state = updates.state;
+    if (updates.country !== undefined) updateData.country = updates.country;
+    if (updates.modalities !== undefined) updateData.modalities = updates.modalities;
+    if (updates.angelNumbers !== undefined) updateData.angel_numbers = updates.angelNumbers;
+    if (updates.lifePathNumber !== undefined) updateData.life_path_number = updates.lifePathNumber;
+    if (updates.photo !== undefined) updateData.photo = updates.photo;
+    if (updates.website !== undefined) updateData.website = updates.website;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.instagram !== undefined) updateData.instagram = updates.instagram;
+    if (updates.sessionTypes !== undefined) updateData.session_types = updates.sessionTypes;
+    if (updates.priceRange !== undefined) updateData.price_range = updates.priceRange;
+
+    await supabase
+      .from('healers')
+      .update(updateData)
+      .eq('user_id', user.id);
+  } catch (err) {
+    console.error('Update healer failed:', err);
   }
 }
 
-function calculateHealerTruthScore(profile: Partial<HealerProfile>): number {
-  let score = 40;
-  if (profile.bio && profile.bio.length > 100) score += 15;
-  if (profile.photo) score += 15;
+export function calculateHealerTruthScore(
+  profile: Partial<HealerProfile>
+): number {
+  let score = 30;
+  if (profile.bio && profile.bio.length > 50) score += 15;
+  if (profile.photo) score += 10;
   if (profile.website) score += 10;
-  if (profile.email) score += 5;
+  if (profile.modalities && profile.modalities.length > 0) score += 10;
+  if (profile.angelNumbers && profile.angelNumbers.length > 0) score += 10;
+  if (profile.sessionTypes && profile.sessionTypes.length > 0) score += 5;
+  if (profile.priceRange) score += 5;
   if (profile.instagram) score += 5;
-  if (profile.modalities && profile.modalities.length >= 2) score += 5;
-  if (profile.angelNumbers && profile.angelNumbers.length >= 1) score += 5;
   return Math.min(score, 100);
+}
+
+export function searchHealers(
+  healers: HealerProfile[],
+  query: string,
+  modality?: string,
+  sessionType?: string,
+  location?: string
+): HealerProfile[] {
+  let results = [...healers];
+  if (query) {
+    const q = query.toLowerCase();
+    results = results.filter(
+      (h) =>
+        h.name.toLowerCase().includes(q) ||
+        h.title.toLowerCase().includes(q) ||
+        h.bio.toLowerCase().includes(q) ||
+        h.modalities.some((m) => m.toLowerCase().includes(q)) ||
+        h.location.toLowerCase().includes(q)
+    );
+  }
+  if (modality) {
+    results = results.filter((h) => h.modalities.includes(modality));
+  }
+  if (sessionType) {
+    results = results.filter((h) => h.sessionTypes.includes(sessionType as 'in-person' | 'virtual' | 'both'));
+  }
+  if (location) {
+    const loc = location.toLowerCase();
+    results = results.filter(
+      (h) =>
+        h.city.toLowerCase().includes(loc) ||
+        h.state.toLowerCase().includes(loc) ||
+        h.country.toLowerCase().includes(loc)
+    );
+  }
+  return results;
 }
 
 export function calculateCosmicAlignment(userLifePath: number, healerLifePath?: number): number {
   if (!healerLifePath) return 50;
+  if (userLifePath === healerLifePath) return 100;
   const compatible: Record<number, number[]> = {
-    1: [1, 5, 7],
-    2: [2, 4, 6, 8],
-    3: [3, 6, 9],
-    4: [2, 4, 8],
-    5: [1, 5, 7],
-    6: [2, 3, 6, 9],
-    7: [1, 5, 7],
-    8: [2, 4, 8],
-    9: [3, 6, 9],
-    11: [2, 11, 22],
-    22: [4, 11, 22],
-    33: [6, 33],
+    1: [3, 5, 7], 2: [4, 6, 8], 3: [1, 5, 9],
+    4: [2, 6, 8], 5: [1, 3, 7], 6: [2, 4, 9],
+    7: [1, 5, 9], 8: [2, 4, 6], 9: [3, 6, 7],
   };
-  const matches = compatible[userLifePath] || [];
-  if (userLifePath === healerLifePath) return 95;
-  if (matches.includes(healerLifePath)) return Math.floor(75 + Math.random() * 15);
-  return Math.floor(45 + Math.random() * 25);
-}
-
-export function searchHealers(healers: HealerProfile[], query: string, modality: string, sessionType: string): HealerProfile[] {
-  return healers.filter(h => {
-    const q = query.toLowerCase();
-    const matchesQuery = !query ||
-      h.name.toLowerCase().includes(q) ||
-      h.bio.toLowerCase().includes(q) ||
-      h.location.toLowerCase().includes(q) ||
-      h.city.toLowerCase().includes(q) ||
-      h.modalities.some(m => m.toLowerCase().includes(q)) ||
-      h.angelNumbers.some(n => n.includes(q));
-    const matchesModality = !modality || h.modalities.includes(modality);
-    const matchesSession = !sessionType || h.sessionTypes.includes(sessionType as 'in-person' | 'virtual' | 'both') || h.sessionTypes.includes('both');
-    return matchesQuery && matchesModality && matchesSession;
-  });
+  if (compatible[userLifePath]?.includes(healerLifePath)) return 85;
+  return 60;
 }
