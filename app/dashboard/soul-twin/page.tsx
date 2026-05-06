@@ -202,6 +202,14 @@ function SoulTwinPageInner() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {realCount === 0 && (
+                <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '1rem', padding: '1rem', marginBottom: '0.75rem', textAlign: 'center' }}>
+                  <p style={{ color: 'rgba(200,180,255,0.8)', fontSize: '0.85rem', margin: 0 }}>
+                    ✨ Our community is growing! The souls below are examples of what your matches will look like.
+                    Real matches (marked with <span style={{ color: '#4ade80' }}>●</span>) appear as more people log their angel numbers.
+                  </p>
+                </div>
+              )}
               {matches.map(match => {
                 const tier = getTier(match.syncScore);
                 const isOpen = selected === match.id;

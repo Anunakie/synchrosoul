@@ -175,7 +175,8 @@ export default function SyncPage() {
           background: 'rgba(8,6,28,0.7)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌌</div>
           <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '0.5rem' }}>No matches yet</p>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem' }}>Log more angel numbers to attract cosmic connections</p>
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Log more angel numbers to attract cosmic connections</p>
+          <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem' }}>Matches appear as more souls join and log their numbers. Keep going! ✨</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
