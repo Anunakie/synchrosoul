@@ -20,6 +20,7 @@ const TOOL_SECTIONS = [
     color: '#c9a84c',
     tools: [
       { href:'/dashboard/oracle', emoji:'✦', name:'Angel Oracle', desc:'Channeled messages from your guides' },
+      { href:'/dashboard/advisor', emoji:'🔮', name:'Angel Advisor', desc:'Personal celestial guide (Twin Flame)' },
       { href:'/dashboard/tarot', emoji:'🃏', name:'Cosmic Tarot', desc:'Major Arcana readings' },
       { href:'/dashboard/dictionary', emoji:'📖', name:'Number Dictionary', desc:'29 angel sequences decoded' },
       { href:'/dashboard/saved-readings', emoji:'🔖', name:'Saved Readings', desc:'Your bookmarked readings' },

@@ -69,7 +69,7 @@ const PLANS = [
     description: 'The complete spiritual companion',
     features: [
       'Everything in Mystic',
-      'AI Angel Advisor (coming soon)',
+      'AI Angel Advisor (personal celestial guide)',
       'Shared Journal Peek with matches',
       'Create private Angel Circles',
       'Priority soul matching algorithm',
