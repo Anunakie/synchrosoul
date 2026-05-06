@@ -16,11 +16,27 @@ const SUGGESTED_QUESTIONS = [
   { text: 'What does my twin flame journey look like?', category: 'love' },
 ];
 
+const SIM_SUGGESTED_QUESTIONS = [
+  { text: 'What anomaly codes are repeating in my data stream?', category: 'default' },
+  { text: 'Decode the pattern in my recent signal intercepts', category: 'love' },
+  { text: 'Is this career fork a planned branch or a glitch?', category: 'career' },
+  { text: 'Run decision tree analysis on my current node', category: 'decision' },
+  { text: 'Diagnose corrupted sectors in my energy matrix', category: 'health' },
+  { text: 'Identify blockers in my manifestation protocol', category: 'default' },
+  { text: 'Verify if my current path matches the source code', category: 'default' },
+  { text: 'What does the signal match algorithm predict?', category: 'love' },
+];
+
 const CATEGORY_ICONS: Record<string, string> = {
   career: '💼', love: '💕', decision: '⚖️', health: '🌿', default: '✨'
 };
 
+const SIM_CATEGORY_ICONS: Record<string, string> = {
+  career: '📊', love: '📡', decision: '⚙️', health: '🔧', default: '⚡'
+};
+
 function OraclePageInner() {
+  const isSim = typeof window !== 'undefined' && localStorage.getItem('synchrosoul_simulation') === 'true';
   const [question, setQuestion] = useState('');
   const [reading, setReading] = useState<OracleReading | null>(null);
   const [history, setHistory] = useState<OracleReading[]>([]);
@@ -85,14 +101,14 @@ function OraclePageInner() {
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <div style={{
           width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 1rem',
-          background: 'radial-gradient(circle, rgba(201,168,76,0.3) 0%, rgba(139,92,246,0.2) 60%, transparent 100%)',
-          border: '1px solid rgba(201,168,76,0.4)',
+          background: isSim ? 'radial-gradient(circle, rgba(0,204,51,0.3) 0%, rgba(0,100,0,0.2) 60%, transparent 100%)' : 'radial-gradient(circle, rgba(201,168,76,0.3) 0%, rgba(139,92,246,0.2) 60%, transparent 100%)',
+          border: isSim ? '1px solid rgba(0,204,51,0.4)' : '1px solid rgba(201,168,76,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '2.5rem',
-          boxShadow: '0 0 40px rgba(201,168,76,0.2)'
-        }}>◈</div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#c9a84c', fontFamily: 'Cormorant Garamond, serif' }}>Angel Oracle</h1>
-        <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '0.5rem' }}>Ask your question. The angels will answer through your numbers.</p>
+          boxShadow: isSim ? '0 0 40px rgba(0,204,51,0.2)' : '0 0 40px rgba(201,168,76,0.2)'
+        }}>{isSim ? '◈' : '◈'}</div>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, color: isSim ? '#00cc33' : '#c9a84c', fontFamily: isSim ? 'monospace' : 'Cormorant Garamond, serif' }}>{isSim ? 'Signal Decoder' : 'Angel Oracle'}</h1>
+        <p style={{ color: isSim ? 'rgba(0,204,51,0.6)' : 'rgba(255,255,255,0.5)', marginTop: '0.5rem' }}>{isSim ? 'Submit your query. The system will decode the signal from your anomaly codes.' : 'Ask your question. The angels will answer through your numbers.'}</p>
       </div>
 
       {/* Question Input */}
@@ -101,11 +117,11 @@ function OraclePageInner() {
         border: '1px solid rgba(201,168,76,0.25)', padding: '1.5rem',
         backdropFilter: 'blur(12px)', marginBottom: '1.5rem'
       }}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Your Question</p>
+        <p style={{ color: isSim ? 'rgba(0,204,51,0.5)' : 'rgba(255,255,255,0.4)', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>{isSim ? 'Your Transmission' : 'Your Question'}</p>
         <textarea
           value={question}
           onChange={e => setQuestion(e.target.value)}
-          placeholder="What guidance do you seek from the angels today?"
+          placeholder={isSim ? "What signal requires decoding?" : "What guidance do you seek from the angels today?"}
           rows={3}
           style={{
             width: '100%', background: 'rgba(255,255,255,0.04)',
@@ -129,23 +145,23 @@ function OraclePageInner() {
             letterSpacing: '0.05em', transition: 'all 0.3s'
           }}
         >
-          {loading ? '✦ Consulting the Angels...' : '◈ Receive Your Reading'}
+          {loading ? (isSim ? '/// DECODING SIGNAL...' : '✦ Consulting the Angels...') : (isSim ? '⚡ Decode Signal' : '◈ Receive Your Reading')}
         </button>
       </div>
 
       {/* Suggested Questions */}
       {!reading && !loading && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Suggested Questions</p>
+          <p style={{ color: isSim ? 'rgba(0,204,51,0.4)' : 'rgba(255,255,255,0.35)', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>{isSim ? 'Query Templates' : 'Suggested Questions'}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            {SUGGESTED_QUESTIONS.map((q, i) => (
+            {(isSim ? SIM_SUGGESTED_QUESTIONS : SUGGESTED_QUESTIONS).map((q, i) => (
               <button key={i} onClick={() => handleSuggestion(q.text)} style={{
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                background: isSim ? 'rgba(0,204,51,0.03)' : 'rgba(255,255,255,0.03)', border: isSim ? '1px solid rgba(0,204,51,0.15)' : '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '0.875rem', padding: '0.65rem 1rem',
                 cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem'
               }}>
-                <span style={{ fontSize: '1rem' }}>{CATEGORY_ICONS[q.category]}</span>
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>{q.text}</span>
+                <span style={{ fontSize: '1rem' }}>{(isSim ? SIM_CATEGORY_ICONS : CATEGORY_ICONS)[q.category]}</span>
+                <span style={{ color: isSim ? 'rgba(0,204,51,0.7)' : 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>{q.text}</span>
               </button>
             ))}
           </div>
