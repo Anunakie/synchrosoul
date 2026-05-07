@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Groq from 'groq-sdk'
+import { groqChatWithRetry } from '@/lib/groq-retry'
 
 export const runtime = 'nodejs'
 
@@ -43,8 +43,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: isSimulation ? 'ARCHITECT_OFFLINE' : 'Oracle not configured' }, { status: 500 })
     }
 
-    const groq = new Groq({ apiKey })
-
+    
     const numerologyContext = numerologyProfile
       ? `Life Path ${numerologyProfile.lifePathNumber || numerologyProfile.lifePath || '?'}, Soul Urge ${numerologyProfile.soulUrgeNumber || numerologyProfile.soulUrge || '?'}, Destiny ${numerologyProfile.destinyNumber || numerologyProfile.destiny || '?'}`
       : null
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
         ? `The seeker just saw angel number ${number}.\n\nRight before seeing it, they were thinking about: "${thoughtAnchor.trim()}"\n\nGive a cosmic reading that DIRECTLY connects the meaning of ${number} to their specific thought. Make them feel the universe was responding directly to what was on their mind.${numerologyContext ? `\n\nTheir numerology: ${numerologyContext}` : ''}`
         : `The seeker just saw angel number ${number}. Give them a brief, powerful cosmic reading about what this number means for them right now.${numerologyContext ? `\n\nTheir numerology: ${numerologyContext}` : ''}`)
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqChatWithRetry({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
         ? `Anomaly code ${number}, consciousness snapshot: ${thoughtAnchor.trim().slice(0, 80)}`
         : `Angel number ${number}, thought about: ${thoughtAnchor.trim().slice(0, 80)}`
 
-      const titleCompletion = await groq.chat.completions.create({
+      const titleCompletion = await groqChatWithRetry({
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: titleSystemPrompt },

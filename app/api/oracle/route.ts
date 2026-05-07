@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Groq from 'groq-sdk'
+import { groqChatWithRetry } from '@/lib/groq-retry'
 
 export const runtime = 'nodejs'
 
@@ -49,8 +49,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Oracle not configured' }, { status: 500 })
     }
 
-    const groq = new Groq({ apiKey })
-
+    
     // Build context from user's actual data
     const recentLogs = (logs || []).slice(0, 15)
     const numberFrequency: Record<string, number> = {}
@@ -99,7 +98,7 @@ ${recentThoughts ? `\nThoughts captured during sightings:\n${recentThoughts}` : 
 
 Channel the oracle and give them a deeply personal, mystical reading based on their actual numbers and question.`
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqChatWithRetry({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },

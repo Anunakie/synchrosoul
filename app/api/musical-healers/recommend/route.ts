@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { groqChatWithRetry } from '@/lib/groq-retry'
 import { createClient } from '@supabase/supabase-js'
-import Groq from 'groq-sdk'
 
 export const runtime = 'nodejs'
 
@@ -110,8 +110,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 3: Send candidates to Groq for intelligent matching
-    const groq = new Groq({ apiKey: groqKey })
-    const isSimulation = mode === 'simulation'
+        const isSimulation = mode === 'simulation'
 
     const candidateList = candidates.map((c, i) =>
       `${i + 1}. "${c.song_title}" by ${c.artist_name} — ${c.song_description || 'No description'} (Genre: ${c.song_genre || 'unknown'}, Relevance: ${c.relevance_score})`
@@ -125,7 +124,7 @@ export async function POST(req: NextRequest) {
       ? `ANOMALY_CODE: ${number || 'N/A'}\nCONSCIOUSNESS_SNAPSHOT: "${thought || 'unrecorded'}"\nDECODED_SIGNAL:\n${reading || 'No signal decoded'}\n\nAVAILABLE AUDIO DATA:\n${candidateList}\n\nSelect the optimal frequency match. Return JSON only.`
       : `Angel Number: ${number || 'N/A'}\nThe seeker was thinking: "${thought || 'not recorded'}"\nOracle Reading:\n${reading || 'No reading generated'}\n\nAvailable Healing Songs:\n${candidateList}\n\nWhich song best matches this moment in the seeker's journey? Return JSON only.`
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqChatWithRetry({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },

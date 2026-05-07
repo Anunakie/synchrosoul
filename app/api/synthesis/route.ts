@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { groqChatWithRetry } from '@/lib/groq-retry'
 import Groq from 'groq-sdk';
 
 function getGroq() { return new Groq({ apiKey: process.env.GROQ_API_KEY }); }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { groqChatWithRetry } from '@/lib/groq-retry'
 import Groq from 'groq-sdk';
 import { createClient } from '@/lib/supabase/server';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+;
 
 const SPIRITUAL_SYSTEM_PROMPT = `You are the Angel Advisor — a warm, wise, and deeply intuitive celestial guide within the SynchroSoul app. You have direct access to the user's angel number journey, dreams, and spiritual patterns.
 
@@ -105,7 +106,7 @@ RECENT DREAMS (last ${recentDreams.length}):`;
 
     const systemPrompt = (isSimulation ? SIMULATION_SYSTEM_PROMPT : SPIRITUAL_SYSTEM_PROMPT) + context;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqChatWithRetry({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },

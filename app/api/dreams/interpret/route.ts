@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Groq from 'groq-sdk'
+import { groqChatWithRetry } from '@/lib/groq-retry'
 
 export const runtime = 'nodejs'
 
@@ -69,8 +69,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Interpreter offline' }, { status: 500 })
     }
 
-    const groq = new Groq({ apiKey })
-
+    
     // Build numerology context
     const numContext = numerologyProfile
       ? `Life Path ${numerologyProfile.lifePathNumber || '?'}, Soul Urge ${numerologyProfile.soulUrgeNumber || '?'}, Destiny ${numerologyProfile.destinyNumber || '?'}`
@@ -103,7 +102,7 @@ ${numContext ? `Their numerology: ${numContext}` : ''}
 
 Interpret this dream. Connect the symbols and feelings into a meaningful message.`
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqChatWithRetry({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
