@@ -94,6 +94,10 @@ export default function UpgradePage() {
   const [portalLoading, setPortalLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoMessage, setPromoMessage] = useState('')
+  const [promoError, setPromoError] = useState(false)
 
   const syncSubscription = useCallback(async (showMessage = true) => {
     setSyncing(true)
@@ -172,6 +176,50 @@ export default function UpgradePage() {
       setPortalLoading(false)
     }
   }
+
+  const handlePromoCode = async () => {
+    if (!promoCode.trim()) return
+    setPromoLoading(true)
+    setPromoMessage('')
+    setPromoError(false)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setPromoError(true)
+        setPromoMessage('Please log in to use a promo code.')
+        return
+      }
+      const res = await fetch('/api/promo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPromoError(false)
+        setPromoMessage(data.message)
+        setPromoCode('')
+        // Refresh subscription status
+        const newSub = await getSubscriptionStatus()
+        setSub(newSub)
+        saveSubscriptionTierLocally(data.tier)
+      } else {
+        setPromoError(true)
+        setPromoMessage(data.error || 'Invalid promo code.')
+      }
+    } catch {
+      setPromoError(true)
+      setPromoMessage('Something went wrong. Please try again.')
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
 
   const currentTier = sub?.tier || 'free'
   const msgColors: Record<string, { bg: string; border: string; text: string }> = {
@@ -346,6 +394,31 @@ export default function UpgradePage() {
         })}
       </div>
 
+      {/* Promo Code Section */}
+      <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>Have a promo code?</p>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <input
+            type="text"
+            placeholder="Enter code"
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+            style={{ flex: 1, padding: '0.7rem 1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+          />
+          <button
+            onClick={handlePromoCode}
+            disabled={!promoCode.trim() || promoLoading}
+            style={{ padding: '0.7rem 1.2rem', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: promoCode.trim() && !promoLoading ? 'pointer' : 'default', opacity: !promoCode.trim() || promoLoading ? 0.5 : 1 }}
+          >
+            {promoLoading ? '...' : 'Apply'}
+          </button>
+        </div>
+        {promoMessage && (
+          <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: promoError ? '#f87171' : '#4ade80' }}>
+            {promoMessage}
+          </p>
+        )}
+      </div>
       {/* Trust badges */}
       <div style={{ textAlign: 'center', marginTop: '3rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
