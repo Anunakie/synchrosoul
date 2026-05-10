@@ -1,27 +1,22 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req)
+  if (auth) return auth
 
-  const token = authHeader.replace('Bearer ', '')
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  // Check admin
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
-  if (!adminEmails.includes(user.email?.toLowerCase() || '')) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const supabaseAdmin = getSupabase()
 
   try {
-    // Get all non-admin users with their activity
+    // Get all users with profiles
     const { data: users } = await supabaseAdmin
       .from('profiles')
       .select('id, display_name, subscription_tier, created_at, avatar_url')
@@ -34,8 +29,9 @@ export async function GET(request: Request) {
     const emailMap: Record<string, string> = {}
     authUsers?.users?.forEach(u => { if (u.email) emailMap[u.id] = u.email })
 
-    // Filter out admin users
-    const nonAdminUsers = users.filter(u => !adminEmails.includes((emailMap[u.id] || '').toLowerCase()))
+    // Filter out the admin user
+    const adminEmail = 'dezekiel@live.com'
+    const nonAdminUsers = users.filter(u => (emailMap[u.id] || '').toLowerCase() !== adminEmail)
 
     // Get activity counts for each user
     const activity = await Promise.all(nonAdminUsers.map(async (profile) => {
@@ -58,11 +54,17 @@ export async function GET(request: Request) {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', profile.id)
 
-      // Dreams count
-      const { count: dreamCount } = await supabaseAdmin
-        .from('dreams')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
+      // Dreams count - try dreams table, gracefully handle if it doesn't exist
+      let dreamCount = 0
+      try {
+        const { count } = await supabaseAdmin
+          .from('dreams')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profile.id)
+        dreamCount = count || 0
+      } catch {
+        // dreams table might not exist
+      }
 
       // Recent angel logs (last 5)
       const { data: recentLogs } = await supabaseAdmin
@@ -81,7 +83,7 @@ export async function GET(request: Request) {
         avatar_url: profile.avatar_url,
         angel_logs: angelLogCount || 0,
         posts: postCount || 0,
-        dreams: dreamCount || 0,
+        dreams: dreamCount,
         last_activity: lastLog?.[0]?.created_at || null,
         last_number: lastLog?.[0]?.number || null,
         last_thought: lastLog?.[0]?.thought || null,
