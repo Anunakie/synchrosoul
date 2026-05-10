@@ -6,16 +6,20 @@ export const runtime = 'nodejs'
 
 interface CandidateSong {
   song_id: string
-  song_title: string
-  song_description: string | null
-  song_genre: string | null
-  song_embed_url: string | null
-  song_cover_art_url: string | null
-  song_amazon_music_url: string | null
-  song_spotify_url: string | null
   healer_id: string
+  title: string
+  description: string | null
+  themes: string[]
+  moods: string[]
+  angel_numbers: string[]
+  genre: string | null
   artist_name: string
-  healer_avatar_url: string | null
+  spotify_url: string | null
+  apple_music_url: string | null
+  amazon_music_url: string | null
+  youtube_url: string | null
+  soundcloud_url: string | null
+  cover_art_url: string | null
   relevance_score: number
 }
 
@@ -113,7 +117,7 @@ export async function POST(req: NextRequest) {
         const isSimulation = mode === 'simulation'
 
     const candidateList = candidates.map((c, i) =>
-      `${i + 1}. "${c.song_title}" by ${c.artist_name} — ${c.song_description || 'No description'} (Genre: ${c.song_genre || 'unknown'}, Relevance: ${c.relevance_score})`
+      `${i + 1}. "${c.title}" by ${c.artist_name} — ${c.description || 'No description'} (Genre: ${c.genre || 'unknown'}, Relevance: ${c.relevance_score})`
     ).join('\n')
 
     const systemPrompt = isSimulation
@@ -181,16 +185,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       recommendation: {
         songId: chosen.song_id,
-        songTitle: chosen.song_title,
-        songDescription: chosen.song_description,
-        songGenre: chosen.song_genre,
-        songEmbedUrl: chosen.song_embed_url,
-        songCoverArtUrl: chosen.song_cover_art_url,
-        songAmazonMusicUrl: chosen.song_amazon_music_url,
-        songSpotifyUrl: chosen.song_spotify_url,
+        songTitle: chosen.title,
+        songDescription: chosen.description,
+        songGenre: chosen.genre,
+        songEmbedUrl: null,
+        songCoverArtUrl: chosen.cover_art_url,
+        songAmazonMusicUrl: chosen.amazon_music_url,
+        songSpotifyUrl: chosen.spotify_url,
         healerId: chosen.healer_id,
         artistName: chosen.artist_name,
-        healerAvatarUrl: chosen.healer_avatar_url,
+        healerAvatarUrl: null,
         reason: reason,
       }
     })
