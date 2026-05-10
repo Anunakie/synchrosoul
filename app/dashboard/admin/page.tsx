@@ -85,9 +85,12 @@ export default function AdminPage() {
   const [betaSignups, setBetaSignups] = useState<{id: string; email: string; name: string | null; device: string; reason: string | null; status: string; created_at: string; notes: string | null}[]>([])
   const [betaSignupsLoading, setBetaSignupsLoading] = useState(false)
   const [betaSignupsFilter, setBetaSignupsFilter] = useState('all')
-  const [betaSubTab, setBetaSubTab] = useState<'grant' | 'signups' | 'users'>('signups')
+  const [betaSubTab, setBetaSubTab] = useState<'grant' | 'signups' | 'users' | 'activity'>('activity')
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [bulkRevoking, setBulkRevoking] = useState(false)
+  const [betaActivity, setBetaActivity] = useState<{id: string; email: string; display_name: string; subscription_tier: string; signed_up: string; avatar_url: string | null; angel_logs: number; posts: number; dreams: number; last_activity: string | null; last_number: string | null; last_thought: string | null; recent_logs: {number: string; created_at: string; thought: string | null}[]}[]>([])
+  const [betaActivityLoading, setBetaActivityLoading] = useState(false)
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [adminChecking, setAdminChecking] = useState(true)
@@ -162,7 +165,7 @@ export default function AdminPage() {
     if (tab === 'beta') {
       loadBetaUsers()
       loadBetaSignups()
-      loadBetaSignups()
+      loadBetaActivity()
     }
   }, [tab, revenue, revLoading, healers.length, healersLoading, authToken])
 
@@ -210,6 +213,21 @@ export default function AdminPage() {
     } catch (e) { console.error('Failed to load beta signups', e) }
     setBetaSignupsLoading(false)
   }
+  const loadBetaActivity = async () => {
+    setBetaActivityLoading(true)
+    try {
+      const res = await fetch('/api/admin/beta-activity', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      })
+      const data = await res.json()
+      if (data.activity) setBetaActivity(data.activity)
+    } catch (e) {
+      console.error('Failed to load beta activity', e)
+    } finally {
+      setBetaActivityLoading(false)
+    }
+  }
+
 
   const updateSignupStatus = async (id: string, status: string) => {
     try {
@@ -792,17 +810,136 @@ export default function AdminPage() {
 
           {/* Sub-tab buttons */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {(['signups', 'grant', 'users'] as const).map(t => (
+            {(['activity', 'signups', 'grant', 'users'] as const).map(t => (
               <button key={t} onClick={() => setBetaSubTab(t)} style={{
                 padding: '8px 18px', borderRadius: '50px', border: 'none', cursor: 'pointer',
                 fontSize: '13px', fontWeight: 600,
                 background: betaSubTab === t ? 'linear-gradient(135deg,#c9a84c,#a78bfa)' : 'rgba(255,255,255,0.06)',
                 color: betaSubTab === t ? '#fff' : 'rgba(180,160,255,0.7)'
               }}>
-                {t === 'signups' ? `Beta Signups (${betaSignups.length})` : t === 'grant' ? 'Grant Access' : `Active Testers (${betaUsers.length})`}
+                {t === 'activity' ? `📊 Tester Activity (${betaActivity.length})` : t === 'signups' ? `Beta Signups (${betaSignups.length})` : t === 'grant' ? 'Grant Access' : `Active Testers (${betaUsers.length})`}
               </button>
             ))}
           </div>
+
+          {/* ACTIVITY TAB */}
+          {betaSubTab === 'activity' && (
+            <div style={{ ...card }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#c9a84c', margin: 0 }}>📊 Tester Activity Monitor</h2>
+                  <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.8rem', margin: '4px 0 0' }}>See what testers are doing in real-time</p>
+                </div>
+                <button onClick={loadBetaActivity} style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(167,139,250,0.3)', background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  🔄 Refresh
+                </button>
+              </div>
+
+              {betaActivityLoading && <p style={{ color: 'rgba(180,160,255,0.5)', textAlign: 'center', padding: '2rem 0' }}>Loading activity...</p>}
+
+              {!betaActivityLoading && betaActivity.length === 0 && (
+                <p style={{ color: 'rgba(180,160,255,0.4)', textAlign: 'center', padding: '2rem 0' }}>No users found.</p>
+              )}
+
+              {!betaActivityLoading && betaActivity.length > 0 && (
+                <div>
+                  {/* Summary Stats */}
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '12px', padding: '0.75rem 1rem', flex: '1', minWidth: '120px' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a78bfa' }}>{betaActivity.length}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.5)' }}>Total Users</div>
+                    </div>
+                    <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '12px', padding: '0.75rem 1rem', flex: '1', minWidth: '120px' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#22c55e' }}>{betaActivity.filter(u => u.angel_logs > 0).length}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.5)' }}>Active (logged numbers)</div>
+                    </div>
+                    <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '12px', padding: '0.75rem 1rem', flex: '1', minWidth: '120px' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f87171' }}>{betaActivity.filter(u => u.angel_logs === 0).length}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.5)' }}>Inactive (no logs)</div>
+                    </div>
+                    <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '12px', padding: '0.75rem 1rem', flex: '1', minWidth: '120px' }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#c9a84c' }}>{betaActivity.reduce((sum, u) => sum + u.angel_logs, 0)}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.5)' }}>Total Logs</div>
+                    </div>
+                  </div>
+
+                  {/* User Activity List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {betaActivity.map(user => {
+                      const isExpanded = expandedUserId === user.id
+                      const isActive = user.angel_logs > 0
+                      return (
+                        <div key={user.id} style={{
+                          background: isActive ? 'rgba(34,197,94,0.04)' : 'rgba(248,113,113,0.04)',
+                          border: `1px solid ${isActive ? 'rgba(34,197,94,0.15)' : 'rgba(248,113,113,0.15)'}`,
+                          borderRadius: '12px', padding: '1rem', cursor: 'pointer'
+                        }} onClick={() => setExpandedUserId(isExpanded ? null : user.id)}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {user.avatar_url ? <img src={user.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.9rem' }}>✨</span>}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span style={{ color: '#e2d9f3', fontWeight: 600, fontSize: '0.9rem' }}>{user.display_name || '(no name)'}</span>
+                                <span style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.4)' }}>{user.email}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.75rem', color: isActive ? '#22c55e' : '#f87171' }}>🔢 {user.angel_logs} logs</span>
+                                <span style={{ fontSize: '0.75rem', color: 'rgba(180,160,255,0.5)' }}>💬 {user.posts} posts</span>
+                                <span style={{ fontSize: '0.75rem', color: 'rgba(180,160,255,0.5)' }}>🌙 {user.dreams} dreams</span>
+                                <span style={{ fontSize: '0.75rem', color: 'rgba(180,160,255,0.4)' }}>
+                                  {user.last_activity ? `Last: ${new Date(user.last_activity).toLocaleDateString()} ${new Date(user.last_activity).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'Never active'}
+                                </span>
+                              </div>
+                            </div>
+                            <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 600, background: isActive ? 'rgba(34,197,94,0.15)' : 'rgba(248,113,113,0.1)', color: isActive ? '#22c55e' : '#f87171' }}>
+                                {isActive ? '● Active' : '○ Inactive'}
+                              </span>
+                              <span style={{ fontSize: '0.8rem', color: 'rgba(180,160,255,0.4)', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                            </div>
+                          </div>
+
+                          {/* Expanded Details */}
+                          {isExpanded && (
+                            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                              <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap', fontSize: '0.75rem', color: 'rgba(180,160,255,0.5)' }}>
+                                <span>📅 Signed up: {new Date(user.signed_up).toLocaleDateString()}</span>
+                                <span>💎 Tier: {user.subscription_tier}</span>
+                                {user.last_number && <span>🔢 Last number: {user.last_number}</span>}
+                              </div>
+                              {user.last_thought && (
+                                <div style={{ fontSize: '0.8rem', color: 'rgba(200,180,255,0.6)', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                                  "{user.last_thought}"
+                                </div>
+                              )}
+                              {user.recent_logs.length > 0 && (
+                                <div>
+                                  <div style={{ fontSize: '0.7rem', color: 'rgba(180,160,255,0.4)', marginBottom: '0.3rem', fontWeight: 600 }}>Recent Angel Logs:</div>
+                                  {user.recent_logs.map((log, i) => (
+                                    <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', padding: '0.2rem 0', color: 'rgba(200,180,255,0.5)' }}>
+                                      <span style={{ fontWeight: 700, color: '#a78bfa' }}>{log.number}</span>
+                                      <span style={{ color: 'rgba(180,160,255,0.3)' }}>•</span>
+                                      <span>{new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                      {log.thought && <span style={{ color: 'rgba(180,160,255,0.4)', fontStyle: 'italic' }}>— {log.thought.slice(0, 50)}{log.thought.length > 50 ? '...' : ''}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {user.recent_logs.length === 0 && (
+                                <p style={{ fontSize: '0.75rem', color: 'rgba(180,160,255,0.3)', fontStyle: 'italic' }}>No activity yet — this tester hasn&apos;t logged any angel numbers.</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
 
           {/* SIGNUPS TAB */}
           {betaSubTab === 'signups' && (
