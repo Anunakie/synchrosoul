@@ -16,35 +16,35 @@ export async function GET(req: NextRequest) {
   const supabaseAdmin = getSupabase()
 
   try {
-    // Get all users with profiles
-    const { data: users } = await supabaseAdmin
-      .from('profiles')
-      .select('id, display_name, subscription_tier, created_at, avatar_url')
-      .order('created_at', { ascending: false })
-
-    if (!users) return NextResponse.json({ activity: [] })
-
-    // Get auth emails
-    const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const emailMap: Record<string, string> = {}
-    authUsers?.users?.forEach(u => { if (u.email) emailMap[u.id] = u.email })
+    // Get ALL users from auth (same approach as admin overview)
+    const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+    if (!authUsers?.users) return NextResponse.json({ activity: [] })
 
     // Filter out the admin user
     const adminEmail = 'dezekiel@live.com'
-    const nonAdminUsers = users.filter(u => (emailMap[u.id] || '').toLowerCase() !== adminEmail)
+    const nonAdminUsers = authUsers.users.filter(u => (u.email || '').toLowerCase() !== adminEmail)
+
+    // Get all profiles for cross-reference
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, display_name, subscription_tier, avatar_url')
+    const profileMap: Record<string, any> = {}
+    profiles?.forEach(p => { profileMap[p.id] = p })
 
     // Get activity counts for each user
-    const activity = await Promise.all(nonAdminUsers.map(async (profile) => {
+    const activity = await Promise.all(nonAdminUsers.map(async (user) => {
+      const profile = profileMap[user.id]
+
       // Angel logs count and last log
       const { count: angelLogCount } = await supabaseAdmin
         .from('angel_logs')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
 
       const { data: lastLog } = await supabaseAdmin
         .from('angel_logs')
         .select('number, created_at, thought')
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -52,15 +52,15 @@ export async function GET(req: NextRequest) {
       const { count: postCount } = await supabaseAdmin
         .from('posts')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
 
-      // Dreams count - try dreams table, gracefully handle if it doesn't exist
+      // Dreams count
       let dreamCount = 0
       try {
         const { count } = await supabaseAdmin
           .from('dreams')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', profile.id)
+          .eq('user_id', user.id)
         dreamCount = count || 0
       } catch {
         // dreams table might not exist
@@ -70,17 +70,17 @@ export async function GET(req: NextRequest) {
       const { data: recentLogs } = await supabaseAdmin
         .from('angel_logs')
         .select('number, created_at, thought')
-        .eq('user_id', profile.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5)
 
       return {
-        id: profile.id,
-        email: emailMap[profile.id] || 'unknown',
-        display_name: profile.display_name,
-        subscription_tier: profile.subscription_tier || 'free',
-        signed_up: profile.created_at,
-        avatar_url: profile.avatar_url,
+        id: user.id,
+        email: user.email || 'unknown',
+        display_name: profile?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown',
+        subscription_tier: profile?.subscription_tier || 'free',
+        signed_up: user.created_at,
+        avatar_url: profile?.avatar_url || null,
         angel_logs: angelLogCount || 0,
         posts: postCount || 0,
         dreams: dreamCount,
