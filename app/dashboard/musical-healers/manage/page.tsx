@@ -652,12 +652,22 @@ export default function ManagePage() {
                 padding: '1rem', marginBottom: '0.75rem', opacity: song.is_active ? 1 : 0.5,
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '1rem', color: textColor, margin: '0 0 0.25rem', fontWeight: 600 }}>
-                      {song.synch_enabled && <span style={{ marginRight: '0.3rem' }}>🔮</span>}
-                      {song.title}
-                    </h3>
-                    {song.genre && <span style={{ fontSize: '0.7rem', color: mutedColor }}>{song.genre}</span>}
+                  <div style={{ display: 'flex', gap: '0.75rem', flex: 1 }}>
+                    {/* Song Cover Art Thumbnail */}
+                    <div style={{ width: '48px', height: '48px', borderRadius: '0.5rem', overflow: 'hidden', flexShrink: 0, background: 'rgba(255,255,255,0.05)', border: `1px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {song.cover_art_url ? (
+                        <img src={song.cover_art_url} alt={song.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ fontSize: '1.2rem' }}>🎵</span>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '1rem', color: textColor, margin: '0 0 0.25rem', fontWeight: 600 }}>
+                        {song.synch_enabled && <span style={{ marginRight: '0.3rem' }}>🔮</span>}
+                        {song.title}
+                      </h3>
+                      {song.genre && <span style={{ fontSize: '0.7rem', color: mutedColor }}>{song.genre}</span>}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
                     {song.synch_enabled && <span style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: `${accent}0.15)`, border: `1px solid ${accent}0.3)`, color: textColor, fontWeight: 600 }}>Synched</span>}
