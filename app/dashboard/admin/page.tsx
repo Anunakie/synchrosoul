@@ -216,8 +216,12 @@ export default function AdminPage() {
   const loadBetaActivity = async () => {
     setBetaActivityLoading(true)
     try {
+      const supabaseClient = createClient()
+      const { data: { session } } = await supabaseClient.auth.getSession()
+      const token = session?.access_token
+      if (!token) { setBetaActivityLoading(false); return }
       const res = await fetch('/api/admin/beta-activity', {
-        headers: { Authorization: `Bearer ${authToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       if (data.activity) setBetaActivity(data.activity)
@@ -227,6 +231,7 @@ export default function AdminPage() {
       setBetaActivityLoading(false)
     }
   }
+
 
 
   const updateSignupStatus = async (id: string, status: string) => {
