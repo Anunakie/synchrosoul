@@ -14,6 +14,7 @@ import ThemeSwitcher from '@/components/ThemeSwitcher'
 import NotificationBell from '@/components/NotificationBell'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import InstallPrompt from '@/components/InstallPrompt'
+import WelcomeTour from '@/components/WelcomeTour'
 import { ThemeProvider, useTheme, THEMES } from '@/lib/theme-context'
 import SimulationRain from '@/components/SimulationRain'
 import { SIM_NAV } from '@/lib/simulation-vocabulary'
@@ -144,6 +145,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       <ThemeSwitcher />
       <NotificationBell />
       <InstallPrompt />
+      <WelcomeTour />
 
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
         background: isSim ? 'rgba(0,8,0,0.97)' : 'rgba(5,5,16,0.92)',
