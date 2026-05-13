@@ -7,6 +7,13 @@ import { saveNumerologyProfile } from '@/lib/storage';
 import { requestNotificationPermission, scheduleDailyReminder, savePushSettings } from '@/lib/push-notifications';
 import StarField from '@/components/StarField';
 
+const USER_TYPES = [
+  { id: 'seeker', emoji: '🔮', title: 'Spiritual Seeker', desc: 'Track angel numbers & receive divine readings' },
+  { id: 'musician', emoji: '🎵', title: 'Musical Healer', desc: 'Share my music through spiritual alignment' },
+  { id: 'healer', emoji: '✋', title: 'Healer / Practitioner', desc: 'Connect with souls seeking healing' },
+  { id: 'explorer', emoji: '✨', title: 'Just Exploring', desc: "I'm curious about all of it" },
+];
+
 const INTENTIONS = [
   { emoji: '💕', text: 'Find my soul mate or twin flame' },
   { emoji: '🌱', text: 'Manifest my dream life' },
@@ -16,8 +23,8 @@ const INTENTIONS = [
   { emoji: '✨', text: 'Connect with like-minded souls' },
 ];
 
-const STEPS = ['welcome', 'name', 'birthdate', 'numbers', 'intention', 'notifications', 'complete'];
-const STEP_LABELS = ['Welcome', 'Your Name', 'Birthdate', 'Your Numbers', 'Intention', 'Reminders', 'Complete'];
+const STEPS = ['welcome', 'user_type', 'name', 'birthdate', 'numbers', 'intention', 'notifications', 'complete'];
+const STEP_LABELS = ['Welcome', 'Your Path', 'Your Name', 'Birthdate', 'Your Numbers', 'Intention', 'Reminders', 'Complete'];
 
 function useCountUp(target: number, duration: number = 1200, active: boolean = false) {
   const [value, setValue] = useState(0);
@@ -93,6 +100,7 @@ export default function OnboardingPage() {
   const [dir, setDir] = useState(1);
   const [name, setName] = useState('');
   const [birthdate, setBirthdate] = useState('');
+  const [userType, setUserType] = useState('');
   const [intention, setIntention] = useState('');
   const [saving, setSaving] = useState(false);
   const [nums, setNums] = useState<{lp:number;su:number;de:number}|null>(null);
@@ -121,9 +129,9 @@ export default function OnboardingPage() {
   }, [router]);
 
   useEffect(() => {
-    if (step === 3) setTimeout(() => setNumbersActive(true), 300);
+    if (step === 4) setTimeout(() => setNumbersActive(true), 300);
     else setNumbersActive(false);
-    if (step === 6) setTimeout(() => setShowParticles(true), 400);
+    if (step === 7) setTimeout(() => setShowParticles(true), 400);
   }, [step]);
 
   const transition = (newStep: number, direction: number) => {
@@ -137,7 +145,7 @@ export default function OnboardingPage() {
   };
 
   const goNext = () => {
-    if (step === 2 && birthdate && name) {
+    if (step === 3 && birthdate && name) {
       setNums({ lp: calcLifePath(birthdate), su: calcSoulUrge(name), de: calcDestiny(name) });
     }
     transition(Math.min(step + 1, STEPS.length - 1), 1);
@@ -171,9 +179,10 @@ export default function OnboardingPage() {
         const de = calcDestiny(name);
         const lpd = getLifePathData(lp);
         await saveNumerologyProfile({ lifePath: lp, lifePathMeaning: lpd.meaning, lifePathColor: lpd.color, soulUrge: su, destiny: de, birthdate });
-        await upsertProfile({ display_name: name, birthdate: birthdate, life_path: lp, soul_urge: su, destiny: de, intention, onboarding_complete: true } as any);
+        await upsertProfile({ display_name: name, birthdate: birthdate, life_path: lp, soul_urge: su, destiny: de, intention, user_type: userType, onboarding_complete: true } as any);
       }
       document.cookie = 'onboarding_complete=true; path=/; max-age=31536000';
+      if (userType) localStorage.setItem('synchrosoul_user_type', userType);
     } catch (e) { console.error(e); }
     finally { setSaving(false); router.push('/dashboard'); }
   };
@@ -195,7 +204,7 @@ export default function OnboardingPage() {
     transition: 'opacity 0.6s ease, transform 0.6s ease',
   };
 
-  const skippable = step === 4 || step === 5;
+  const skippable = step === 5 || step === 6;
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden',
@@ -305,8 +314,53 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 1: Name */}
+          {/* STEP 1: User Type */}
           {step === 1 && (
+            <div>
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div className="float-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌟</div>
+                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300,
+                  color: 'rgba(220,200,255,0.95)', marginBottom: '0.375rem' }}>How Will You Use SynchroSoul?</h2>
+                <p style={{ color: 'rgba(180,160,255,0.5)', fontSize: '0.875rem' }}>Choose your path — you can always explore everything</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                {USER_TYPES.map(({ id, emoji, title, desc }) => (
+                  <button key={id} onClick={() => setUserType(id)} className="stagger-item" style={{
+                    display: 'flex', alignItems: 'center', gap: '0.875rem',
+                    background: userType === id ? 'rgba(167,139,250,0.18)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${userType === id ? 'rgba(167,139,250,0.45)' : 'rgba(200,180,255,0.08)'}`,
+                    borderRadius: '0.875rem', padding: '0.875rem 1rem', cursor: 'pointer',
+                    textAlign: 'left', width: '100%', transition: 'all 0.2s',
+                    boxShadow: userType === id ? '0 0 16px rgba(167,139,250,0.15)' : 'none',
+                  }}>
+                    <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: userType === id ? 'rgba(220,200,255,0.95)' : 'rgba(180,160,255,0.65)',
+                        fontSize: '0.95rem', fontWeight: 500 }}>{title}</div>
+                      <div style={{ color: userType === id ? 'rgba(180,160,255,0.6)' : 'rgba(180,160,255,0.35)',
+                        fontSize: '0.78rem', marginTop: '0.15rem' }}>{desc}</div>
+                    </div>
+                    {userType === id && <span style={{ color: 'rgba(167,139,250,0.9)', fontSize: '1rem' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button onClick={goBack} style={{ flex: 1, background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(200,180,255,0.1)', borderRadius: '1rem',
+                  color: 'rgba(180,160,255,0.55)', fontSize: '0.9rem', padding: '0.875rem', cursor: 'pointer' }}>Back</button>
+                <button onClick={goNext} disabled={!userType} style={{
+                  flex: 2, background: userType ? 'linear-gradient(135deg, #7c3aed, #a78bfa)' : 'rgba(167,139,250,0.12)',
+                  border: 'none', borderRadius: '1rem',
+                  color: userType ? 'white' : 'rgba(167,139,250,0.35)',
+                  fontSize: '0.95rem', fontWeight: 500, padding: '0.875rem',
+                  cursor: userType ? 'pointer' : 'not-allowed', transition: 'all 0.3s',
+                }}>Continue</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: Name */}
+          {step === 2 && (
             <div>
               <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                 <div className="float-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌟</div>
@@ -347,8 +401,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 2: Birthdate */}
-          {step === 2 && (
+          {/* STEP 3: Birthdate */}
+          {step === 3 && (
             <div>
               <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                 <div className="float-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌙</div>
@@ -395,8 +449,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 3: Numbers reveal */}
-          {step === 3 && nums && lpData && (
+          {/* STEP 4: Numbers reveal */}
+          {step === 4 && nums && lpData && (
             <div style={{ textAlign: 'center' }}>
               <div className="float-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>✨</div>
               <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300,
@@ -444,8 +498,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 4: Intention */}
-          {step === 4 && (
+          {/* STEP 5: Intention */}
+          {step === 5 && (
             <div>
               <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                 <div className="float-icon" style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
@@ -488,8 +542,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 5: Notifications */}
-          {step === 5 && (
+          {/* STEP 6: Notifications */}
+          {step === 6 && (
             <div style={{ textAlign: 'center' }}>
               <div className="float-icon" style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>🔔</div>
               <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300,
@@ -528,8 +582,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 6: Complete */}
-          {step === 6 && (
+          {/* STEP 7: Complete */}
+          {step === 7 && (
             <div style={{ textAlign: 'center' }}>
               <div className="pulse-glow" style={{ fontSize: '5rem', marginBottom: '1.5rem',
                 filter: 'drop-shadow(0 0 40px rgba(167,139,250,0.6))' }}>✶</div>
