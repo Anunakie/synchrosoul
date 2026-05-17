@@ -208,7 +208,7 @@ export default function DashboardPage() {
             <span style={{color:'#c9a84c',fontSize:'0.9rem'}}>✶</span>
             <span style={{color:'rgba(201,168,76,0.6)',fontSize:'0.65rem',textTransform:'uppercase',letterSpacing:'0.12em'}}>{isSim ? 'SYSTEM DIRECTIVE' : "Today's Guidance"}</span>
           </div>
-          <p style={{color:'rgba(220,200,255,0.8)',fontSize:'1rem'}}>“{guidance.message}”</p>
+          <p style={{color:'rgba(220,200,255,0.8)',fontSize:'1rem'}}>“{guidance.personalMessage}”</p>
           {guidance.affirmation && (
             <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.78rem',margin:0}}>{isSim ? getSimAffirmation(guidance.affirmation) : guidance.affirmation}</p>
           )}
