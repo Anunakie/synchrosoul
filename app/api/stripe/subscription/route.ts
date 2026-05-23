@@ -23,37 +23,61 @@ export async function POST(req: NextRequest) {
       .single()
 
     let customerId = profile?.stripe_customer_id
+
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: profile?.display_name || user.email,
-        metadata: { supabase_user_id: user.id },
+      // Before creating a new customer, check if one already exists by email
+      // This prevents duplicate Stripe customers for the same email
+      const existingCustomers = await stripe.customers.list({
+        email: user.email || '',
+        limit: 5,
       })
-      customerId = customer.id
+
+      if (existingCustomers.data.length > 0) {
+        // Use the first existing customer and link it to the profile
+        customerId = existingCustomers.data[0].id
+        console.log(`Found existing Stripe customer ${customerId} for email ${user.email}`)
+      } else {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: profile?.display_name || user.email,
+          metadata: { supabase_user_id: user.id },
+        })
+        customerId = customer.id
+      }
+      // Save the customer ID to profile
       await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
     }
 
-    // Cancel any existing active subscriptions to prevent double billing on upgrades
-    const existingSubs = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'active',
+    // Cancel ALL existing active/trialing subscriptions across ALL Stripe customers for this email
+    // This catches duplicates even if multiple Stripe customers were created for the same email
+    const allCustomers = await stripe.customers.list({
+      email: user.email || '',
       limit: 10,
     })
-    const trialSubs = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'trialing',
-      limit: 10,
-    })
-    const allActiveSubs = [...existingSubs.data, ...trialSubs.data]
 
-    for (const sub of allActiveSubs) {
-      // Cancel immediately so user can subscribe to new plan
-      await stripe.subscriptions.cancel(sub.id)
-      console.log(`Cancelled existing subscription ${sub.id} for customer ${customerId} before upgrade`)
+    let cancelledCount = 0
+    for (const cust of allCustomers.data) {
+      const existingSubs = await stripe.subscriptions.list({
+        customer: cust.id,
+        status: 'active',
+        limit: 10,
+      })
+      const trialSubs = await stripe.subscriptions.list({
+        customer: cust.id,
+        status: 'trialing',
+        limit: 10,
+      })
+      const allActiveSubs = [...existingSubs.data, ...trialSubs.data]
+
+      for (const sub of allActiveSubs) {
+        await stripe.subscriptions.cancel(sub.id)
+        cancelledCount++
+        console.log(`Cancelled subscription ${sub.id} for customer ${cust.id} before new checkout`)
+      }
     }
 
     // Update DB to free while checkout is pending
-    if (allActiveSubs.length > 0) {
+    if (cancelledCount > 0) {
       await supabase
         .from('profiles')
         .update({ subscription_tier: 'free', subscription_status: 'canceled' })

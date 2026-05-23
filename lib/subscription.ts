@@ -49,11 +49,19 @@ export function getLocalSubscriptionTier(): SubscriptionTier | null {
   return localStorage.getItem(LS_TIER_KEY) as SubscriptionTier | null
 }
 
+// Admin emails that always get Twin Flame access
+const ADMIN_EMAILS = ['dezekiel@live.com']
+
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { tier: 'free', status: null, currentPeriodEnd: null, cancelAtPeriodEnd: false }
+
+    // Admin whitelist: always Twin Flame
+    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      return { tier: 'twin-flame', status: 'admin', currentPeriodEnd: null, cancelAtPeriodEnd: false }
+    }
 
     // Try DB first
     try {
