@@ -49,20 +49,11 @@ export function getLocalSubscriptionTier(): SubscriptionTier | null {
   return localStorage.getItem(LS_TIER_KEY) as SubscriptionTier | null
 }
 
-// Beta auto-upgrade: all users get Twin Flame until this date
-const BETA_END_DATE = new Date('2026-06-08T00:00:00Z')
-const IS_BETA_ACTIVE = new Date() < BETA_END_DATE
-
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { tier: 'free', status: null, currentPeriodEnd: null, cancelAtPeriodEnd: false }
-
-    // During beta, everyone gets Twin Flame
-    if (IS_BETA_ACTIVE) {
-      return { tier: 'twin-flame', status: 'beta', currentPeriodEnd: BETA_END_DATE.toISOString(), cancelAtPeriodEnd: false }
-    }
 
     // Try DB first
     try {
