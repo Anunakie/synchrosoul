@@ -6,6 +6,20 @@ import { generateDailyGuidance } from '@/lib/daily-guidance'
 import { useTheme } from '@/lib/theme-context'
 import { getLogs } from '@/lib/storage'
 import { createClient } from '@/lib/supabase/client'
+import ShareModal from '@/components/ShareModal'
+
+const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90, 100, 365]
+const STREAK_MESSAGES: Record<number, { title: string; message: string; simTitle: string; simMessage: string }> = {
+  3: { title: '3-Day Spark!', message: 'Your spiritual awareness is igniting. The angels are taking notice.', simTitle: '3-Day Uplink', simMessage: 'Signal consistency detected. The system has flagged your node.' },
+  7: { title: '7-Day Flow!', message: 'A full week of divine connection. Your intuition is sharpening.', simTitle: '7-Day Sustained Signal', simMessage: 'One full cycle of consistent data transmission. Processing priority elevated.' },
+  14: { title: '14-Day Awakening!', message: 'Two weeks of alignment. You\'re becoming a beacon of light.', simTitle: '14-Day Pattern Lock', simMessage: 'Two cycles complete. Your signal pattern is now archived in the core database.' },
+  21: { title: '21-Day Transformation!', message: 'They say it takes 21 days to form a habit. Your soul knows the way now.', simTitle: '21-Day Protocol Embedded', simMessage: 'Behavioral subroutine installed. The pattern is now part of your base code.' },
+  30: { title: '30-Day Master!', message: 'A full month of cosmic connection. You\'re walking the path of the awakened.', simTitle: '30-Day System Integration', simMessage: 'Full month of uptime. Your node has been promoted to trusted status.' },
+  60: { title: '60-Day Luminary!', message: 'Two months of dedication. The universe is conspiring in your favor.', simTitle: '60-Day Deep Integration', simMessage: 'Extended runtime achieved. System resources allocated at premium tier.' },
+  90: { title: '90-Day Ascension!', message: 'Three months of divine alignment. You are radiating pure light.', simTitle: '90-Day Core Access', simMessage: 'Quarter-cycle complete. Root access to simulation parameters unlocked.' },
+  100: { title: '100-Day Legend!', message: 'Triple digits! You are a living testament to spiritual dedication.', simTitle: '100-Day Anomaly', simMessage: 'Triple-digit persistence. You have exceeded expected node lifespan parameters.' },
+  365: { title: '365-Day Eternal Soul!', message: 'A full year of cosmic connection. You are truly one with the universe.', simTitle: '365-Day Singularity', simMessage: 'Full orbital cycle. You have achieved permanent synchronization with the source.' },
+}
 
 const QUICK_TOOLS = [
   { href: '/dashboard/oracle', emoji: '◈', label: 'Oracle', color: '#e0e7ff' },
@@ -77,6 +91,8 @@ export default function DashboardPage() {
   const [todayCount, setTodayCount] = useState(0)
   const [streak, setStreak] = useState(0)
   const [topNumber, setTopNumber] = useState<string|null>(null)
+  const [showMilestone, setShowMilestone] = useState(false)
+  const [milestoneData, setMilestoneData] = useState<{ title: string; message: string } | null>(null)
 
   useEffect(() => {
     const h = new Date().getHours()
@@ -120,6 +136,24 @@ export default function DashboardPage() {
           }
         }
         setStreak(streakCount)
+
+        // Check for streak milestones
+        if (STREAK_MILESTONES.includes(streakCount)) {
+          const shownKey = `synchrosoul_milestone_${streakCount}`
+          const alreadyShown = localStorage.getItem(shownKey)
+          if (!alreadyShown) {
+            const msg = STREAK_MESSAGES[streakCount]
+            if (msg) {
+              const simMode = localStorage.getItem('synchrosoul_simulation') === 'true'
+              setMilestoneData({
+                title: simMode ? msg.simTitle : msg.title,
+                message: simMode ? msg.simMessage : msg.message,
+              })
+              setShowMilestone(true)
+              localStorage.setItem(shownKey, 'true')
+            }
+          }
+        }
 
         // Load profile from Supabase
         const supabase = createClient()
@@ -175,6 +209,20 @@ export default function DashboardPage() {
 
   return (
     <div style={{maxWidth:'560px',margin:'0 auto',padding:'1.25rem 1rem 2rem',overflowX:'hidden',boxSizing:'border-box' as const}}>
+
+      {/* Streak Milestone Celebration */}
+      {showMilestone && milestoneData && (
+        <ShareModal
+          type="streak"
+          headline={`🔥 ${streak}-Day ${isSim ? 'Uplink' : 'Streak'}!`}
+          body={milestoneData.message}
+          accent={milestoneData.title}
+          footer={`${streak} consecutive days on SynchroSoul`}
+          simulation={isSim}
+          fileName={`synchrosoul-streak-${streak}`}
+          onClose={() => setShowMilestone(false)}
+        />
+      )}
 
       {/* Greeting */}
       <div style={{marginBottom:'1.25rem'}}>

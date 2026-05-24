@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import SaveReadingButton from '@/components/SaveReadingButton';
 import { askOracle, getOracleHistory, saveOracleReading, OracleReading } from '@/lib/oracle';
 import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard';
+import ShareModal from '@/components/ShareModal';
 
 const SUGGESTED_QUESTIONS = [
   { text: 'What is my soul calling me toward right now?', category: 'default' },
@@ -45,6 +46,7 @@ function OraclePageInner() {
   const [revealed, setRevealed] = useState(false);
   const [songRec, setSongRec] = useState<SongRecommendationData | null>(null);
   const [songRecLoading, setSongRecLoading] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     setHistory(getOracleHistory());
@@ -254,13 +256,36 @@ function OraclePageInner() {
             </div>
           )}
 
-          {/* Ask another */}
-          <button onClick={() => { setReading(null); setQuestion(''); setSongRec(null); }} style={{
-            width: '100%', marginTop: '1.25rem', padding: '0.65rem',
-            borderRadius: '999px', cursor: 'pointer',
-            background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)',
-            border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem'
-          }}>Ask Another Question</button>
+          {/* Share + Ask another */}
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
+            <button onClick={() => setShowShareModal(true)} style={{
+              flex: 1, padding: '0.65rem',
+              borderRadius: '999px', cursor: 'pointer',
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(167,139,250,0.15))',
+              color: '#c9a84c',
+              border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.85rem',
+              fontWeight: 600,
+            }}>📤 Share Reading</button>
+            <button onClick={() => { setReading(null); setQuestion(''); setSongRec(null); setShowShareModal(false); }} style={{
+              flex: 1, padding: '0.65rem',
+              borderRadius: '999px', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)',
+              border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem'
+            }}>Ask Another</button>
+          </div>
+
+          {showShareModal && reading && (
+            <ShareModal
+              type="oracle"
+              headline={isSim ? `Signal ${reading.guidingNumber} Decoded` : `Angel Number ${reading.guidingNumber}`}
+              body={reading.response.substring(0, 200) + (reading.response.length > 200 ? '...' : '')}
+              accent={isSim ? 'Signal decoded via SynchroSoul' : reading.guidingMeaning}
+              footer={new Date(reading.timestamp).toLocaleDateString()}
+              simulation={isSim}
+              fileName={`synchrosoul-oracle-${reading.guidingNumber}`}
+              onClose={() => setShowShareModal(false)}
+            />
+          )}
         </div>
       )}
 

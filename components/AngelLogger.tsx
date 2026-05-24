@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/lib/theme-context'
 import SongRecommendationCard, { type SongRecommendationData } from './SongRecommendationCard'
 import { saveSongRecommendation } from '@/lib/song-recommendations'
+import ShareModal from './ShareModal'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -49,6 +50,7 @@ export default function AngelLogger({ onLogged }: Props) {
   const [personalizedReading, setPersonalizedReading] = useState<boolean>(false)
   const [songRec, setSongRec] = useState<SongRecommendationData | null>(null)
   const [songRecLoading, setSongRecLoading] = useState<boolean>(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const activeNumber = custom || selected
@@ -378,7 +380,13 @@ export default function AngelLogger({ onLogged }: Props) {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => setShowShareModal(true)} style={{
+            padding: '0.6rem 1.5rem', borderRadius: '9999px',
+            background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(167,139,250,0.15))',
+            border: '1px solid rgba(201,168,76,0.3)',
+            color: '#c9a84c', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
+          }}>📤 Share</button>
           <button onClick={handleReset} style={{
             padding: '0.6rem 1.5rem', borderRadius: '9999px',
             background: 'rgba(200,150,255,0.15)', border: '1px solid rgba(200,150,255,0.4)',
@@ -390,6 +398,19 @@ export default function AngelLogger({ onLogged }: Props) {
             cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block',
           }}>View Journal</a>
         </div>
+
+        {showShareModal && lastLog && (
+          <ShareModal
+            type="angel-number"
+            headline={isSim ? `Signal ${lastLog.number} Intercepted` : `Angel Number ${lastLog.number}`}
+            body={lastLog.miniReading || meaning?.message || 'A divine message for your journey'}
+            accent={isSim ? `Frequency logged at ${new Date(lastLog.createdAt).toLocaleTimeString()}` : (meaning?.title || '')}
+            footer={new Date(lastLog.createdAt).toLocaleDateString()}
+            simulation={isSim}
+            fileName={`synchrosoul-angel-${lastLog.number}`}
+            onClose={() => setShowShareModal(false)}
+          />
+        )}
       </div>
     )
   }
