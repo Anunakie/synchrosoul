@@ -7,6 +7,7 @@ import { speakText, stopSpeaking } from '@/components/VoiceRecorder'
 import FeatureGate from '@/components/FeatureGate'
 import SleepSounds from '@/components/SleepSounds'
 import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard'
+import { createClient } from '@/lib/supabase/client'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any
@@ -15,6 +16,27 @@ declare global {
     SpeechRecognition: new () => SpeechRecognitionInstance
     webkitSpeechRecognition: new () => SpeechRecognitionInstance
   }
+}
+
+// Mirror of AngelLogger's tier check so free vs premium dream readings stay consistent
+async function getSubscriptionTier(): Promise<string> {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return 'free'
+    const { data } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single()
+    return data?.subscription_tier || 'free'
+  } catch {
+    return 'free'
+  }
+}
+
+function isPremiumTier(tier: string): boolean {
+  return tier === 'mystic' || tier === 'twin-flame' || tier === 'twin_flame'
 }
 
 export default function DreamsPage() {
@@ -26,6 +48,7 @@ export default function DreamsPage() {
   const [nightMode, setNightMode] = useState(false)
   const [dreamRecs, setDreamRecs] = useState<Record<string, SongRecommendationData | null>>({})
   const [dreamRecLoading, setDreamRecLoading] = useState<string | null>(null)
+  const [isPremiumUser, setIsPremiumUser] = useState(false)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -45,6 +68,9 @@ export default function DreamsPage() {
   const descRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { getDreams().then(setDreams) }, [])
+
+  // Detect tier once so free vs premium dream readings stay consistent with AngelLogger
+  useEffect(() => { getSubscriptionTier().then(t => setIsPremiumUser(isPremiumTier(t))) }, [])
 
   // Fetch song recommendation when a dream is expanded and has a reading
   useEffect(() => {
@@ -149,6 +175,23 @@ export default function DreamsPage() {
     const numbers = angelNumbers.split(/[,\s]+/).map(n => n.replace(/\D/g, '')).filter(Boolean)
     saveDream({ title, description, symbols: selectedSymbols, moods: selectedMoods, angelNumbers: numbers, voiceNoteUrl: null })
     getDreams().then(setDreams)
+
+    // Free users: nudge that a deeper personalized Oracle reading awaits in paid tiers
+    // (in-app + best-effort web-push; throttled server-side to 1st, 3rd, then every 3rd dream)
+    if (!isPremiumUser) {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          fetch('/api/dreams/reading-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, kind: 'dream' }),
+          }).catch(() => {})
+        }
+      } catch {}
+    }
+
     setSaving(false)
     setSaved(true)
     setTimeout(() => {
@@ -574,6 +617,52 @@ export default function DreamsPage() {
                     <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', padding: '0.75rem', marginBottom: '0.75rem' }}>
                       <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: 'rgba(201,168,76,0.5)', marginBottom: '0.4rem' }}>COSMIC READING</div>
                       <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>{dream.reading}</p>
+                    </div>
+                  )}
+                  {/* Free-user upsell teaser — deeper Oracle dream reading (parity with AngelLogger) */}
+                  {!isPremiumUser && dream.reading && (
+                    <div style={{
+                      margin: '0 0 0.75rem', borderRadius: '0.75rem', overflow: 'hidden',
+                      border: '1px solid rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.05)',
+                    }}>
+                      <div style={{
+                        padding: '0.6rem 0.85rem', background: 'rgba(201,168,76,0.1)',
+                        borderBottom: '1px solid rgba(201,168,76,0.2)',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      }}>
+                        <span style={{ fontSize: '0.95rem' }}>🔮</span>
+                        <span style={{ color: 'rgba(201,168,76,0.9)', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                          The Oracle sensed something deeper in this dream…
+                        </span>
+                      </div>
+                      <div style={{ padding: '0.85rem', position: 'relative' }}>
+                        <div style={{
+                          filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none',
+                          color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', lineHeight: 1.6,
+                          marginBottom: '0.85rem',
+                        }}>
+                          The Oracle reads your dream as a layered message tuned to your numerology and the symbols you recorded — a personalized interpretation of what your subconscious is processing and the path it points toward...
+                        </div>
+                        <div style={{
+                          position: 'absolute', top: '0.85rem', left: 0, right: 0,
+                          display: 'flex', justifyContent: 'center',
+                        }}>
+                          <span style={{ fontSize: '1.4rem' }}>🔒</span>
+                        </div>
+                        <a href="/dashboard/upgrade" style={{
+                          display: 'block', width: '100%', padding: '0.7rem',
+                          borderRadius: '9999px', textAlign: 'center', textDecoration: 'none',
+                          background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(180,140,50,0.2))',
+                          border: '1px solid rgba(201,168,76,0.4)',
+                          color: 'rgba(201,168,76,0.95)', fontSize: '0.82rem', fontWeight: 600,
+                          letterSpacing: '0.05em',
+                        }}>
+                          Unlock My Full Dream Reading ✦
+                        </a>
+                        <p style={{ color: 'rgba(200,180,255,0.3)', fontSize: '0.7rem', marginTop: '0.5rem', textAlign: 'center' }}>
+                          Mystic tier · $6.99/mo · Cancel anytime
+                        </p>
+                      </div>
                     </div>
                   )}
                   {/* Song Recommendation */}

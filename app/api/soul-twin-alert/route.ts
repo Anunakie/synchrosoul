@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       user_id: matchUserId,
       type: 'soul_twin',
       title: 'Soul Twin Alert! ✨',
-      message: `Someone just saw ${number} at the same time as you! You may be cosmically connected.`,
+      body: `Someone just saw ${number} at the same time as you! You may be cosmically connected.`,
       read: false,
       created_at: new Date().toISOString(),
     }));
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       user_id: userId,
       type: 'soul_twin',
       title: 'Soul Twin Alert! ✨',
-      message: `${uniqueUserIds.length} other soul${uniqueUserIds.length > 1 ? 's' : '' } just saw ${number} at the same time as you!`,
+      body: `${uniqueUserIds.length} other soul${uniqueUserIds.length > 1 ? 's' : '' } just saw ${number} at the same time as you!`,
       read: false,
       created_at: new Date().toISOString(),
     });

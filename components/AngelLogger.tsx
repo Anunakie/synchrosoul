@@ -183,6 +183,23 @@ export default function AngelLogger({ onLogged }: Props) {
         }).catch(() => {})
       }
     } catch {}
+
+    // Free users: nudge that a deeper personalized Oracle reading awaits in paid tiers
+    // (in-app + best-effort web-push; throttled server-side to 1st, 3rd, then every 3rd log)
+    try {
+      const tier = await getSubscriptionTier()
+      if (!isPremium(tier)) {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          fetch('/api/dreams/reading-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, kind: 'number', label: activeNumber }),
+          }).catch(() => {})
+        }
+      }
+    } catch {}
   }
 
   function handleReset() {

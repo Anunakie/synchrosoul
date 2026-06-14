@@ -18,7 +18,8 @@ export const TIER_FEATURES: Record<SubscriptionTier, string[]> = {
   free: ['logger', 'journal', 'dreams', 'basic-numerology', 'dictionary', 'gratitude', 'feed'],
   mystic: ['logger', 'journal', 'dreams', 'full-numerology', 'dictionary', 'gratitude',
     'feed', 'weekly-synthesis', 'oracle-unlimited', 'tarot-full', 'soul-twin-radar',
-    'angel-circles', 'truth-score', 'manifestations', 'badges-30', 'export-pdf'],
+    'angel-circles', 'truth-score', 'manifestations', 'badges-30', 'export-pdf',
+    'voice_journal', 'sleep_sounds'],
   'twin-flame': ['*'],
 }
 

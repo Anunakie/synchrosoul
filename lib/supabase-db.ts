@@ -628,8 +628,7 @@ export async function sendSyncSignal(toUserId: string, sharedNumbers: string[], 
         user_id: toUserId,
         type: 'sync_match',
         title: '✨ Sync Signal Received',
-        message: `${fromName} sent you a sync signal! You both logged ${sharedNumbers.slice(0,3).join(', ')} — ${syncScore}% cosmic alignment.`,
-        metadata: { fromUserId: myId, fromName, sharedNumbers, syncScore },
+        body: `${fromName} sent you a sync signal! You both logged ${sharedNumbers.slice(0,3).join(', ')} — ${syncScore}% cosmic alignment.`,
         read: false,
       })
     return !error
