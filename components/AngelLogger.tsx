@@ -326,7 +326,7 @@ export default function AngelLogger({ onLogged }: Props) {
         <h3 style={{ color: lastLog.readingColor, fontSize: '1.5rem', marginBottom: '0.5rem', fontFamily: 'Cormorant Garamond, serif' }}>
           {lastLog.readingTitle}
         </h3>
-        <p style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+        <p style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>
           {lastLog.miniReading}
         </p>
 

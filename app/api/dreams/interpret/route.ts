@@ -21,7 +21,9 @@ Format:
 4. The directive: what action does this memory fragment suggest for the subject's process? (2 sentences)
 5. A closing observation about what this reveals about the subject's awareness level (1 sentence)
 
-Total: 150-200 words. Begin immediately. No greetings.`
+Total: 150-200 words. Begin immediately. No greetings.
+CRITICAL FORMATTING: Put a blank line (double line break) between each section so the reading is easy to read. Never output one continuous block of text.
+`
 
 const SPIRITUAL_DREAM_PROMPT = `You are the SynchroSoul Dream Oracle — a deeply intuitive interpreter of dreams, symbols, and the messages that come through sleep. You understand that dreams are the soul's language, using symbols, emotions, and imagery to communicate what the conscious mind cannot.
 
@@ -40,7 +42,9 @@ Format:
 4. Action and awareness: what should the dreamer carry forward? (2 sentences)
 5. A closing affirmation or blessing (1 sentence)
 
-Total: 150-200 words. Begin immediately with the dream's message.`
+Total: 150-200 words. Begin immediately with the dream's message.
+CRITICAL FORMATTING: Put a blank line (double line break) between each section so the reading is easy to read. Never output one continuous block of text.
+`
 
 export async function POST(req: NextRequest) {
   try {

@@ -658,7 +658,7 @@ export default function DreamsPage() {
                   {dream.reading && (
                     <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', padding: '0.75rem', marginBottom: '0.75rem' }}>
                       <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: 'rgba(201,168,76,0.5)', marginBottom: '0.4rem' }}>COSMIC READING</div>
-                      <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>{dream.reading}</p>
+                      <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>{dream.reading}</p>
                     </div>
                   )}
                   {trialRemaining !== null && !isPremiumUser && trialRemaining > 0 && (

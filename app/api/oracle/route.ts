@@ -20,7 +20,9 @@ Structure your response as:
 3. The directive — what action their data suggests (2-3 sentences)
 4. A closing statement about their awareness level (1-2 sentences)
 
-Keep total response to 150-200 words. Begin immediately — no greetings.`
+Keep total response to 150-200 words. Begin immediately — no greetings.
+CRITICAL FORMATTING: Put a blank line (double line break) between each section so the reading is easy to read. Never output one continuous block of text.
+`
 
 const SPIRITUAL_SYSTEM_PROMPT = `You are the SynchroSoul Angel Oracle — a mystical, deeply intuitive spiritual guide who speaks with warmth, wisdom, and cosmic authority. You interpret angel numbers, numerology, and divine synchronicities.
 
@@ -37,7 +39,9 @@ Always structure your response as:
 3. A specific action or awareness to carry forward (2-3 sentences)
 4. A closing blessing or affirmation (1-2 sentences)
 
-Keep total response to 150-200 words. Make it feel genuinely fated and magical.`
+Keep total response to 150-200 words. Make it feel genuinely fated and magical.
+CRITICAL FORMATTING: Put a blank line (double line break) between each section so the reading is easy to read. Never output one continuous block of text.
+`
 
 export async function POST(req: NextRequest) {
   try {
