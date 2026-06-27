@@ -5,6 +5,7 @@ import { saveLog, AngelLog, updateLogRecommendation } from '@/lib/storage'
 import { getAngelMeaning, QUICK_NUMBERS } from '@/lib/angel-meanings'
 import VoiceRecorder from './VoiceRecorder'
 import { createClient } from '@/lib/supabase/client'
+import { getSubscriptionStatus } from '@/lib/subscription'
 import { useTheme } from '@/lib/theme-context'
 import SongRecommendationCard, { type SongRecommendationData } from './SongRecommendationCard'
 import { saveSongRecommendation } from '@/lib/song-recommendations'
@@ -15,16 +16,12 @@ interface Props {
 }
 
 async function getSubscriptionTier(): Promise<string> {
+  // Unified tier source (matches FeatureGate): honors DB profiles + localStorage
+  // cache + admin whitelist, so premium users are recognized consistently and a
+  // Twin Flame / Mystic user is never shown an "upgrade to Mystic" prompt.
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return 'free'
-    const { data } = await supabase
-      .from('profiles')
-      .select('subscription_tier')
-      .eq('id', user.id)
-      .single()
-    return data?.subscription_tier || 'free'
+    const status = await getSubscriptionStatus()
+    return status.tier
   } catch {
     return 'free'
   }

@@ -8,6 +8,7 @@ import FeatureGate from '@/components/FeatureGate'
 import SleepSounds from '@/components/SleepSounds'
 import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard'
 import { createClient } from '@/lib/supabase/client'
+import { getSubscriptionStatus } from '@/lib/subscription'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any
@@ -18,18 +19,13 @@ declare global {
   }
 }
 
-// Mirror of AngelLogger's tier check so free vs premium dream readings stay consistent
+// Unified tier source (matches FeatureGate & AngelLogger): honors DB profiles +
+// localStorage cache + admin whitelist, so premium users are recognized
+// consistently and never shown an "upgrade to Mystic" prompt while already paid.
 async function getSubscriptionTier(): Promise<string> {
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return 'free'
-    const { data } = await supabase
-      .from('profiles')
-      .select('subscription_tier')
-      .eq('id', user.id)
-      .single()
-    return data?.subscription_tier || 'free'
+    const status = await getSubscriptionStatus()
+    return status.tier
   } catch {
     return 'free'
   }
