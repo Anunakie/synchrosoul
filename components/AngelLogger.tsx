@@ -10,6 +10,7 @@ import { useTheme } from '@/lib/theme-context'
 import SongRecommendationCard, { type SongRecommendationData } from './SongRecommendationCard'
 import { saveSongRecommendation } from '@/lib/song-recommendations'
 import ShareModal from './ShareModal'
+import TrialReadingBanner from './TrialReadingBanner'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -48,6 +49,7 @@ export default function AngelLogger({ onLogged }: Props) {
   const [songRec, setSongRec] = useState<SongRecommendationData | null>(null)
   const [songRecLoading, setSongRecLoading] = useState<boolean>(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [trialRemaining, setTrialRemaining] = useState<number | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const activeNumber = custom || selected
@@ -149,9 +151,86 @@ export default function AngelLogger({ onLogged }: Props) {
           // Fall back to generic reading
         }
       } else {
-        // Free user with thought: save generic, show upgrade teaser
-        const snippet = thought.trim().slice(0, 45)
-        setUpgradeTeaser(snippet)
+        // Free user with thought: check trial readings
+        try {
+          const trialRes = await fetch('/api/trial-reading')
+          if (trialRes.ok) {
+            const trialData = await trialRes.json()
+            const remaining: number = trialData.remaining ?? 0
+            setTrialRemaining(remaining)
+
+            if (remaining > 0) {
+              // Still have trial readings — get full Groq-powered reading
+              const supabase = createClient()
+              const { data: { user } } = await supabase.auth.getUser()
+              let numerologyProfile = null
+              if (user) {
+                const { data: profileData } = await supabase
+                  .from('profiles')
+                  .select('life_path_number, soul_urge_number, destiny_number')
+                  .eq('id', user.id)
+                  .single()
+                if (profileData) numerologyProfile = {
+                  lifePathNumber: profileData.life_path_number,
+                  soulUrgeNumber: profileData.soul_urge_number,
+                  destinyNumber: profileData.destiny_number,
+                }
+              }
+              const res = await fetch('/api/oracle/instant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  number: activeNumber,
+                  thoughtAnchor: thought.trim(),
+                  numerologyProfile,
+                  mode: theme === 'simulation' ? 'simulation' : 'spiritual'
+                }),
+              })
+              if (res.ok) {
+                const data = await res.json()
+                if (data.reading) {
+                  miniReadingOverride = data.reading
+                  readingTitleOverride = data.title
+                  setPersonalizedReading(true)
+
+                  // Fire off song recommendation request (non-blocking)
+                  setSongRecLoading(true)
+                  fetch('/api/musical-healers/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      number: activeNumber,
+                      thought: thought.trim(),
+                      reading: data.reading,
+                      readingType: 'oracle_instant',
+                      mode: theme === 'simulation' ? 'simulation' : 'spiritual',
+                    }),
+                  }).then(r => r.json()).then(d => {
+                    if (d.recommendation) setSongRec(d.recommendation)
+                  }).catch(() => {}).finally(() => setSongRecLoading(false))
+
+                  // Increment trial counter after successful reading
+                  fetch('/api/trial-reading', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(d => setTrialRemaining(d.remaining ?? 0))
+                    .catch(() => {})
+                }
+              }
+            } else {
+              // No trial readings left: keep existing teaser + throttled notification
+              const snippet = thought.trim().slice(0, 45)
+              setUpgradeTeaser(snippet)
+            }
+          } else {
+            // Trial check failed: fall back to teaser
+            const snippet = thought.trim().slice(0, 45)
+            setUpgradeTeaser(snippet)
+          }
+        } catch {
+          // Trial check failed: fall back to teaser
+          const snippet = thought.trim().slice(0, 45)
+          setUpgradeTeaser(snippet)
+        }
       }
     }
 
@@ -204,7 +283,7 @@ export default function AngelLogger({ onLogged }: Props) {
     setScreenshot(null); setScreenshotName('')
     setVoiceNoteUrl(null)
     setStep('pick'); setLastLog(null)
-    setUpgradeTeaser(null); setPersonalizedReading(false); setSongRec(null); setSongRecLoading(false)
+    setUpgradeTeaser(null); setPersonalizedReading(false); setSongRec(null); setSongRecLoading(false); setTrialRemaining(null)
   }
 
   // DONE
@@ -229,6 +308,10 @@ export default function AngelLogger({ onLogged }: Props) {
           color: lastLog.readingColor, border: `1px solid ${lastLog.readingColor}44`,
           fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase',
         }}>{lastLog.number}</div>
+
+        {trialRemaining !== null && (
+          <TrialReadingBanner remaining={trialRemaining} isSimulation={isSim} />
+        )}
 
         {personalizedReading && (
           <div style={{

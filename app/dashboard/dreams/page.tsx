@@ -7,8 +7,12 @@ import { speakText, stopSpeaking } from '@/components/VoiceRecorder'
 import FeatureGate from '@/components/FeatureGate'
 import SleepSounds from '@/components/SleepSounds'
 import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard'
+import TrialReadingBanner from '@/components/TrialReadingBanner'
 import { createClient } from '@/lib/supabase/client'
 import { getSubscriptionStatus } from '@/lib/subscription'
+import { getNumerologyProfile, getLogs, AngelLog } from '@/lib/storage'
+import { updateDreamReading } from '@/lib/dream-storage'
+import { useTheme } from '@/lib/theme-context'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any
@@ -36,6 +40,8 @@ function isPremiumTier(tier: string): boolean {
 }
 
 export default function DreamsPage() {
+  const { theme } = useTheme()
+  const isSim = theme === 'simulation'
   const [dreams, setDreams] = useState<DreamEntry[]>([])
   const [view, setView] = useState<'list' | 'new'>('list')
   const [search, setSearch] = useState('')
@@ -45,6 +51,7 @@ export default function DreamsPage() {
   const [dreamRecs, setDreamRecs] = useState<Record<string, SongRecommendationData | null>>({})
   const [dreamRecLoading, setDreamRecLoading] = useState<string | null>(null)
   const [isPremiumUser, setIsPremiumUser] = useState(false)
+  const [trialRemaining, setTrialRemaining] = useState<number | null>(null)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -169,21 +176,60 @@ export default function DreamsPage() {
     if (isListening) { recognitionRef.current?.stop(); setIsListening(false) }
     await new Promise(r => setTimeout(r, 700))
     const numbers = angelNumbers.split(/[,\s]+/).map(n => n.replace(/\D/g, '')).filter(Boolean)
-    saveDream({ title, description, symbols: selectedSymbols, moods: selectedMoods, angelNumbers: numbers, voiceNoteUrl: null })
+    const savedDream = await saveDream({ title, description, symbols: selectedSymbols, moods: selectedMoods, angelNumbers: numbers, voiceNoteUrl: null })
     getDreams().then(setDreams)
 
-    // Free users: nudge that a deeper personalized Oracle reading awaits in paid tiers
-    // (in-app + best-effort web-push; throttled server-side to 1st, 3rd, then every 3rd dream)
+    // Free users: check trial readings first; if remaining, get full Groq interpretation
     if (!isPremiumUser) {
       try {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          fetch('/api/dreams/reading-alert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, kind: 'dream' }),
-          }).catch(() => {})
+        const trialRes = await fetch('/api/trial-reading')
+        if (trialRes.ok) {
+          const trialData = await trialRes.json()
+          const remaining: number = trialData.remaining ?? 0
+          setTrialRemaining(remaining)
+
+          if (remaining > 0 && savedDream) {
+            // Fetch numerology profile and recent logs for context
+            const numProfile = await getNumerologyProfile()
+            const recentLogs: AngelLog[] = await getLogs()
+            const res = await fetch('/api/dreams/interpret', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: savedDream.title,
+                description: savedDream.description,
+                symbols: savedDream.symbols,
+                moods: savedDream.moods,
+                angelNumbers: savedDream.angelNumbers,
+                recentLogs: recentLogs.slice(0, 5),
+                numerologyProfile: numProfile,
+                mode: isSim ? 'simulation' : 'spiritual',
+              }),
+            })
+            const data = await res.json()
+            if (data.interpretation) {
+              // Persist the interpretation to the dream entry
+              await updateDreamReading(savedDream.id, data.interpretation)
+              getDreams().then(setDreams)
+            }
+
+            // Increment trial counter after successful interpretation
+            fetch('/api/trial-reading', { method: 'POST' })
+              .then(r => r.json())
+              .then(d => setTrialRemaining(d.remaining ?? 0))
+              .catch(() => {})
+          } else if (remaining === 0) {
+            // No trial readings left: nudge that a deeper reading awaits in paid tiers
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              fetch('/api/dreams/reading-alert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, kind: 'dream' }),
+              }).catch(() => {})
+            }
+          }
         }
       } catch {}
     }
@@ -615,8 +661,11 @@ export default function DreamsPage() {
                       <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>{dream.reading}</p>
                     </div>
                   )}
+                  {trialRemaining !== null && !isPremiumUser && trialRemaining > 0 && (
+                    <TrialReadingBanner remaining={trialRemaining} isSimulation={isSim} />
+                  )}
                   {/* Free-user upsell teaser — deeper Oracle dream reading (parity with AngelLogger) */}
-                  {!isPremiumUser && dream.reading && (
+                  {!isPremiumUser && dream.reading && (trialRemaining === null || trialRemaining === 0) && (
                     <div style={{
                       margin: '0 0 0.75rem', borderRadius: '0.75rem', overflow: 'hidden',
                       border: '1px solid rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.05)',
