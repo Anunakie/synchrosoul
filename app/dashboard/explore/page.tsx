@@ -1,6 +1,8 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isCosmicFieldAdmin } from '@/lib/cosmic-field'
 
 const TOOL_SECTIONS = [
   {
@@ -104,7 +106,31 @@ const TOOL_SECTIONS = [
 
 export default function ExplorePage() {
   const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
-  const totalTools = TOOL_SECTIONS.reduce((a,s)=>a+s.tools.length,0)
+
+  // Cosmic Field (ADMIN-ONLY private beta): link is injected only for the admin
+  const [isCosmicAdmin, setIsCosmicAdmin] = useState(false)
+  useEffect(() => {
+    try {
+      const supabase = createClient()
+      supabase.auth.getUser()
+        .then(({ data: { user } }) => setIsCosmicAdmin(isCosmicFieldAdmin(user?.email)))
+        .catch(() => {})
+    } catch {}
+  }, [])
+
+  const sections = TOOL_SECTIONS.map(section => {
+    if (section.title === 'Cosmic Tracking' && isCosmicAdmin) {
+      return {
+        ...section,
+        tools: [
+          { href:'/dashboard/cosmic-field', emoji:'🌌', name:'Cosmic Field', desc:'Live space weather & consciousness field' },
+          ...section.tools,
+        ],
+      }
+    }
+    return section
+  })
+  const totalTools = sections.reduce((a,s)=>a+s.tools.length,0)
 
   const handleLogout = async () => {
     try {

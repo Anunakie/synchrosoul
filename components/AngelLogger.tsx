@@ -11,6 +11,8 @@ import SongRecommendationCard, { type SongRecommendationData } from './SongRecom
 import { saveSongRecommendation } from '@/lib/song-recommendations'
 import ShareModal from './ShareModal'
 import TrialReadingBanner from './TrialReadingBanner'
+import CosmicFieldCard, { type CosmicFieldSnapshotWithNote } from './CosmicFieldCard'
+import { isCosmicFieldAdmin } from '@/lib/cosmic-field'
 
 interface Props {
   onLogged?: (log: AngelLog) => void
@@ -50,6 +52,8 @@ export default function AngelLogger({ onLogged }: Props) {
   const [songRecLoading, setSongRecLoading] = useState<boolean>(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [trialRemaining, setTrialRemaining] = useState<number | null>(null)
+  const [cosmicSnapshot, setCosmicSnapshot] = useState<CosmicFieldSnapshotWithNote | null>(null)
+  const [cosmicLoading, setCosmicLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const activeNumber = custom || selected
@@ -247,6 +251,30 @@ export default function AngelLogger({ onLogged }: Props) {
     setSaving(false)
     onLogged?.(log)
 
+    // Cosmic Field snapshot (ADMIN-ONLY private beta) — NON-BLOCKING: the log
+    // is already saved and rendered; this fills in underneath once it resolves.
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && isCosmicFieldAdmin(user.email)) {
+        setCosmicLoading(true)
+        fetch('/api/cosmic-field/snapshot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entryType: 'log',
+            entryId: log.id,
+            number: activeNumber,
+            thought: thought.trim() || undefined,
+            reading: miniReadingOverride,
+            mode: theme === 'simulation' ? 'simulation' : 'spiritual',
+          }),
+        }).then(r => r.ok ? r.json() : null).then(data => {
+          if (data && data.timestamp) setCosmicSnapshot(data)
+        }).catch(() => {}).finally(() => setCosmicLoading(false))
+      }
+    } catch {}
+
     // Soul Twin Alert
     try {
       const supabase = createClient()
@@ -284,6 +312,7 @@ export default function AngelLogger({ onLogged }: Props) {
     setVoiceNoteUrl(null)
     setStep('pick'); setLastLog(null)
     setUpgradeTeaser(null); setPersonalizedReading(false); setSongRec(null); setSongRecLoading(false); setTrialRemaining(null)
+    setCosmicSnapshot(null); setCosmicLoading(false)
   }
 
   // DONE
@@ -329,6 +358,13 @@ export default function AngelLogger({ onLogged }: Props) {
         <p style={{ color: 'rgba(220,200,255,0.6)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>
           {lastLog.miniReading}
         </p>
+
+        {/* Cosmic Field snapshot (ADMIN-ONLY private beta) */}
+        {(cosmicSnapshot || cosmicLoading) && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <CosmicFieldCard snapshot={cosmicSnapshot} loading={cosmicLoading} simulation={isSim} />
+          </div>
+        )}
 
         {/* Song Recommendation Card */}
         {songRec && (

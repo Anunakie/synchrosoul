@@ -13,6 +13,8 @@ import { getSubscriptionStatus } from '@/lib/subscription'
 import { getNumerologyProfile, getLogs, AngelLog } from '@/lib/storage'
 import { updateDreamReading } from '@/lib/dream-storage'
 import { useTheme } from '@/lib/theme-context'
+import CosmicFieldCard, { type CosmicFieldSnapshotWithNote } from '@/components/CosmicFieldCard'
+import { isCosmicFieldAdmin } from '@/lib/cosmic-field'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any
@@ -52,6 +54,9 @@ export default function DreamsPage() {
   const [dreamRecLoading, setDreamRecLoading] = useState<string | null>(null)
   const [isPremiumUser, setIsPremiumUser] = useState(false)
   const [trialRemaining, setTrialRemaining] = useState<number | null>(null)
+  const [isCosmicAdmin, setIsCosmicAdmin] = useState(false)
+  const [cosmicSnapshots, setCosmicSnapshots] = useState<Record<string, CosmicFieldSnapshotWithNote | null>>({})
+  const [cosmicLoadingId, setCosmicLoadingId] = useState<string | null>(null)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -74,6 +79,39 @@ export default function DreamsPage() {
 
   // Detect tier once so free vs premium dream readings stay consistent with AngelLogger
   useEffect(() => { getSubscriptionTier().then(t => setIsPremiumUser(isPremiumTier(t))) }, [])
+
+  // Cosmic Field (ADMIN-ONLY private beta): detect admin once
+  useEffect(() => {
+    try {
+      const supabase = createClient()
+      supabase.auth.getUser()
+        .then(({ data: { user } }) => setIsCosmicAdmin(isCosmicFieldAdmin(user?.email)))
+        .catch(() => {})
+    } catch {}
+  }, [])
+
+  // Cosmic Field: lazy-load the stored snapshot when an admin expands a dream
+  useEffect(() => {
+    if (!isCosmicAdmin || !expandedId) return
+    if (cosmicSnapshots[expandedId] !== undefined) return
+    const load = async () => {
+      try {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('dreams')
+          .select('cosmic_field_snapshot')
+          .eq('id', expandedId)
+          .single()
+        setCosmicSnapshots(prev => ({
+          ...prev,
+          [expandedId]: (data?.cosmic_field_snapshot as CosmicFieldSnapshotWithNote) || null,
+        }))
+      } catch {
+        setCosmicSnapshots(prev => ({ ...prev, [expandedId]: null }))
+      }
+    }
+    load()
+  }, [isCosmicAdmin, expandedId, cosmicSnapshots])
 
   // Fetch song recommendation when a dream is expanded and has a reading
   useEffect(() => {
@@ -178,6 +216,28 @@ export default function DreamsPage() {
     const numbers = angelNumbers.split(/[,\s]+/).map(n => n.replace(/\D/g, '')).filter(Boolean)
     const savedDream = await saveDream({ title, description, symbols: selectedSymbols, moods: selectedMoods, angelNumbers: numbers, voiceNoteUrl: null })
     getDreams().then(setDreams)
+
+    // Cosmic Field snapshot (ADMIN-ONLY private beta) — NON-BLOCKING: the dream
+    // is already saved; the field state fills in on the entry once it resolves.
+    if (isCosmicAdmin && savedDream) {
+      setCosmicLoadingId(savedDream.id)
+      fetch('/api/cosmic-field/snapshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entryType: 'dream',
+          entryId: savedDream.id,
+          number: savedDream.angelNumbers?.[0],
+          thought: [savedDream.title, savedDream.description].filter(Boolean).join(': ').slice(0, 400) || undefined,
+          reading: savedDream.reading,
+          mode: isSim ? 'simulation' : 'spiritual',
+        }),
+      }).then(r => r.ok ? r.json() : null).then(data => {
+        if (data && data.timestamp) {
+          setCosmicSnapshots(prev => ({ ...prev, [savedDream.id]: data }))
+        }
+      }).catch(() => {}).finally(() => setCosmicLoadingId(null))
+    }
 
     // Free users: check trial readings first; if remaining, get full Groq interpretation
     if (!isPremiumUser) {
@@ -659,6 +719,17 @@ export default function DreamsPage() {
                     <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', padding: '0.75rem', marginBottom: '0.75rem' }}>
                       <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: 'rgba(201,168,76,0.5)', marginBottom: '0.4rem' }}>COSMIC READING</div>
                       <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>{dream.reading}</p>
+                    </div>
+                  )}
+                  {/* Cosmic Field snapshot (ADMIN-ONLY private beta) */}
+                  {isCosmicAdmin && (cosmicSnapshots[dream.id] || cosmicLoadingId === dream.id) && (
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <CosmicFieldCard
+                        snapshot={cosmicSnapshots[dream.id]}
+                        loading={cosmicLoadingId === dream.id}
+                        simulation={isSim}
+                        compact
+                      />
                     </div>
                   )}
                   {trialRemaining !== null && !isPremiumUser && trialRemaining > 0 && (
