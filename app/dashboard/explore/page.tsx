@@ -2,8 +2,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { isCosmicFieldAdmin } from '@/lib/cosmic-field'
-import { getSubscriptionStatus } from '@/lib/subscription'
 
 const TOOL_SECTIONS = [
   {
@@ -108,19 +106,10 @@ const TOOL_SECTIONS = [
 export default function ExplorePage() {
   const card: React.CSSProperties = {background:'rgba(8,6,28,0.88)',border:'1px solid rgba(200,180,255,0.1)',borderRadius:'1.25rem',backdropFilter:'blur(12px)'}
 
-  // Cosmic Field (ADMIN-ONLY private beta): link is injected only for the admin
-  const [isCosmicAdmin, setIsCosmicAdmin] = useState(false)
-  useEffect(() => {
-    try {
-      const supabase = createClient()
-      supabase.auth.getUser()
-        .then(({ data: { user } }) => setIsCosmicAdmin(isCosmicFieldAdmin(user?.email)))
-        .catch(() => {})
-    } catch {}
-  }, [])
+  // Cosmic Field: open beta — link shown to everyone
 
   const sections = TOOL_SECTIONS.map(section => {
-    if (section.title === 'Cosmic Tracking' && isCosmicAdmin) {
+    if (section.title === 'Cosmic Tracking') {
       return {
         ...section,
         tools: [

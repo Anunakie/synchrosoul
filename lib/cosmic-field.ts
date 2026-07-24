@@ -2,12 +2,11 @@
 // Cosmic Field — live Earth space-weather + global consciousness snapshot.
 // ADMIN-ONLY private beta. All external fetches happen server-side.
 
-// ── Admin gate ──────────────────────────────────────────────────────────────
-const COSMIC_FIELD_ADMINS = ['dezekiel@live.com']
-
+// ── Access gate ─────────────────────────────────────────────────────────────
+// OPEN BETA: Cosmic Field is live for every signed-in user.
+// Function name kept so all callers (APIs, pages, cards) work unchanged.
 export function isCosmicFieldAdmin(email: string | null | undefined): boolean {
-  if (!email) return false
-  return COSMIC_FIELD_ADMINS.includes(email.toLowerCase().trim())
+  return !!email
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
