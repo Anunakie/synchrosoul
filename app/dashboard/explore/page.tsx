@@ -135,7 +135,7 @@ export default function ExplorePage() {
       <h1 style={{fontFamily:'Cormorant Garamond,serif',fontSize:'1.8rem',color:'rgba(220,200,255,0.95)',margin:'0 0 0.25rem',fontWeight:400}}>Explore</h1>
       <p style={{color:'rgba(180,160,255,0.5)',fontSize:'0.8rem',margin:'0 0 1.75rem'}}>{totalTools} features for your spiritual journey</p>
 
-      {TOOL_SECTIONS.map(section=>(
+      {sections.map(section=>(
         <div key={section.title} style={{marginBottom:'1.75rem'}}>
           {/* Section header */}
           <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.75rem'}}>
