@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isCosmicFieldAdmin } from '@/lib/cosmic-field'
+import { getSubscriptionStatus } from '@/lib/subscription'
 
 const TOOL_SECTIONS = [
   {
