@@ -1,10 +1,8 @@
 
 import { NextResponse } from "next/server";
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 import { sendWeeklyDigestEmail } from "@/lib/email";
-import Groq from "groq-sdk";
 
-function getGroq() { return new Groq({ apiKey: process.env.GROQ_API_KEY }); }
 
 export async function POST(request: Request) {
   try {
@@ -22,8 +20,8 @@ export async function POST(request: Request) {
 
     if (process.env.GROQ_API_KEY && topNumbers?.length > 0) {
       try {
-        const completion = await getGroq().chat.completions.create({
-          model: "llama-3.3-70b-versatile",
+        const completion = await groqChatWithRetry({
+          model: ORACLE_MODEL,
           messages: [
             {
               role: "system",

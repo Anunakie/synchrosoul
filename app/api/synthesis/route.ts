@@ -1,9 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { groqChatWithRetry } from '@/lib/groq-retry'
-import Groq from 'groq-sdk';
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 
-function getGroq() { return new Groq({ apiKey: process.env.GROQ_API_KEY }); }
 
 const ANGEL_MEANINGS: Record<string, { title: string; theme: string }> = {
   '111':  { title: 'Manifestation Portal', theme: 'creation and new beginnings' },
@@ -105,8 +103,8 @@ Respond with ONLY valid JSON in this exact format:
   "energyForecast": "1 sentence poetic energy forecast for the coming days"
 }`;
 
-    const completion = await getGroq().chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqChatWithRetry({
+      model: ORACLE_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.85,
       max_tokens: 800,

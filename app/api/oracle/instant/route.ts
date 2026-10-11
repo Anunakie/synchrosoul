@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 
 export const runtime = 'nodejs'
 
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         : `The seeker just saw angel number ${number}. Give them a brief, powerful cosmic reading about what this number means for them right now.${numerologyContext ? `\n\nTheir numerology: ${numerologyContext}` : ''}`)
 
     const completion = await groqChatWithRetry({
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         : `Angel number ${number}, thought about: ${thoughtAnchor.trim().slice(0, 80)}`
 
       const titleCompletion = await groqChatWithRetry({
-        model: 'llama-3.3-70b-versatile',
+        model: ORACLE_MODEL,
         messages: [
           { role: 'system', content: titleSystemPrompt },
           { role: 'user', content: titleUserPrompt }

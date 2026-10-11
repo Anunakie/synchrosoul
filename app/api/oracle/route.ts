@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 
 export const runtime = 'nodejs'
 
@@ -103,7 +103,7 @@ ${recentThoughts ? `\nThoughts captured during sightings:\n${recentThoughts}` : 
 Channel the oracle and give them a deeply personal, mystical reading based on their actual numbers and question.`
 
     const completion = await groqChatWithRetry({
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -120,7 +120,7 @@ Channel the oracle and give them a deeply personal, mystical reading based on th
     return NextResponse.json({
       response,
       guidingNumber,
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       isAI: true,
       mode: isSimulation ? 'simulation' : 'spiritual',
     })

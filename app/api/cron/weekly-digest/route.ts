@@ -1,11 +1,9 @@
 
 import { NextResponse } from "next/server";
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 import { sendWeeklyDigestEmail } from "@/lib/email";
 import { createClient } from "@supabase/supabase-js";
-import Groq from "groq-sdk";
 
-function getGroq() { return new Groq({ apiKey: process.env.GROQ_API_KEY }); }
 
 export const runtime = "nodejs";
 
@@ -75,8 +73,8 @@ export async function GET(request: Request) {
       let weeklyMessage = "The universe has been sending you signs this week. Trust the numbers you see.";
       if (process.env.GROQ_API_KEY && topNumbers.length > 0) {
         try {
-          const completion = await getGroq().chat.completions.create({
-            model: "llama-3.3-70b-versatile",
+          const completion = await groqChatWithRetry({
+            model: ORACLE_MODEL,
             messages: [
               { role: "system", content: "You are a mystical numerology guide. Write a short, beautiful weekly cosmic message (2-3 sentences). Be poetic and uplifting. No markdown." },
               { role: "user", content: `Name: ${profile.display_name || "Seeker"}. Life Path: ${profile.life_path_number || "unknown"}. Top numbers: ${topNumbers.join(", ")}. Logs: ${logs.length}. Active days: ${streakDays}.` }
