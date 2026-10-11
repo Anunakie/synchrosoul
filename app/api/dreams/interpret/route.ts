@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
+import { logReadingEvent, statusFor } from '@/lib/ai-reading-log'
 
 export const runtime = 'nodejs'
 
@@ -47,6 +48,7 @@ CRITICAL FORMATTING: Put a blank line (double line break) between each section s
 `
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now()
   try {
     const {
       title,
@@ -70,6 +72,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
+      logReadingEvent({ feature: 'dream_interpret', status: 'error', mode, error: 'GROQ_API_KEY is not set' })
       return NextResponse.json({ error: 'Interpreter offline' }, { status: 500 })
     }
 
@@ -117,6 +120,14 @@ Interpret this dream. Connect the symbols and feelings into a meaningful message
     })
 
     const interpretation = completion.choices[0]?.message?.content || ''
+    logReadingEvent({
+      feature: 'dream_interpret',
+      status: statusFor(completion.model, interpretation),
+      mode: isSimulation ? 'simulation' : 'spiritual',
+      model: completion.model,
+      latencyMs: Date.now() - startedAt,
+      reading: interpretation,
+    })
 
     return NextResponse.json({
       interpretation,
@@ -125,6 +136,7 @@ Interpret this dream. Connect the symbols and feelings into a meaningful message
 
   } catch (err) {
     console.error('Dream interpret error:', err)
+    logReadingEvent({ feature: 'dream_interpret', status: 'error', latencyMs: Date.now() - startedAt, err })
     return NextResponse.json({ error: 'Interpretation failed' }, { status: 500 })
   }
 }

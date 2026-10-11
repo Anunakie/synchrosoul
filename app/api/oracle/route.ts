@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
+import { logReadingEvent, statusFor } from '@/lib/ai-reading-log'
 
 export const runtime = 'nodejs'
 
@@ -44,12 +45,17 @@ CRITICAL FORMATTING: Put a blank line (double line break) between each section s
 `
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now()
+  let mode: string | undefined
   try {
-    const { question, logs, numerologyProfile, mode } = await req.json()
+    const body = await req.json()
+    const { question, logs, numerologyProfile } = body
+    mode = body.mode
     const isSimulation = mode === 'simulation'
 
     const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
+      logReadingEvent({ feature: 'oracle_question', status: 'error', mode, error: 'GROQ_API_KEY is not set' })
       return NextResponse.json({ error: 'Oracle not configured' }, { status: 500 })
     }
 
@@ -112,7 +118,17 @@ Channel the oracle and give them a deeply personal, mystical reading based on th
       max_tokens: 350,
     })
 
-    const response = completion.choices[0]?.message?.content ||
+    const aiText = completion.choices[0]?.message?.content
+    logReadingEvent({
+      feature: 'oracle_question',
+      status: statusFor(completion.model, aiText),
+      mode: isSimulation ? 'simulation' : 'spiritual',
+      model: completion.model,
+      latencyMs: Date.now() - startedAt,
+      reading: aiText,
+    })
+
+    const response = aiText ||
       (isSimulation ? 'SIGNAL_LOST. Re-initialize and try again.' : 'The oracle is silent. Try again when the stars align.')
 
     const guidingNumber = topNumbers.split(' ')[0] || recentLogs[0]?.number || '111'
@@ -120,13 +136,20 @@ Channel the oracle and give them a deeply personal, mystical reading based on th
     return NextResponse.json({
       response,
       guidingNumber,
-      model: ORACLE_MODEL,
-      isAI: true,
+      model: completion.model || ORACLE_MODEL,
+      isAI: !!aiText,
       mode: isSimulation ? 'simulation' : 'spiritual',
     })
 
   } catch (err) {
     console.error('Oracle API error:', err)
+    logReadingEvent({
+      feature: 'oracle_question',
+      status: 'error',
+      mode: mode === 'simulation' ? 'simulation' : 'spiritual',
+      latencyMs: Date.now() - startedAt,
+      err,
+    })
     return NextResponse.json({ error: 'The oracle is temporarily veiled. Please try again.' }, { status: 500 })
   }
 }
