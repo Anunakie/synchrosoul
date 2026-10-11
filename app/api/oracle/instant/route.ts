@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
+import { logReadingEvent, statusFor } from '@/lib/ai-reading-log'
 
 export const runtime = 'nodejs'
 
@@ -32,8 +33,13 @@ Your readings are:
 CRITICAL RULE: The thought anchor is the most important element. Your reading MUST directly address and weave in what they were thinking. If they thought about taxes, address finances and transformation. If they thought about a relationship, address that specifically. Never give a generic angel number meaning — always make the cosmic message feel like a direct response to their exact thought.`
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now()
+  let mode: string | undefined
+  let hasThought = false
   try {
-    const { number, thoughtAnchor, numerologyProfile, mode } = await req.json()
+    const body = await req.json()
+    const { number, thoughtAnchor, numerologyProfile } = body
+    mode = body.mode
     const isSimulation = mode === 'simulation'
 
     if (!number) {
@@ -42,6 +48,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
+      logReadingEvent({ feature: 'oracle_instant', status: 'error', mode, error: 'GROQ_API_KEY is not set' })
       return NextResponse.json({ error: isSimulation ? 'ARCHITECT_OFFLINE' : 'Oracle not configured' }, { status: 500 })
     }
 
@@ -50,7 +57,7 @@ export async function POST(req: NextRequest) {
       ? `Life Path ${numerologyProfile.lifePathNumber || numerologyProfile.lifePath || '?'}, Soul Urge ${numerologyProfile.soulUrgeNumber || numerologyProfile.soulUrge || '?'}, Destiny ${numerologyProfile.destinyNumber || numerologyProfile.destiny || '?'}`
       : null
 
-    const hasThought = thoughtAnchor && thoughtAnchor.trim().length > 0
+    hasThought = !!thoughtAnchor && thoughtAnchor.trim().length > 0
     const systemPrompt = isSimulation ? SIMULATION_SYSTEM_PROMPT : SPIRITUAL_SYSTEM_PROMPT
 
     const userPrompt = isSimulation
@@ -72,6 +79,15 @@ export async function POST(req: NextRequest) {
     })
 
     const reading = completion.choices[0]?.message?.content || null
+    logReadingEvent({
+      feature: 'oracle_instant',
+      status: statusFor(completion.model, reading),
+      mode: isSimulation ? 'simulation' : 'spiritual',
+      model: completion.model,
+      latencyMs: Date.now() - startedAt,
+      hasThought,
+      reading,
+    })
 
     // Generate title
     let title = isSimulation ? `ANOMALY ${number} — SIGNAL DECODED` : `${number} — Divine Message`
@@ -83,17 +99,22 @@ export async function POST(req: NextRequest) {
         ? `Anomaly code ${number}, consciousness snapshot: ${thoughtAnchor.trim().slice(0, 80)}`
         : `Angel number ${number}, thought about: ${thoughtAnchor.trim().slice(0, 80)}`
 
-      const titleCompletion = await groqChatWithRetry({
-        model: ORACLE_MODEL,
-        messages: [
-          { role: 'system', content: titleSystemPrompt },
-          { role: 'user', content: titleUserPrompt }
-        ],
-        temperature: 0.9,
-        max_tokens: 20,
-      })
-      const generatedTitle = titleCompletion.choices[0]?.message?.content?.trim().replace(/["']/g, '')
-      if (generatedTitle) title = isSimulation ? generatedTitle.toUpperCase() : generatedTitle
+      // A failed title must not throw away a good reading; keep the default title.
+      try {
+        const titleCompletion = await groqChatWithRetry({
+          model: ORACLE_MODEL,
+          messages: [
+            { role: 'system', content: titleSystemPrompt },
+            { role: 'user', content: titleUserPrompt }
+          ],
+          temperature: 0.9,
+          max_tokens: 20,
+        })
+        const generatedTitle = titleCompletion.choices[0]?.message?.content?.trim().replace(/["']/g, '')
+        if (generatedTitle) title = isSimulation ? generatedTitle.toUpperCase() : generatedTitle
+      } catch (titleErr) {
+        console.warn('Instant oracle title failed:', (titleErr as Error)?.message)
+      }
     }
 
     return NextResponse.json({
@@ -106,6 +127,14 @@ export async function POST(req: NextRequest) {
 
   } catch (err) {
     console.error('Instant oracle error:', err)
+    logReadingEvent({
+      feature: 'oracle_instant',
+      status: 'error',
+      mode: mode === 'simulation' ? 'simulation' : 'spiritual',
+      latencyMs: Date.now() - startedAt,
+      hasThought,
+      err,
+    })
     return NextResponse.json({ error: 'Oracle temporarily unavailable' }, { status: 500 })
   }
 }

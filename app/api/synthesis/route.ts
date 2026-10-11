@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
+import { logReadingEvent, statusFor } from '@/lib/ai-reading-log'
 
 
 const ANGEL_MEANINGS: Record<string, { title: string; theme: string }> = {
@@ -24,6 +25,8 @@ const ANGEL_MEANINGS: Record<string, { title: string; theme: string }> = {
 };
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
+  let answeredModel: string | undefined;
   try {
     const { logs, profile, period } = await req.json();
 
@@ -110,14 +113,29 @@ Respond with ONLY valid JSON in this exact format:
       max_tokens: 800,
     });
 
+    answeredModel = completion.model;
     const raw = completion.choices[0]?.message?.content || '{}';
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in response');
     const result = JSON.parse(jsonMatch[0]);
+    logReadingEvent({
+      feature: 'synthesis',
+      status: statusFor(completion.model, result?.narrative),
+      model: completion.model,
+      latencyMs: Date.now() - startedAt,
+      reading: result?.narrative,
+    });
     return NextResponse.json(result);
 
   } catch (err: any) {
     console.error('Synthesis API error:', err);
+    logReadingEvent({
+      feature: 'synthesis',
+      status: 'error',
+      model: answeredModel ?? null,
+      latencyMs: Date.now() - startedAt,
+      err,
+    });
     return NextResponse.json({
       title: 'Cosmic Currents Are Flowing',
       narrative: 'The universe has been speaking to you through sacred sequences this week. Each number you noticed was a deliberate message from the divine, carefully placed in your path to guide your soul\'s journey.',

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ReadingQualityPanel, ReadingHealthBanner, type ReadingQualityData } from '@/components/admin/ReadingQuality'
 
 const card = {
   background: 'rgba(8,6,28,0.88)',
@@ -55,7 +56,7 @@ interface HealerRow {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'overview' | 'revenue' | 'healers' | 'reports' | 'beta'>('overview')
+  const [tab, setTab] = useState<'overview' | 'readings' | 'revenue' | 'healers' | 'reports' | 'beta'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [revenue, setRevenue] = useState<RevenueData | null>(null)
   const [healers, setHealers] = useState<HealerRow[]>([])
@@ -94,6 +95,9 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [adminChecking, setAdminChecking] = useState(true)
+  const [readingQuality, setReadingQuality] = useState<ReadingQualityData | null>(null)
+  const [rqLoading, setRqLoading] = useState(false)
+  const [rqError, setRqError] = useState('')
   const router = useRouter()
 
     // ── Admin guard ──────────────────────────────────────────────────────────
@@ -141,6 +145,25 @@ export default function AdminPage() {
       })
       .catch(() => setError('Failed to load stats'))
       .finally(() => setLoading(false))
+  }, [authToken])
+
+  function loadReadingQuality() {
+    if (!authToken) return
+    setRqLoading(true)
+    setRqError('')
+    fetch('/api/admin/reading-quality', { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) setRqError(data.error)
+        else setReadingQuality(data)
+      })
+      .catch(() => setRqError('Failed to load reading quality'))
+      .finally(() => setRqLoading(false))
+  }
+
+  // Loaded on open so the Overview can warn when readings go generic.
+  useEffect(() => {
+    loadReadingQuality()
   }, [authToken])
 
   useEffect(() => {
@@ -403,7 +426,7 @@ export default function AdminPage() {
     }
   }
 
-  const tabBtn = (t: 'overview' | 'revenue' | 'healers' | 'reports' | 'beta', label: string, icon: string) => (
+  const tabBtn = (t: 'overview' | 'readings' | 'revenue' | 'healers' | 'reports' | 'beta', label: string, icon: string) => (
     <button
       onClick={() => setTab(t)}
       style={{
@@ -464,6 +487,7 @@ export default function AdminPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         {tabBtn('overview', 'Overview', '📊')}
+        {tabBtn('readings', 'Readings', '🔮')}
         {tabBtn('revenue', 'Revenue', '💰')}
         {tabBtn('healers', 'Healers', '✨')}
         {tabBtn('beta', 'Beta Access', '🔑')}
@@ -473,6 +497,7 @@ export default function AdminPage() {
       {tab === 'overview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {error && <div style={{ color: '#f87171', padding: '1rem', background: 'rgba(248,113,113,0.1)', borderRadius: '0.75rem' }}>{error}</div>}
+          {readingQuality && <ReadingHealthBanner data={readingQuality} onOpen={() => setTab('readings')} />}
           {stats && (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
@@ -552,6 +577,11 @@ export default function AdminPage() {
             </>
           )}
         </div>
+      )}
+
+      {/* READINGS TAB */}
+      {tab === 'readings' && (
+        <ReadingQualityPanel data={readingQuality} loading={rqLoading} error={rqError} onRefresh={loadReadingQuality} />
       )}
 
       {/* REVENUE TAB */}
