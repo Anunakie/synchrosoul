@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 import { fetchCosmicSnapshot, isCosmicFieldAdmin, type CosmicSnapshot } from '@/lib/cosmic-field'
 
 export const runtime = 'nodejs'
@@ -57,7 +57,7 @@ async function generateFieldNote(
     const userPrompt = `LIVE FIELD STATE:\n${describeSnapshot(snapshot)}\n\nTHE MOMENT:\n${momentParts.join('\n')}\n\nWrite the 1-2 sentence field note now.`
 
     const completion = await groqChatWithRetry({
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       messages: [
         { role: 'system', content: isSimulation ? SIMULATION_SYSTEM_PROMPT : SPIRITUAL_SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },

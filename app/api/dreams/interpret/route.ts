@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 
 export const runtime = 'nodejs'
 
@@ -107,7 +107,7 @@ ${numContext ? `Their numerology: ${numContext}` : ''}
 Interpret this dream. Connect the symbols and feelings into a meaningful message.`
 
     const completion = await groqChatWithRetry({
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },

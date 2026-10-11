@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,14 +16,8 @@ export async function POST(req: NextRequest) {
     if (isShared && description) {
       // Extract themes using Groq AI
       try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
+        const groqData = await groqChatWithRetry({
+            model: ORACLE_MODEL,
             messages: [
               {
                 role: 'system',
@@ -37,10 +32,8 @@ Symbols: ${(symbols || []).join(', ')}`
             ],
             temperature: 0.5,
             max_tokens: 150
-          })
         })
-        if (groqRes.ok) {
-          const groqData = await groqRes.json()
+        {
           const raw = groqData.choices[0]?.message?.content || '[]'
           const startIdx = raw.indexOf("["); const endIdx = raw.lastIndexOf("]"); const match = startIdx !== -1 && endIdx !== -1 ? [raw.slice(startIdx, endIdx + 1)] : null
           if (match) themes = JSON.parse(match[0])

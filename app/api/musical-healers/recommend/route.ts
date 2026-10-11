@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       : `Angel Number: ${number || 'N/A'}\nThe seeker was thinking: "${thought || 'not recorded'}"\nOracle Reading:\n${reading || 'No reading generated'}\n\nAvailable Healing Songs:\n${candidateList}\n\nWhich song best matches this moment in the seeker's journey? Return JSON only.`
 
     const completion = await groqChatWithRetry({
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },

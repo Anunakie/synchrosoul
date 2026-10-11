@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { groqChatWithRetry } from '@/lib/groq-retry'
+import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 import Groq from 'groq-sdk';
 import { createClient } from '@/lib/supabase/server';
 
@@ -107,7 +107,7 @@ RECENT DREAMS (last ${recentDreams.length}):`;
     const systemPrompt = (isSimulation ? SIMULATION_SYSTEM_PROMPT : SPIRITUAL_SYSTEM_PROMPT) + context;
 
     const completion = await groqChatWithRetry({
-      model: 'llama-3.3-70b-versatile',
+      model: ORACLE_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages.slice(-20), // Keep last 20 messages for context
