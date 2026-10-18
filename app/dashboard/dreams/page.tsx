@@ -5,7 +5,6 @@ import { saveDream, getDreams, deleteDream, searchDreams, DreamEntry } from '@/l
 import { DREAM_SYMBOLS, MOOD_TAGS } from '@/lib/dream-meanings'
 import { speakText, stopSpeaking } from '@/components/VoiceRecorder'
 import FeatureGate from '@/components/FeatureGate'
-import SleepSounds from '@/components/SleepSounds'
 import SongRecommendationCard, { type SongRecommendationData } from '@/components/SongRecommendationCard'
 import TrialReadingBanner from '@/components/TrialReadingBanner'
 import { createClient } from '@/lib/supabase/client'
@@ -531,13 +530,6 @@ export default function DreamsPage() {
           {saved ? '✓ Dream Saved' : saving ? 'Saving...' : 'Save Dream'}
         </button>
 
-        {/* Premium: Sleep Sounds */}
-        <div style={{ width: '100%' }}>
-          <FeatureGate feature="sleep_sounds" requiredTier="mystic">
-            <SleepSounds />
-          </FeatureGate>
-        </div>
-
         <p style={{ textAlign: 'center', fontSize: '0.55rem', color: 'rgba(140,30,30,0.2)', letterSpacing: '0.1em', margin: 0 }}>Screen dimmed to preserve night vision</p>
       </div>
     )
@@ -570,15 +562,6 @@ export default function DreamsPage() {
           </div>
         </div>
       </div>
-
-      {/* Sleep Sounds - Premium, always visible in normal mode */}
-      {view === 'list' && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <FeatureGate feature="sleep_sounds" requiredTier="mystic">
-            <SleepSounds />
-          </FeatureGate>
-        </div>
-      )}
 
       {/* New Dream Form */}
       {view === 'new' && (
