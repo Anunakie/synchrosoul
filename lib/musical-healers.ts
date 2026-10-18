@@ -195,3 +195,47 @@ export function getHealerStreamLinks(healer: MusicalHealer): { url: string; plat
   if (healer.merch_url) links.push({ url: healer.merch_url, platform: 'Merch', emoji: '🛍️' })
   return links
 }
+
+export type ArtistSong = MusicalHealerSong & { artist_name: string }
+
+// Fetch every active song from every active artist profile, for the in-app music players
+export async function getAllArtistSongs(): Promise<ArtistSong[]> {
+  const supabase = createClient()
+  const [{ data: healers, error: hErr }, { data: songs, error: sErr }] = await Promise.all([
+    supabase.from('musical_healers').select('id, artist_name').eq('is_active', true),
+    supabase.from('musical_healer_songs').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+  ])
+
+  if (hErr || sErr) {
+    console.error('Error fetching artist songs:', hErr || sErr)
+    return []
+  }
+
+  const names: Record<string, string> = {}
+  for (const h of (healers || [])) names[h.id] = h.artist_name
+
+  return (songs || [])
+    .filter(s => names[s.healer_id])
+    .map(s => ({ ...s, artist_name: names[s.healer_id] }))
+}
+
+// Turn a song's streaming link into a URL that can play inside the app (iframe), if the platform allows it
+export function getSongEmbed(song: MusicalHealerSong): { url: string; platform: string; height: number } | null {
+  if (song.embed_url) return { url: song.embed_url, platform: 'Player', height: 152 }
+
+  if (song.youtube_url) {
+    const m = song.youtube_url.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/)
+    if (m) return { url: `https://www.youtube.com/embed/${m[1]}?autoplay=1`, platform: 'YouTube', height: 200 }
+  }
+
+  if (song.spotify_url) {
+    const m = song.spotify_url.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist|episode)\/([A-Za-z0-9]+)/)
+    if (m) return { url: `https://open.spotify.com/embed/${m[1]}/${m[2]}`, platform: 'Spotify', height: 152 }
+  }
+
+  if (song.soundcloud_url) {
+    return { url: `https://w.soundcloud.com/player/?url=${encodeURIComponent(song.soundcloud_url)}&auto_play=true&visual=false`, platform: 'SoundCloud', height: 166 }
+  }
+
+  return null
+}
