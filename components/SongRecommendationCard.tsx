@@ -2,6 +2,7 @@
 import Link from 'next/link'
 
 export interface SongRecommendationData {
+  recommendationId?: string | null
   songId: string
   songTitle: string
   songDescription: string | null
@@ -10,6 +11,12 @@ export interface SongRecommendationData {
   songCoverArtUrl: string | null
   songAmazonMusicUrl: string | null
   songSpotifyUrl: string | null
+  // Added Nov 2026; older saved recommendations don't have these
+  songAppleMusicUrl?: string | null
+  songYoutubeUrl?: string | null
+  songSoundcloudUrl?: string | null
+  songTidalUrl?: string | null
+  songBandcampUrl?: string | null
   healerId: string
   artistName: string
   healerAvatarUrl: string | null
@@ -24,9 +31,32 @@ interface Props {
 export default function SongRecommendationCard({ recommendation, mode = 'spiritual' }: Props) {
   const isSimulation = mode === 'simulation'
 
-  // Pick the best available streaming link
-  const listenUrl = recommendation.songSpotifyUrl || recommendation.songAmazonMusicUrl || recommendation.songEmbedUrl || null
-  const listenPlatform = recommendation.songSpotifyUrl ? 'Spotify' : recommendation.songAmazonMusicUrl ? 'Amazon Music' : recommendation.songEmbedUrl ? 'Stream' : null
+  // Every listening link the song has, in display order
+  const links: { url: string; platform: string }[] = []
+  const add = (url: string | null | undefined, platform: string) => { if (url) links.push({ url, platform }) }
+  add(recommendation.songSpotifyUrl, 'Spotify')
+  add(recommendation.songAppleMusicUrl, 'Apple Music')
+  add(recommendation.songYoutubeUrl, 'YouTube')
+  add(recommendation.songSoundcloudUrl, 'SoundCloud')
+  add(recommendation.songAmazonMusicUrl, 'Amazon Music')
+  add(recommendation.songTidalUrl, 'Tidal')
+  add(recommendation.songBandcampUrl, 'Bandcamp')
+  if (links.length === 0) add(recommendation.songEmbedUrl, 'Stream')
+  const primary = links[0] || null
+  const others = links.slice(1)
+
+  // Tell the server this recommendation was clicked (for artist/admin stats)
+  const trackClick = () => {
+    if (!recommendation.recommendationId) return
+    try {
+      fetch('/api/musical-healers/recommend/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recommendationId: recommendation.recommendationId }),
+        keepalive: true,
+      }).catch(() => {})
+    } catch {}
+  }
 
   return (
     <div style={{
@@ -98,11 +128,12 @@ export default function SongRecommendationCard({ recommendation, mode = 'spiritu
       {/* Action Buttons */}
       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
         {/* Listen Button */}
-        {listenUrl && (
+        {primary && (
           <a
-            href={listenUrl}
+            href={primary.url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={trackClick}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
               padding: '0.45rem 0.85rem',
@@ -119,13 +150,39 @@ export default function SongRecommendationCard({ recommendation, mode = 'spiritu
               transition: 'background 0.2s',
             }}
           >
-            ▶ {isSimulation ? `Access on ${listenPlatform}` : `Listen on ${listenPlatform}`}
+            ▶ {isSimulation ? `Access on ${primary.platform}` : `Listen on ${primary.platform}`}
           </a>
         )}
+
+        {/* Other platforms */}
+        {others.map(l => (
+          <a
+            key={l.platform}
+            href={l.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={trackClick}
+            style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '0.45rem 0.7rem',
+              background: 'transparent',
+              border: isSimulation
+                ? '1px solid rgba(0,255,65,0.12)'
+                : '1px solid rgba(201,168,76,0.2)',
+              borderRadius: '0.6rem',
+              color: isSimulation ? 'rgba(0,255,65,0.6)' : 'rgba(201,168,76,0.8)',
+              fontSize: '0.7rem',
+              textDecoration: 'none',
+            }}
+          >
+            {l.platform}
+          </a>
+        ))}
 
         {/* View Artist Button */}
         <Link
           href={`/dashboard/musical-healers/${recommendation.healerId}`}
+          onClick={trackClick}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
             padding: '0.45rem 0.85rem',
