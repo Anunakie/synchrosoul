@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groqChatWithRetry, ORACLE_MODEL } from '@/lib/groq-retry'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createSessionClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
@@ -163,35 +164,75 @@ export async function POST(req: NextRequest) {
     const index = Math.max(0, Math.min(pick - 1, candidates.length - 1))
     const chosen = candidates[index]
 
-    // Step 4: Record the recommendation (non-blocking)
+    // Step 4: Fetch every listening link for the chosen song. The candidate RPC
+    // only returns a few platforms, so read the full row here (no SQL change needed).
+    let links: {
+      spotify_url: string | null
+      apple_music_url: string | null
+      amazon_music_url: string | null
+      youtube_url: string | null
+      soundcloud_url: string | null
+      tidal_url: string | null
+      bandcamp_url: string | null
+      embed_url: string | null
+      cover_art_url: string | null
+    } | null = null
     try {
-      const userId = req.headers.get('x-user-id')
-      if (userId) {
-        await supabase.from('song_recommendations').insert({
-          user_id: userId,
-          song_id: chosen.song_id,
-          healer_id: chosen.healer_id,
-          reading_type: readingType || 'oracle',
-          context_number: number || null,
-          context_thought: thought?.slice(0, 500) || null,
-          ai_reasoning: reason?.slice(0, 500) || null,
-          clicked: false,
-        })
-      }
+      const { data } = await supabase
+        .from('musical_healer_songs')
+        .select('spotify_url, apple_music_url, amazon_music_url, youtube_url, soundcloud_url, tidal_url, bandcamp_url, embed_url, cover_art_url')
+        .eq('id', chosen.song_id)
+        .single()
+      links = data
     } catch {
+      // Fall back to the links the RPC returned
+    }
+
+    // Step 5: Record the recommendation so admins and artists can see what was
+    // recommended and clicked. The user comes from the signed-in session cookie.
+    let recommendationId: string | null = null
+    try {
+      const session = await createSessionClient()
+      const { data: { user } } = await session.auth.getUser()
+      if (user) {
+        const { data: row, error: insertError } = await supabase
+          .from('song_recommendations')
+          .insert({
+            user_id: user.id,
+            song_id: chosen.song_id,
+            healer_id: chosen.healer_id,
+            reading_type: readingType || 'oracle',
+            context_number: number || null,
+            context_thought: thought?.slice(0, 500) || null,
+            ai_reasoning: reason?.slice(0, 500) || null,
+            clicked: false,
+          })
+          .select('id')
+          .single()
+        if (insertError) console.error('Song recommendation tracking failed:', insertError.message)
+        recommendationId = row?.id ?? null
+      }
+    } catch (trackErr) {
       // Don't fail the request if tracking fails
+      console.error('Song recommendation tracking error:', trackErr)
     }
 
     return NextResponse.json({
       recommendation: {
+        recommendationId,
         songId: chosen.song_id,
         songTitle: chosen.title,
         songDescription: chosen.description,
         songGenre: chosen.genre,
-        songEmbedUrl: null,
-        songCoverArtUrl: chosen.cover_art_url,
-        songAmazonMusicUrl: chosen.amazon_music_url,
-        songSpotifyUrl: chosen.spotify_url,
+        songEmbedUrl: links?.embed_url ?? null,
+        songCoverArtUrl: links?.cover_art_url ?? chosen.cover_art_url,
+        songSpotifyUrl: links?.spotify_url ?? chosen.spotify_url,
+        songAppleMusicUrl: links?.apple_music_url ?? chosen.apple_music_url,
+        songAmazonMusicUrl: links?.amazon_music_url ?? chosen.amazon_music_url,
+        songYoutubeUrl: links?.youtube_url ?? chosen.youtube_url,
+        songSoundcloudUrl: links?.soundcloud_url ?? chosen.soundcloud_url,
+        songTidalUrl: links?.tidal_url ?? null,
+        songBandcampUrl: links?.bandcamp_url ?? null,
         healerId: chosen.healer_id,
         artistName: chosen.artist_name,
         healerAvatarUrl: null,
